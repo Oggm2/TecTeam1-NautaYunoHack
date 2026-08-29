@@ -67,18 +67,28 @@ def deterministic_explanation(diagnosis: dict[str, Any]) -> dict[str, Any]:
         "evidence_sufficient": enough,
         "window_started_at": window.get("started_at"),
         "window_ended_at": window.get("ended_at"),
+        "profiles": {
+            "technical": operational,
+            "financial": f"El GMV no recuperado esperado es USD {cost:,.2f} en esta ventana; la proyección por hora está en las métricas del incidente.",
+            "simple": f"Hay un problema en {target}: están aprobándose menos pagos de lo normal. El equipo debe revisar la acción recomendada.",
+        },
     }
 
 
 EXPLANATION_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["executive_summary", "operational_explanation", "recommended_action", "uncertainty_note"],
+    "required": ["executive_summary", "operational_explanation", "recommended_action", "uncertainty_note", "profiles"],
     "properties": {
         "executive_summary": {"type": "string"},
         "operational_explanation": {"type": "string"},
         "recommended_action": {"type": "string"},
         "uncertainty_note": {"type": "string"},
+        "profiles": {
+            "type": "object", "additionalProperties": False,
+            "required": ["technical", "financial", "simple"],
+            "properties": {"technical": {"type": "string"}, "financial": {"type": "string"}, "simple": {"type": "string"}},
+        },
     },
 }
 
@@ -91,7 +101,8 @@ def openai_explanation(diagnosis: dict[str, Any], model: str) -> dict[str, Any]:
         raise RuntimeError("Install the OpenAI Python SDK first: py -m pip install openai") from error
     instructions = """Eres redactor para operaciones de pagos. Redacta únicamente con los hechos
 del JSON recibido. No inventes dimensiones, causas, cifras, fechas ni acciones. No cambies la
-acción recomendada. Si evidence_sufficient es false, dilo claramente. Responde en español."""
+acción recomendada. Si evidence_sufficient es false, dilo claramente. Responde en español.
+En profiles devuelve: technical para un operador, financial para negocio y simple sin jerga para cualquier persona."""
     client = OpenAI()
     response = client.responses.create(
         model=model,

@@ -507,6 +507,7 @@
       <span class="live-pill"><span class="beat"></span> LIVE</span>
       <span class="crumb" id="crumb">Command Center</span>
       <span class="spacer"></span>
+      <div id="audience-switch" style="display:flex;gap:5px"><button class="btn ghost audience-btn" data-audience="technical">Technical</button><button class="btn ghost audience-btn" data-audience="financial">Financial</button><button class="btn ghost audience-btn" data-audience="simple">Simple</button></div>
       <span class="clock mono" id="clock">14:32:07</span>
     </div>
 
@@ -525,6 +526,7 @@
               Discounts incident-attributable declines by their expected successful-retry probability
             </div>
           </div>
+          <div class="card pad" id="audience-brief" style="border-left:3px solid var(--info)"></div>
 
           <!-- KPIs -->
           <div class="kpis">
@@ -1019,6 +1021,7 @@
         daily: "$"+Math.round((m.expected_unrecovered_amount_per_hour_usd||0)*24).toLocaleString("en-US"),
       } : null,
       recommendation: {action: d.recommended_action || "Continue monitoring; evidence is not yet sufficient for a specific action.", why},
+      profiles: explanation.profiles || {},
     };
   }
 
@@ -1421,6 +1424,12 @@
       $("#fin").innerHTML = `<div class="f" style="grid-column:1/-1;border-color:#5c4718"><div class="v" style="color:var(--warn);font-size:19px">Not quantified yet</div><div class="k">Financial impact is withheld until a root cause reaches sufficient confidence. The system does not attach a dollar figure to a guess.</div></div>`;
       $("#fin-note").textContent = "No confident root cause → no defensible cost estimate. Honesty over false precision.";
     }
+    renderProfiles(inc);
+  }
+  function renderProfiles(inc){
+    let panel=$("#profile-panel"); if(!panel){ panel=document.createElement("div"); panel.id="profile-panel"; panel.className="evi-card"; $("#rec-card").insertAdjacentElement("afterend",panel); }
+    const p=inc.profiles||{}, text={technical:p.technical||inc.confNote.text,financial:p.financial||`Expected unrecovered GMV: ${money(inc.money||0)} per hour.`,simple:p.simple||"Some payments are failing more often than normal."};
+    const k=audienceMode; panel.innerHTML=`<div class="eh"><div class="why">${k==='technical'?'Technical evidence':k==='financial'?'Financial impact':'What this means'}</div></div><div class="evi-body"><div style="font-size:13.5px;color:var(--ink-soft)">${text[k]}</div>${k==='technical'?`<div style="height:10px;margin-top:12px;background:linear-gradient(90deg,var(--crit) ${inc.convTo||0}%,var(--ok) ${inc.convTo||0}%);border-radius:6px"></div><small>Observed vs expected conversion</small>`:k==='financial'?`<div style="height:12px;width:78%;margin-top:12px;background:var(--money);border-radius:6px"></div><small>Expected unrecovered GMV per hour</small>`:`<div style="font-size:26px;margin-top:12px">🔎 → 💳 → 👥</div><small>Problem found, impact measured, human action recommended.</small>`}</div>`;
   }
   function renderExplorer(){ renderSwitch(); renderTree(); renderEvidence(); }
 
@@ -1540,6 +1549,18 @@
 
   /* ------------------------------------------------ INIT ------------------------------------------------ */
   let marBase = 22640;
+  let audienceMode=localStorage.getItem("audienceMode")||"technical";
+  function applyAudience(){
+    document.body.dataset.audience=audienceMode;
+    $$(".audience-btn").forEach(b=>b.classList.toggle("active",b.dataset.audience===audienceMode));
+    const top=INCIDENTS[rcOrder[0]];
+    const p=top&&top.profiles||{};
+    const labels={technical:["Technical view",p.technical||"Inspect conversion, baseline and diagnostic evidence."],financial:["Financial view",p.financial||"Focus on revenue at risk and priority."],simple:["Simple view",p.simple||"We explain what happened and what people should do next."]};
+    $("#audience-brief").innerHTML=`<div class="section-h"><h2>${labels[audienceMode][0]}</h2></div><div style="color:var(--ink-soft);font-size:14px">${labels[audienceMode][1]}</div>`;
+    $("#mar-unit").textContent=audienceMode==='financial'?"expected unrecovered GMV per hour":audienceMode==='simple'?"money at risk while payments are failing":"per hour · across active incidents";
+    if(currentInc) renderExplorer();
+  }
+  $$(".audience-btn").forEach(b=>b.addEventListener("click",()=>{audienceMode=b.dataset.audience;localStorage.setItem("audienceMode",audienceMode);applyAudience();}));
 
   function renderAll(data){
     // Keep the current explorer selection if that incident is still around; otherwise fall back to the top one.
@@ -1561,6 +1582,7 @@
       txCount = data.kpis.transactions_window;
       $("#kpi-tx").textContent = txCount.toLocaleString();
     }
+    applyAudience();
   }
 
   async function refreshDashboard(){

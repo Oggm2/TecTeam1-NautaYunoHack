@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-29T22:34:54.763895+00:00",
+  "generated_at": "2026-08-29T23:46:07.666840+00:00",
   "kpis": {
-    "current_conversion_pct": 91.5,
-    "expected_conversion_pct": 94.58,
-    "transactions_window": 753,
+    "current_conversion_pct": 83.7,
+    "expected_conversion_pct": 95.74,
+    "transactions_window": 754,
     "active_incidents": 0,
     "critical_count": 0,
     "high_count": 0,
@@ -18,10 +18,17 @@
     "sustain_evaluations": 3,
     "points": [
       {
-        "t": "2026-08-29T22:34:00+00:00",
-        "observed_pct": 91.5,
-        "expected_pct": 94.58,
-        "threshold_pct": 92.1,
+        "t": "2026-08-29T23:45:00+00:00",
+        "observed_pct": 92.71,
+        "expected_pct": 95.74,
+        "threshold_pct": 93.3,
+        "state": "breach"
+      },
+      {
+        "t": "2026-08-29T23:46:00+00:00",
+        "observed_pct": 83.7,
+        "expected_pct": 95.74,
+        "threshold_pct": 90.53,
         "state": "breach"
       }
     ]
