@@ -8,7 +8,9 @@
     "critical_count": 0,
     "high_count": 0,
     "investigating_count": 0,
-    "money_at_risk_per_hour_usd": 0
+    "expected_unrecovered_gmv_per_hour_usd": 0,
+    "gross_lost_gmv_per_hour_usd": 0,
+    "recovery_horizon_hours": 24
   },
   "chart": {
     "period_seconds": 60,

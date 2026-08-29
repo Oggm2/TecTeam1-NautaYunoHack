@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import heapq
 import json
 import random
 import sys
@@ -31,6 +32,15 @@ DECLINES = {
     "91": "issuer_unavailable",
 }
 REASON_TO_CODE = {reason: code for code, reason in DECLINES.items()}
+RECOVERABLE_FAILURE_STATUSES = {"declined", "failed", "expired"}
+RETRY_RECOVERY_BY_METHOD = {
+    "card": 0.48, "wallet": 0.55, "pix": 0.50, "pse": 0.36, "cash_in_store": 0.12,
+}
+RETRY_REASON_MULTIPLIER = {
+    "issuer_unavailable": 1.35, "provider_error": 1.25, "do_not_honor": 0.90,
+    "insufficient_funds": 0.55, "expired_card": 0.45, "invalid_card": 0.20,
+    "lost_card": 0.08, "stolen_card": 0.08, "payment_expired": 0.40,
+}
 
 
 @dataclass(frozen=True)
@@ -110,6 +120,8 @@ def make_candidate(timestamp: datetime, rng: random.Random) -> dict[str, Any]:
     amount = amount_for(country, rng)
     return {
         "transaction_id": str(uuid.uuid4()), "created_at": iso_timestamp(timestamp),
+        "checkout_id": str(uuid.uuid4()), "customer_id": str(uuid.uuid4()),
+        "attempt_number": 1, "is_retry": False, "original_failed_attempt_id": None,
         "merchant": weighted_choice(rng, MERCHANTS, (0.35, 0.25, 0.40)),
         "provider": weighted_choice(rng, PROVIDERS, (0.40, 0.35, 0.25)),
         "payment_method": weighted_choice(rng, PAYMENT_METHODS, method_weights[country]),
@@ -175,15 +187,78 @@ def create_event(timestamp: datetime, elapsed_seconds: float, rng: random.Random
     return event
 
 
+def recovery_probability(event: dict[str, Any], timestamp: datetime) -> float:
+    """Simulation-only chance that a failed checkout completes on its next attempt."""
+    probability = RETRY_RECOVERY_BY_METHOD.get(str(event.get("payment_method")), 0.35)
+    probability *= RETRY_REASON_MULTIPLIER.get(str(event.get("decline_reason")), 1.0)
+    if timestamp.hour in {0, 1, 2, 3, 4, 5}:
+        probability *= 0.78
+    return min(0.92, max(0.02, probability))
+
+
+def retry_events_for(event: dict[str, Any], rng: random.Random, delay_seconds: float) -> list[tuple[float, dict[str, Any]]]:
+    """Create one linked retry for a subset of terminal failures.
+
+    The generator uses a compressed retry delay in the live demo.  Historical
+    generation can use a longer delay; either way the events retain a shared
+    checkout ID so recovery is observable.
+    """
+    if event.get("status") not in RECOVERABLE_FAILURE_STATUSES or event.get("is_retry"):
+        return []
+    retry_probability = min(0.90, recovery_probability(event, parse_event_time(event)) + 0.18)
+    if rng.random() >= retry_probability:
+        return []
+    initial_time = parse_event_time(event)
+    retry_at = initial_time + timedelta(seconds=delay_seconds)
+    retried = {
+        key: event.get(key) for key in (
+            "checkout_id", "customer_id", "merchant", "provider", "payment_method", "country",
+            "issuing_bank", "amount", "currency", "amount_usd",
+        )
+    }
+    retried.update({
+        "transaction_id": str(uuid.uuid4()), "created_at": iso_timestamp(retry_at),
+        "attempt_number": int(event.get("attempt_number", 1)) + 1, "is_retry": True,
+        "original_failed_attempt_id": event.get("transaction_id"),
+    })
+    # Some customers choose a different, readily available digital method.
+    if rng.random() < 0.28 and retried["payment_method"] in {"card", "cash_in_store", "pse"}:
+        retried["payment_method"] = rng.choice(("card", "wallet", "pix" if retried["country"] == "BR" else "wallet"))
+    success = rng.random() < recovery_probability(event, initial_time)
+    retried["status"] = "approved" if success else "declined"
+    add_lifecycle(retried, retry_at, rng, retried["status"])
+    if success:
+        retried["decline_code"], retried["decline_reason"] = None, None
+    else:
+        set_decline(retried, event.get("decline_reason"), rng)
+    return [(delay_seconds, retried)]
+
+
+def parse_event_time(event: dict[str, Any]) -> datetime:
+    value = event.get("completed_at") or event.get("created_at")
+    return datetime.fromisoformat(str(value).replace("Z", "+00:00")).astimezone(UTC)
+
+
 def stream(events_per_second: float, total_events: int | None, seed: int | None, injections: list[Injection]) -> None:
     rng = random.Random(seed)
-    interval, started_at, emitted = 1 / events_per_second, time.monotonic(), 0
+    interval, started_at, emitted, retry_sequence = 1 / events_per_second, time.monotonic(), 0, 0
+    pending_retries: list[tuple[float, int, dict[str, Any]]] = []
     while total_events is None or emitted < total_events:
         target_time = started_at + emitted * interval
-        if (wait := target_time - time.monotonic()) > 0:
+        next_retry_at = pending_retries[0][0] if pending_retries else float("inf")
+        if (wait := min(target_time, next_retry_at) - time.monotonic()) > 0:
             time.sleep(wait)
+        while pending_retries and pending_retries[0][0] <= time.monotonic():
+            _, _, retry = heapq.heappop(pending_retries)
+            print(json.dumps(retry, separators=(",", ":")), flush=True)
+        if time.monotonic() < target_time:
+            continue
         now = datetime.now(UTC)
-        print(json.dumps(create_event(now, time.monotonic() - started_at, rng, injections), separators=(",", ":")), flush=True)
+        event = create_event(now, time.monotonic() - started_at, rng, injections)
+        print(json.dumps(event, separators=(",", ":")), flush=True)
+        for delay, retry in retry_events_for(event, rng, delay_seconds=rng.uniform(3, 20)):
+            retry_sequence += 1
+            heapq.heappush(pending_retries, (time.monotonic() + delay, retry_sequence, retry))
         emitted += 1
 
 

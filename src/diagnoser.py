@@ -20,6 +20,7 @@ from typing import Any
 import cost_estimator
 from baseline import Baseline, BaselineStore
 from detector import CONVERSION_STATUSES, parse_timestamp
+from recovery_estimator import RecoveryEstimator
 
 
 DIMENSIONS = ("merchant", "provider", "payment_method", "country", "issuing_bank")
@@ -70,13 +71,16 @@ def build_baseline(history: list[dict[str, Any]]) -> BaselineStore:
     return store
 
 
-def loss_metrics(events: list[dict[str, Any]], baseline: Baseline, window_seconds: float | None = None) -> dict[str, float | int]:
+def loss_metrics(
+    events: list[dict[str, Any]], baseline: Baseline, window_seconds: float | None = None,
+    recovery_estimator: RecoveryEstimator | None = None,
+) -> dict[str, float | int | str]:
     attempts = len(events)
     approved = sum(event["status"] == "approved" for event in events)
     observed = approved / attempts
     standard_error = math.sqrt(baseline.expected_conversion * (1 - baseline.expected_conversion) / attempts)
     z_score = (observed - baseline.expected_conversion) / standard_error if standard_error else 0.0
-    cost = cost_estimator.estimate(events, baseline.expected_conversion, window_seconds)
+    cost = cost_estimator.estimate(events, baseline.expected_conversion, window_seconds, recovery_estimator)
     return {
         "attempts": attempts,
         "approved": approved,
@@ -85,9 +89,14 @@ def loss_metrics(events: list[dict[str, Any]], baseline: Baseline, window_second
         "conversion_drop_pp": (baseline.expected_conversion - observed) * 100,
         "z_score": z_score,
         "lost_approvals": cost.lost_approvals,
-        "average_ticket_usd": cost.average_ticket_usd,
-        "lost_amount_usd": cost.lost_amount_usd,
-        "lost_amount_per_hour_usd": cost.lost_amount_per_hour_usd,
+        "gross_lost_amount_usd": cost.gross_lost_amount_usd,
+        "gross_lost_amount_per_hour_usd": cost.gross_lost_amount_per_hour_usd,
+        "expected_recovered_amount_usd": cost.expected_recovered_amount_usd,
+        "expected_unrecovered_amount_usd": cost.expected_unrecovered_amount_usd,
+        "expected_unrecovered_amount_per_hour_usd": cost.expected_unrecovered_amount_per_hour_usd,
+        "expected_recovery_rate": cost.expected_recovery_rate,
+        "recovery_model_source": cost.recovery_model_source,
+        "recovery_model_sample_size": cost.recovery_model_sample_size,
     }
 
 
@@ -101,6 +110,7 @@ def expected_for_segment(store: BaselineStore, segment: dict[str, str], at: date
 def candidate_breakdown(
     events: list[dict[str, Any]], parent_segment: dict[str, str], dimension: str,
     store: BaselineStore, at: datetime, args: argparse.Namespace, window_seconds: float | None,
+    recovery_estimator: RecoveryEstimator,
 ) -> list[dict[str, Any]]:
     buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for event in events:
@@ -113,7 +123,7 @@ def candidate_breakdown(
         baseline = expected_for_segment(store, child_segment, at, args.min_history_attempts)
         if baseline is None:
             continue
-        metrics = loss_metrics(child_events, baseline, window_seconds)
+        metrics = loss_metrics(child_events, baseline, window_seconds, recovery_estimator)
         rows.append({
             "value": value, "segment": child_segment, "baseline_attempts": baseline.attempts,
             "baseline_source": baseline.source, **metrics,
@@ -176,6 +186,7 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
         and (not started_at or (completed_at := parse_timestamp(event.get("completed_at"))) and started_at <= completed_at <= ended_at)
     ]
     store = build_baseline(history)
+    recovery_estimator = RecoveryEstimator(horizon_hours=args.recovery_horizon_hours).fit(history)
     parent_baseline = expected_for_segment(store, initial_segment, ended_at, args.min_history_attempts)
     if parent_baseline is None or len(current) < args.min_attempts:
         return {
@@ -185,7 +196,7 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
             "root_cause_segment": initial_segment,
         }
 
-    parent_metrics = loss_metrics(current, parent_baseline, window_seconds)
+    parent_metrics = loss_metrics(current, parent_baseline, window_seconds, recovery_estimator)
     path: list[dict[str, Any]] = []
     root_segment = initial_segment.copy()
     root_events = current
@@ -194,7 +205,7 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
         best: dict[str, Any] | None = None
         best_rows: list[dict[str, Any]] | None = None
         for dimension in remaining:
-            rows = candidate_breakdown(root_events, root_segment, dimension, store, ended_at, args, window_seconds)
+            rows = candidate_breakdown(root_events, root_segment, dimension, store, ended_at, args, window_seconds, recovery_estimator)
             for row in rows:
                 contribution = row["lost_approvals"] / parent_metrics["lost_approvals"] if parent_metrics["lost_approvals"] else 0.0
                 row["contribution_to_parent_loss"] = contribution
@@ -211,7 +222,10 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
         path.append(best)
         root_segment = best["segment"]
         root_events = [event for event in root_events if matches(event, {best["dimension"]: best["value"]})]
-        parent_metrics = loss_metrics(root_events, expected_for_segment(store, root_segment, ended_at, args.min_history_attempts), window_seconds)
+        parent_metrics = loss_metrics(
+            root_events, expected_for_segment(store, root_segment, ended_at, args.min_history_attempts),
+            window_seconds, recovery_estimator,
+        )
         remaining.remove(best["dimension"])
 
     decline = dominant_decline_reason(root_events, history, root_segment, args.min_history_attempts)
@@ -241,8 +255,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--z-threshold", type=float, default=3.0)
     parser.add_argument("--min-contribution", type=float, default=0.60)
     parser.add_argument("--max-depth", type=int, default=3)
+    parser.add_argument("--recovery-horizon-hours", type=float, default=24.0)
     args = parser.parse_args()
-    if args.min_attempts <= 0 or args.min_history_attempts <= 0 or args.max_depth <= 0:
+    if args.min_attempts <= 0 or args.min_history_attempts <= 0 or args.max_depth <= 0 or args.recovery_horizon_hours <= 0:
         parser.error("Minimum attempts and max depth must be positive.")
     if not 0 < args.min_contribution <= 1:
         parser.error("--min-contribution must be in (0, 1].")

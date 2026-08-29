@@ -40,14 +40,14 @@ def deterministic_explanation(diagnosis: dict[str, Any]) -> dict[str, Any]:
     target = format_segment(segment)
     observed = metrics.get("observed_conversion")
     expected = metrics.get("expected_conversion")
-    cost = metrics.get("lost_amount_usd", 0)
+    cost = metrics.get("expected_unrecovered_amount_usd", 0)
     window = diagnosis.get("incident_window", {})
 
     if not enough:
         executive = "Se confirmó una caída de conversión, pero la evidencia no permite atribuirla a una causa única."
         operational = diagnosis.get("reason", "La pérdida está distribuida entre varios segmentos.")
     else:
-        executive = f"Incidente en {target}: pérdida estimada de USD {cost:,.2f} en la ventana analizada."
+        executive = f"Incidente en {target}: GMV no recuperado esperado de USD {cost:,.2f} en la ventana analizada."
         operational = (
             f"La conversión observada fue {observed:.1%}, frente a {expected:.1%} esperada "
             f"({metrics.get('conversion_drop_pp', 0):.1f} puntos porcentuales menos) en {target}."

@@ -20,6 +20,7 @@ from typing import Any
 
 import cost_estimator
 from baseline import BaselineStore
+from recovery_estimator import RecoveryEstimator
 
 
 SEGMENT_DEFINITIONS = (
@@ -51,10 +52,20 @@ def load_history(path: str, segments: tuple[tuple[str, ...], ...]) -> BaselineSt
     return store
 
 
+def load_recovery_estimator(path: str, horizon_hours: float = 24) -> RecoveryEstimator:
+    events: list[dict[str, Any]] = []
+    with Path(path).open(encoding="utf-8") as source:
+        for line in source:
+            if line.strip():
+                events.append(json.loads(line))
+    return RecoveryEstimator(horizon_hours=horizon_hours).fit(events)
+
+
 class DetectionEngine:
-    def __init__(self, baseline: BaselineStore, args: argparse.Namespace) -> None:
+    def __init__(self, baseline: BaselineStore, args: argparse.Namespace, recovery_estimator: RecoveryEstimator | None = None) -> None:
         self.baseline = baseline
         self.args = args
+        self.recovery_estimator = recovery_estimator
         self.events: deque[tuple[datetime, dict[str, Any]]] = deque()
         self.seen_ids: set[str] = set()
         self.flags: dict[str, deque[bool]] = defaultdict(lambda: deque(maxlen=args.persistence))
@@ -105,7 +116,7 @@ class DetectionEngine:
                 z_score = (observed - baseline.expected_conversion) / standard_error if standard_error else 0.0
                 drop_pp = (baseline.expected_conversion - observed) * 100
                 anomalous = drop_pp >= self.args.min_drop_pp and z_score <= -self.args.z_threshold
-                cost = cost_estimator.estimate(events, baseline.expected_conversion, self.args.window_seconds)
+                cost = cost_estimator.estimate(events, baseline.expected_conversion, self.args.window_seconds, self.recovery_estimator)
                 evidence = {
                     "detection_dimensions": list(dimensions), "segment": segment,
                     "window_started_at": cutoff.isoformat(), "window_ended_at": now.isoformat(),
@@ -115,9 +126,13 @@ class DetectionEngine:
                     "conversion_drop_pp": round(drop_pp, 2), "z_score": round(z_score, 2),
                     "baseline_attempts": baseline.attempts, "baseline_source": baseline.source,
                     "estimated_lost_approvals": cost.lost_approvals,
-                    "estimated_lost_amount_usd": cost.lost_amount_usd,
-                    "estimated_lost_amount_per_hour_usd": cost.lost_amount_per_hour_usd,
-                    "average_ticket_usd": cost.average_ticket_usd,
+                    "gross_lost_amount_usd": cost.gross_lost_amount_usd,
+                    "gross_lost_amount_per_hour_usd": cost.gross_lost_amount_per_hour_usd,
+                    "expected_unrecovered_amount_usd": cost.expected_unrecovered_amount_usd,
+                    "expected_unrecovered_amount_per_hour_usd": cost.expected_unrecovered_amount_per_hour_usd,
+                    "expected_recovery_rate": cost.expected_recovery_rate,
+                    "recovery_model_source": cost.recovery_model_source,
+                    "recovery_model_sample_size": cost.recovery_model_sample_size,
                 }
             self.flags[signature].append(anomalous)
             if anomalous and len(self.flags[signature]) == self.args.persistence and all(self.flags[signature]) and signature not in self.active:
@@ -148,16 +163,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-history-attempts", type=int, default=200)
     parser.add_argument("--min-drop-pp", type=float, default=5.0)
     parser.add_argument("--z-threshold", type=float, default=3.0)
+    parser.add_argument("--recovery-horizon-hours", type=float, default=24.0)
     parser.add_argument("--verbose", action="store_true", help="Print evaluation progress to stderr.")
     args = parser.parse_args()
-    if min(args.window_seconds, args.evaluation_seconds, args.persistence, args.min_attempts, args.min_history_attempts) <= 0:
+    if min(args.window_seconds, args.evaluation_seconds, args.persistence, args.min_attempts, args.min_history_attempts, args.recovery_horizon_hours) <= 0:
         parser.error("All integer thresholds must be positive.")
     return args
 
 
 def main() -> None:
     args = parse_args()
-    engine = DetectionEngine(load_history(args.history, SEGMENT_DEFINITIONS), args)
+    engine = DetectionEngine(
+        load_history(args.history, SEGMENT_DEFINITIONS), args,
+        load_recovery_estimator(args.history, args.recovery_horizon_hours),
+    )
     last_evaluation = time.monotonic()
     for line in sys.stdin:
         if not line.strip():

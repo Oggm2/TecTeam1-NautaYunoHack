@@ -4,7 +4,9 @@
 
 El generador emite eventos en formato JSON Lines con las dimensiones necesarias
 para diagnóstico, monto local (`amount`, `currency`) y monto comparable
-(`amount_usd`). También modela el ciclo de vida: `created_at`,
+(`amount_usd`). Cada intento incluye `checkout_id`, `customer_id`,
+`attempt_number` y la relación con el intento fallido anterior, de modo que se
+puedan identificar reintentos exitosos. También modela el ciclo de vida: `created_at`,
 `provider_request_at`, `provider_response_at`, `completed_at` y
 `processing_time_ms`.
 
@@ -86,6 +88,29 @@ py src/diagnoser.py --history data/history.jsonl --transactions data/live_transa
 
 El resultado es un JSON con la causa raíz, ruta de drill-down, impacto,
 código de rechazo dominante, nivel de confianza y acción recomendada.
+
+## GMV no recuperado esperado
+
+Además del GMV bruto perdido, el sistema estima el GMV que probablemente no se
+recupere tras un rechazo. Para cada fallo atribuible al incidente, suma el
+monto real de la transacción —no usa ticket promedio— y lo descuenta por la
+probabilidad de que el checkout se recupere en las siguientes 24 horas:
+
+```text
+GMV no recuperado esperado = Σ(monto × atribución al incidente × (1 − P(recuperación)))
+```
+
+La primera versión de `recovery_estimator.py` aprende tasas históricas
+suavizadas, con fallbacks por método de pago, motivo de rechazo, país y hora.
+El entrenamiento usa un checkout fallido que luego logra un pago aprobado
+dentro del horizonte. La puntuación de cada rechazo es inmediata; las etiquetas
+se incorporan al histórico una vez que pasa el horizonte. Cambia el horizonte
+con `--recovery-horizon-hours` en `detector.py`, `diagnoser.py` o
+`build_dashboard.py`.
+
+El dashboard prioriza por GMV no recuperado esperado por hora y conserva el
+GMV bruto perdido en menor tamaño para dar contexto antes del ajuste de
+recuperación.
 
 ## Motor de explicación
 

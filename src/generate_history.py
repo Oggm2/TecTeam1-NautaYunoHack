@@ -8,7 +8,7 @@ import random
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from generator import create_event
+from generator import create_event, retry_events_for
 
 
 def parse_datetime(value: str) -> datetime:
@@ -45,6 +45,11 @@ def generate_history(days: int, events_per_minute: int, end_at: datetime, output
                 event = create_event(timestamp, 0, rng, [], include_processing=False)
                 destination.write(json.dumps(event, separators=(",", ":")) + "\n")
                 total += 1
+                # Retry records may appear later in the file, but carry their
+                # own timestamps and are sorted by consumers when order matters.
+                for _, retry in retry_events_for(event, rng, delay_seconds=rng.uniform(60, 6 * 3600)):
+                    destination.write(json.dumps(retry, separators=(",", ":")) + "\n")
+                    total += 1
             current += timedelta(minutes=1)
     return total
 

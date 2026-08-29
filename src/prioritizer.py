@@ -94,7 +94,7 @@ def representative(group: list[dict[str, Any]]) -> dict[str, Any]:
 
 def urgency_score(readings: list[dict[str, Any]]) -> tuple[float, str]:
     timed = sorted(
-        ((parse_timestamp(r.get("diagnosed_at")), r.get("root_metrics", {}).get("lost_amount_usd", 0.0)) for r in readings),
+        ((parse_timestamp(r.get("diagnosed_at")), r.get("root_metrics", {}).get("expected_unrecovered_amount_usd", 0.0)) for r in readings),
         key=lambda pair: pair[0] or datetime.min.replace(tzinfo=UTC),
     )
     if len(timed) >= 2 and timed[0][0] and timed[-1][0] and timed[-1][0] > timed[0][0]:
@@ -118,7 +118,7 @@ class PrioritizedIncident:
 
 
 def prioritize(diagnoses: list[dict[str, Any]]) -> list[PrioritizedIncident]:
-    """Rank incidents by cost_per_hour x urgency_multiplier.
+    """Rank incidents by expected unrecovered GMV per hour x urgency.
 
     Urgency caps its contribution at +100% of cost so a single incident with
     an extreme z-score can't outrank one costing an order of magnitude more —
@@ -128,7 +128,8 @@ def prioritize(diagnoses: list[dict[str, Any]]) -> list[PrioritizedIncident]:
     incidents: list[PrioritizedIncident] = []
     for group in group_incidents(diagnoses):
         latest = representative(group)
-        cost_per_hour = latest.get("root_metrics", {}).get("lost_amount_per_hour_usd") or 0.0
+        metrics = latest.get("root_metrics", {})
+        cost_per_hour = metrics.get("expected_unrecovered_amount_per_hour_usd") or metrics.get("gross_lost_amount_per_hour_usd") or 0.0
         urgency, basis = urgency_score(group)
         normalizer = 500.0 if basis == "growth_rate_usd_per_min" else 8.0
         urgency_multiplier = 1 + min(urgency / normalizer, 1.0)

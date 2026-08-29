@@ -21,6 +21,7 @@ import diagnoser
 import explainer
 import incident_memory
 import prioritizer
+from recovery_estimator import RecoveryEstimator
 from baseline import BaselineStore
 from detector import CONVERSION_STATUSES, parse_timestamp
 
@@ -80,7 +81,8 @@ def replay_transactions(history_events: list[dict[str, Any]], events: list[dict[
         min_history_attempts=args.min_history_attempts, min_drop_pp=args.min_drop_pp,
         z_threshold=args.z_threshold,
     )
-    engine = detector.DetectionEngine(detector_store, detector_args)
+    recovery_estimator = RecoveryEstimator(horizon_hours=args.recovery_horizon_hours).fit(history_events)
+    engine = detector.DetectionEngine(detector_store, detector_args, recovery_estimator)
     alerts: list[dict[str, Any]] = []
     ordered = sorted(events, key=lambda event: parse_timestamp(event.get("completed_at")) or datetime.min.replace(tzinfo=UTC))
     first_time = next((parse_timestamp(event.get("completed_at")) for event in ordered if parse_timestamp(event.get("completed_at"))), None)
@@ -106,6 +108,7 @@ def diagnose_alerts(alerts: list[dict[str, Any]], events: list[dict[str, Any]], 
         min_attempts=args.diag_min_attempts, min_history_attempts=args.min_history_attempts,
         min_drop_pp=args.min_drop_pp, z_threshold=args.z_threshold,
         min_contribution=args.min_contribution, max_depth=args.max_depth,
+        recovery_horizon_hours=args.recovery_horizon_hours,
     )
     diagnoses = []
     for alert in alerts:
@@ -149,6 +152,7 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident], m
             "priority_rank": incident.priority_rank,
             "priority_score": incident.priority_score,
             "cost_per_hour_usd": incident.cost_per_hour_usd,
+            "gross_lost_amount_per_hour_usd": diagnosis.get("root_metrics", {}).get("gross_lost_amount_per_hour_usd", 0.0),
             "urgency": incident.urgency,
             "urgency_basis": incident.urgency_basis,
             "readings": incident.readings,
@@ -204,7 +208,9 @@ def build_chart(events: list[dict[str, Any]], alerts: list[dict[str, Any]], hist
     }
 
 
-def build_kpis(entries: list[dict[str, Any]], chart: dict[str, Any], transactions_window: int) -> dict[str, Any]:
+def build_kpis(
+    entries: list[dict[str, Any]], chart: dict[str, Any], transactions_window: int, recovery_horizon_hours: float,
+) -> dict[str, Any]:
     last_point = chart["points"][-1] if chart["points"] else None
     active = [e for e in entries if e["status"] == "active"]
     return {
@@ -215,7 +221,9 @@ def build_kpis(entries: list[dict[str, Any]], chart: dict[str, Any], transaction
         "critical_count": sum(e["severity"] == "crit" for e in entries),
         "high_count": sum(e["severity"] == "high" for e in entries),
         "investigating_count": sum(e["status"] == "investigating" for e in entries),
-        "money_at_risk_per_hour_usd": round(sum(e["cost_per_hour_usd"] for e in active), 2),
+        "expected_unrecovered_gmv_per_hour_usd": round(sum(e["cost_per_hour_usd"] for e in active), 2),
+        "gross_lost_gmv_per_hour_usd": round(sum(e.get("gross_lost_amount_per_hour_usd", 0.0) for e in active), 2),
+        "recovery_horizon_hours": recovery_horizon_hours,
     }
 
 
@@ -233,6 +241,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--diag-min-attempts", type=int, default=20)
     parser.add_argument("--min-contribution", type=float, default=0.60)
     parser.add_argument("--max-depth", type=int, default=3)
+    parser.add_argument("--recovery-horizon-hours", type=float, default=24.0)
     parser.add_argument("--chart-minutes", type=int, default=30)
     parser.add_argument("--diagnoses-out", default="data/diagnoses.jsonl")
     parser.add_argument("--priorities-out", default="data/priorities.json")
@@ -266,7 +275,7 @@ def main() -> None:
     memory = incident_memory.load(args.memory)
     entries = build_incident_entries(prioritized, memory)
     chart = build_chart(events, alerts, history_events, args)
-    kpis = build_kpis(entries, chart, transactions_window=len(events))
+    kpis = build_kpis(entries, chart, transactions_window=len(events), recovery_horizon_hours=args.recovery_horizon_hours)
 
     dashboard = {
         "generated_at": datetime.now(UTC).isoformat(),
