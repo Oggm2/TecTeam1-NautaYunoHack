@@ -26,10 +26,14 @@ from typing import Any
 
 import build_dashboard as bd
 import detector
+import explainer
 import generator
 import incident_memory
 import prioritizer
 from detector import parse_timestamp
+from recovery_estimator import RecoveryEstimator
+
+RUNTIME_FIELDS = ("window_seconds", "evaluation_seconds", "persistence", "min_attempts", "min_history_attempts", "min_drop_pp", "z_threshold")
 
 
 def write_atomic(path: Path, content: str) -> None:
@@ -55,11 +59,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--diag-min-attempts", type=int, default=20)
     parser.add_argument("--min-contribution", type=float, default=0.60)
     parser.add_argument("--max-depth", type=int, default=3)
+    parser.add_argument("--recovery-horizon-hours", type=float, default=24.0)
     parser.add_argument("--chart-minutes", type=int, default=30)
     parser.add_argument("--memory", default="data/incident_memory.json")
     parser.add_argument("--output", default="frontend/dashboard_data.json")
     parser.add_argument("--transactions-out", default="data/live_transactions.jsonl")
     parser.add_argument("--seed", type=int)
+    parser.add_argument("--use-openai", action="store_true", help="Use OpenAI only to redact confirmed diagnoses.")
+    parser.add_argument("--model", default="gpt-5", help="OpenAI model used with --use-openai.")
+    parser.add_argument("--runtime-config", default="data/runtime_config.json")
     return parser.parse_args()
 
 
@@ -67,15 +75,28 @@ def main() -> None:
     args = parse_args()
     history_events = bd.load_jsonl(args.history)
     detector_store = bd.build_store(history_events, detector.SEGMENT_DEFINITIONS)
+    recovery_estimator = RecoveryEstimator(horizon_hours=args.recovery_horizon_hours).fit(history_events)
     detector_args = argparse.Namespace(
         window_seconds=args.window_seconds, evaluation_seconds=args.evaluation_seconds,
         persistence=args.persistence, min_attempts=args.min_attempts,
         min_history_attempts=args.min_history_attempts, min_drop_pp=args.min_drop_pp,
         z_threshold=args.z_threshold,
     )
-    engine = detector.DetectionEngine(detector_store, detector_args)
+    engine = detector.DetectionEngine(detector_store, detector_args, recovery_estimator)
     injections = generator.load_injections(args.injections)
     memory = incident_memory.load(args.memory)
+
+    def reload_controls() -> bool:
+        try:
+            controls = json.loads(Path(args.runtime_config).read_text(encoding="utf-8"))
+            if any(controls[key] <= 0 for key in RUNTIME_FIELDS):
+                return False
+            changed = any(getattr(detector_args, key) != controls[key] for key in RUNTIME_FIELDS)
+            for key in RUNTIME_FIELDS:
+                setattr(detector_args, key, controls[key])
+            return changed
+        except (OSError, KeyError, ValueError, json.JSONDecodeError):
+            return False
 
     rng = random.Random(args.seed)
     interval = 1 / args.events_per_second
@@ -120,6 +141,13 @@ def main() -> None:
             last_refresh = time.monotonic()
             transactions_sink.flush()
 
+            if reload_controls():
+                # Rebuild so persistence deque sizes reflect the new setting.
+                engine = detector.DetectionEngine(detector_store, detector_args, recovery_estimator)
+                for retained_event in retained:
+                    engine.add(retained_event)
+                print(f"[{now.isoformat()}] applied runtime detection controls", file=sys.stderr)
+
             alerts = engine.evaluate(now)
             all_alerts.extend(alerts)
             new_alerts = [alert for alert in alerts if alert["alert_id"] not in seen_alert_ids]
@@ -127,6 +155,9 @@ def main() -> None:
                 seen_alert_ids.add(alert["alert_id"])
             if new_alerts:
                 new_diagnoses = bd.diagnose_alerts(new_alerts, retained, history_events, args)
+                if args.use_openai:
+                    for diagnosis in new_diagnoses:
+                        diagnosis["explanation"] = explainer.openai_explanation(diagnosis, args.model)
                 diagnoses.extend(new_diagnoses)
                 for diagnosis in new_diagnoses:
                     print(f"[{now.isoformat()}] new incident: {diagnosis.get('root_cause_segment')}", file=sys.stderr)
@@ -134,7 +165,9 @@ def main() -> None:
             prioritized = prioritizer.prioritize(diagnoses) if diagnoses else []
             entries = bd.build_incident_entries(prioritized, memory)
             chart = bd.build_chart(retained, all_alerts, history_events, args)
-            kpis = bd.build_kpis(entries, chart, transactions_window=len(retained))
+            kpis = bd.build_kpis(
+                entries, chart, transactions_window=len(retained), recovery_horizon_hours=args.recovery_horizon_hours,
+            )
             dashboard = {
                 "generated_at": now.isoformat(), "kpis": kpis, "chart": chart,
                 "incidents": entries, "resolved": memory,

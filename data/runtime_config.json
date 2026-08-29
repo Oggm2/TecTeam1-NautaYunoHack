@@ -1,0 +1,9 @@
+{
+  "window_seconds": 300,
+  "evaluation_seconds": 30,
+  "persistence": 3,
+  "min_attempts": 30,
+  "min_history_attempts": 200,
+  "min_drop_pp": 5.0,
+  "z_threshold": 3.0
+}

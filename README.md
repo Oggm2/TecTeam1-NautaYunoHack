@@ -152,6 +152,12 @@ python3 src/generate_history.py --days 28 --events-per-minute 5
 python3 src/live_dashboard.py --injections examples/injections.json
 ```
 
+Para usar OpenAI exclusivamente al redactar diagnósticos ya confirmados:
+
+```bash
+python3 src/live_dashboard.py --injections examples/injections.json --use-openai --model gpt-5
+```
+
 En otra terminal:
 
 ```bash

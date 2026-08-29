@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-08-29T21:45:04.915057+00:00",
+  "generated_at": "2026-08-29T22:34:54.763895+00:00",
   "kpis": {
-    "current_conversion_pct": 95.03,
-    "expected_conversion_pct": 94.43,
-    "transactions_window": 302,
+    "current_conversion_pct": 91.5,
+    "expected_conversion_pct": 94.58,
+    "transactions_window": 753,
     "active_incidents": 0,
     "critical_count": 0,
     "high_count": 0,
     "investigating_count": 0,
     "expected_unrecovered_gmv_per_hour_usd": 0,
     "gross_lost_gmv_per_hour_usd": 0,
-    "recovery_horizon_hours": 24
+    "recovery_horizon_hours": 24.0
   },
   "chart": {
     "period_seconds": 60,
@@ -18,18 +18,11 @@
     "sustain_evaluations": 3,
     "points": [
       {
-        "t": "2026-08-29T21:44:00+00:00",
-        "observed_pct": 91.67,
-        "expected_pct": 94.43,
-        "threshold_pct": 88.14,
-        "state": "ok"
-      },
-      {
-        "t": "2026-08-29T21:45:00+00:00",
-        "observed_pct": 95.03,
-        "expected_pct": 94.43,
-        "threshold_pct": 89.31,
-        "state": "ok"
+        "t": "2026-08-29T22:34:00+00:00",
+        "observed_pct": 91.5,
+        "expected_pct": 94.58,
+        "threshold_pct": 92.1,
+        "state": "breach"
       }
     ]
   },

@@ -495,7 +495,7 @@
       <div class="row"><span class="dot" style="background:var(--ok)"></span> Detection engine</div>
       <div class="row"><span class="dot" style="background:var(--warn)"></span> 2 active investigations</div>
     </div>
-    <div class="nav-item" data-view="incidents" style="font-size:12.5px">
+    <div class="nav-item" data-view="controls" style="font-size:12.5px">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 7"/></svg>
       <span class="t">Settings</span>
     </div>
@@ -741,6 +741,22 @@
       <div class="section-h"><h2>Incident history</h2></div>
       <div class="card pad">
         <div class="mem-list" id="mem-list"></div>
+      </div>
+    </section>
+    <section class="view" id="view-controls">
+      <div class="section-h"><h2>Detection controls</h2><span class="hint">Changes apply to the live engine on its next refresh.</span></div>
+      <div class="card pad" style="max-width:760px">
+        <form id="controls-form" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+          <label>Rolling window (seconds)<input name="window_seconds" type="number" min="10" step="10" required style="width:100%;margin-top:6px"></label>
+          <label>Evaluation interval (seconds)<input name="evaluation_seconds" type="number" min="5" step="5" required style="width:100%;margin-top:6px"></label>
+          <label>Persistent evaluations required<input name="persistence" type="number" min="1" step="1" required style="width:100%;margin-top:6px"></label>
+          <label>Minimum current attempts<input name="min_attempts" type="number" min="1" step="1" required style="width:100%;margin-top:6px"></label>
+          <label>Minimum historical attempts<input name="min_history_attempts" type="number" min="1" step="1" required style="width:100%;margin-top:6px"></label>
+          <label>Minimum conversion drop (pp)<input name="min_drop_pp" type="number" min="0.1" step="0.1" required style="width:100%;margin-top:6px"></label>
+          <label>Z-score threshold<input name="z_threshold" type="number" min="0.1" step="0.1" required style="width:100%;margin-top:6px"></label>
+          <div style="display:flex;align-items:end"><button class="btn primary" type="submit">Apply controls</button></div>
+        </form>
+        <p id="controls-status" style="color:var(--ink-soft);font-size:12.5px;margin:18px 0 0">Loading current controls…</p>
       </div>
     </section>
   </div>
@@ -1409,7 +1425,7 @@
   function renderExplorer(){ renderSwitch(); renderTree(); renderEvidence(); }
 
   /* ------------------------------------------------ NAVIGATION ------------------------------------------------ */
-  const VIEW_TITLES = {command:"Command Center", incidents:"Incidents", explorer:"Root Cause Explorer", memory:"Incident Memory"};
+  const VIEW_TITLES = {command:"Command Center", incidents:"Incidents", explorer:"Root Cause Explorer", memory:"Incident Memory", controls:"Detection Controls"};
   function go(view){
     $$(".view").forEach(v=>v.classList.remove("active"));
     $("#view-"+view).classList.add("active");
@@ -1420,6 +1436,20 @@
     window.scrollTo({top:0, behavior:"smooth"});
   }
   $$(".nav-item").forEach(n=> n.addEventListener("click", ()=> go(n.dataset.view)));
+
+  async function loadControls(){
+    try {
+      const controls = await (await fetch("/api/config", {cache:"no-store"})).json();
+      Object.entries(controls).forEach(([key,value])=>{ const input=$("#controls-form [name='"+key+"']"); if(input) input.value=value; });
+      $("#controls-status").textContent="Loaded from the live engine configuration.";
+    } catch { $("#controls-status").textContent="Controls require src/control_server.py (not a basic static file server)."; }
+  }
+  $("#controls-form").addEventListener("submit", async event=>{
+    event.preventDefault(); const form=new FormData(event.target); const payload={};
+    form.forEach((value,key)=> payload[key]=Number(value));
+    try { const response=await fetch("/api/config", {method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); if(!response.ok) throw new Error(); $("#controls-status").textContent="Saved. The engine will apply these controls on its next refresh."; toast("Detection controls applied."); }
+    catch { $("#controls-status").textContent="Could not save controls. Make sure control_server.py is running."; }
+  });
 
   // open incident -> explorer
   function openIncident(key){ currentInc = key==="uncertainty"?"uncertainty":key; renderExplorer(); go("explorer"); }
@@ -1542,6 +1572,7 @@
     const data = await loadDashboardData(false);
     if (!usingRealData) toast("No dashboard_data.json found — showing illustrative demo data. Run src/live_dashboard.py or build_dashboard.py to see live results.");
     renderAll(data);
+    loadControls();
     setInterval(refreshDashboard, POLL_MS);
 
     /* ------------------------------------------------ LOOPS ------------------------------------------------ */
