@@ -111,3 +111,33 @@ py src/explainer.py --diagnosis data/diagnosis.json --use-openai --model gpt-5
 La salida de IA se fuerza a un esquema JSON con resumen ejecutivo, explicación
 operativa, acción recomendada y nota de incertidumbre. No se usa la IA para
 detectar ni diagnosticar incidentes.
+
+## Dashboard en vivo
+
+`live_dashboard.py` conecta todo el pipeline en tiempo real: genera transacciones
+a ritmo real (`generator.create_event`), las alimenta al detector, diagnostica
+cada alerta apenas aparece, prioriza incidentes simultáneos, revisa recurrencia
+contra `data/incident_memory.json` y reescribe `frontend/dashboard_data.json`
+cada `--refresh-seconds`. El frontend hace polling (cada 8s) en vez de cargar
+una sola foto estática, así que el dashboard se actualiza solo mientras el
+script sigue corriendo.
+
+```bash
+python3 src/generate_history.py --days 28 --events-per-minute 5
+python3 src/live_dashboard.py --injections examples/injections.json
+```
+
+En otra terminal:
+
+```bash
+cd frontend && python3 -m http.server 8000
+```
+
+Abre `http://localhost:8000/PagoTotal-Intelligence_1.html` y déjalo corriendo —
+los incidentes aparecerán solos cuando el detector los encuentre (con los
+parámetros por defecto, ~5-8 minutos). `Ctrl+C` detiene `live_dashboard.py`;
+el frontend simplemente deja de recibir actualizaciones nuevas.
+
+Para un snapshot único a partir de un stream ya capturado (sin dejarlo
+corriendo), usa `build_dashboard.py` como se describe arriba — sigue siendo
+útil para reproducir un análisis puntual o para debugging.
