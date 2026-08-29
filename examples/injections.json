@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Provider Stripe degraded in Brazil",
+    "start_after_seconds": 30,
+    "approval_rate": 0.48,
+    "filters": {"provider": "stripe", "country": "BR"},
+    "decline_code": "do_not_honor"
+  },
+  {
+    "name": "Banorte outage for PagoModa",
+    "start_after_seconds": 45,
+    "approval_rate": 0.08,
+    "filters": {"merchant": "PagoModa", "country": "MX", "issuing_bank": "Banorte"},
+    "decline_reason": "issuer_unavailable"
+  }
+]
