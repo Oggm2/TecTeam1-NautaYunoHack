@@ -18,6 +18,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import cost_estimator
 from baseline import BaselineStore
 
 
@@ -104,8 +105,7 @@ class DetectionEngine:
                 z_score = (observed - baseline.expected_conversion) / standard_error if standard_error else 0.0
                 drop_pp = (baseline.expected_conversion - observed) * 100
                 anomalous = drop_pp >= self.args.min_drop_pp and z_score <= -self.args.z_threshold
-                lost_approvals = max(0.0, attempts * baseline.expected_conversion - approved)
-                average_amount_usd = sum(float(event.get("amount_usd", 0)) for event in events) / attempts
+                cost = cost_estimator.estimate(events, baseline.expected_conversion, self.args.window_seconds)
                 evidence = {
                     "detection_dimensions": list(dimensions), "segment": segment,
                     "window_started_at": cutoff.isoformat(), "window_ended_at": now.isoformat(),
@@ -114,8 +114,10 @@ class DetectionEngine:
                     "expected_conversion": round(baseline.expected_conversion, 4),
                     "conversion_drop_pp": round(drop_pp, 2), "z_score": round(z_score, 2),
                     "baseline_attempts": baseline.attempts, "baseline_source": baseline.source,
-                    "estimated_lost_approvals": round(lost_approvals, 1),
-                    "estimated_lost_amount_usd": round(lost_approvals * average_amount_usd, 2),
+                    "estimated_lost_approvals": cost.lost_approvals,
+                    "estimated_lost_amount_usd": cost.lost_amount_usd,
+                    "estimated_lost_amount_per_hour_usd": cost.lost_amount_per_hour_usd,
+                    "average_ticket_usd": cost.average_ticket_usd,
                 }
             self.flags[signature].append(anomalous)
             if anomalous and len(self.flags[signature]) == self.args.persistence and all(self.flags[signature]) and signature not in self.active:

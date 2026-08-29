@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import cost_estimator
 from baseline import Baseline, BaselineStore
 from detector import CONVERSION_STATUSES, parse_timestamp
 
@@ -69,14 +70,13 @@ def build_baseline(history: list[dict[str, Any]]) -> BaselineStore:
     return store
 
 
-def loss_metrics(events: list[dict[str, Any]], baseline: Baseline) -> dict[str, float | int]:
+def loss_metrics(events: list[dict[str, Any]], baseline: Baseline, window_seconds: float | None = None) -> dict[str, float | int]:
     attempts = len(events)
     approved = sum(event["status"] == "approved" for event in events)
     observed = approved / attempts
     standard_error = math.sqrt(baseline.expected_conversion * (1 - baseline.expected_conversion) / attempts)
     z_score = (observed - baseline.expected_conversion) / standard_error if standard_error else 0.0
-    lost_approvals = max(0.0, attempts * baseline.expected_conversion - approved)
-    average_amount_usd = sum(float(event.get("amount_usd", 0)) for event in events) / attempts
+    cost = cost_estimator.estimate(events, baseline.expected_conversion, window_seconds)
     return {
         "attempts": attempts,
         "approved": approved,
@@ -84,8 +84,10 @@ def loss_metrics(events: list[dict[str, Any]], baseline: Baseline) -> dict[str, 
         "expected_conversion": baseline.expected_conversion,
         "conversion_drop_pp": (baseline.expected_conversion - observed) * 100,
         "z_score": z_score,
-        "lost_approvals": lost_approvals,
-        "lost_amount_usd": lost_approvals * average_amount_usd,
+        "lost_approvals": cost.lost_approvals,
+        "average_ticket_usd": cost.average_ticket_usd,
+        "lost_amount_usd": cost.lost_amount_usd,
+        "lost_amount_per_hour_usd": cost.lost_amount_per_hour_usd,
     }
 
 
@@ -98,7 +100,7 @@ def expected_for_segment(store: BaselineStore, segment: dict[str, str], at: date
 
 def candidate_breakdown(
     events: list[dict[str, Any]], parent_segment: dict[str, str], dimension: str,
-    store: BaselineStore, at: datetime, args: argparse.Namespace,
+    store: BaselineStore, at: datetime, args: argparse.Namespace, window_seconds: float | None,
 ) -> list[dict[str, Any]]:
     buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for event in events:
@@ -111,7 +113,7 @@ def candidate_breakdown(
         baseline = expected_for_segment(store, child_segment, at, args.min_history_attempts)
         if baseline is None:
             continue
-        metrics = loss_metrics(child_events, baseline)
+        metrics = loss_metrics(child_events, baseline, window_seconds)
         rows.append({
             "value": value, "segment": child_segment, "baseline_attempts": baseline.attempts,
             "baseline_source": baseline.source, **metrics,
@@ -166,6 +168,7 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
         raise ValueError("The alert must include an evidence.segment with country.")
     ended_at = parse_timestamp(evidence.get("window_ended_at")) or datetime.now(UTC)
     started_at = parse_timestamp(evidence.get("window_started_at"))
+    window_seconds = (ended_at - started_at).total_seconds() if started_at else None
     current = [
         event for event in current
         if event.get("status") in CONVERSION_STATUSES
@@ -182,28 +185,33 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
             "root_cause_segment": initial_segment,
         }
 
-    parent_metrics = loss_metrics(current, parent_baseline)
+    parent_metrics = loss_metrics(current, parent_baseline, window_seconds)
     path: list[dict[str, Any]] = []
     root_segment = initial_segment.copy()
     root_events = current
     remaining = [dimension for dimension in DRILL_DOWN_DIMENSIONS if dimension not in root_segment]
     for _ in range(args.max_depth):
         best: dict[str, Any] | None = None
+        best_rows: list[dict[str, Any]] | None = None
         for dimension in remaining:
-            rows = candidate_breakdown(root_events, root_segment, dimension, store, ended_at, args)
+            rows = candidate_breakdown(root_events, root_segment, dimension, store, ended_at, args, window_seconds)
             for row in rows:
                 contribution = row["lost_approvals"] / parent_metrics["lost_approvals"] if parent_metrics["lost_approvals"] else 0.0
                 row["contribution_to_parent_loss"] = contribution
                 row["dimension"] = dimension
-                is_anomalous = row["conversion_drop_pp"] >= args.min_drop_pp and row["z_score"] <= -args.z_threshold
-                if is_anomalous and (best is None or contribution > best["contribution_to_parent_loss"]):
+                row["is_anomalous"] = row["conversion_drop_pp"] >= args.min_drop_pp and row["z_score"] <= -args.z_threshold
+                if row["is_anomalous"] and (best is None or contribution > best["contribution_to_parent_loss"]):
                     best = row
+                    best_rows = rows
         if best is None or best["contribution_to_parent_loss"] < args.min_contribution:
             break
+        for row in best_rows:
+            row["is_selected"] = row is best
+        best["siblings"] = [dict(row) for row in best_rows]
         path.append(best)
         root_segment = best["segment"]
         root_events = [event for event in root_events if matches(event, {best["dimension"]: best["value"]})]
-        parent_metrics = loss_metrics(root_events, expected_for_segment(store, root_segment, ended_at, args.min_history_attempts))
+        parent_metrics = loss_metrics(root_events, expected_for_segment(store, root_segment, ended_at, args.min_history_attempts), window_seconds)
         remaining.remove(best["dimension"])
 
     decline = dominant_decline_reason(root_events, history, root_segment, args.min_history_attempts)

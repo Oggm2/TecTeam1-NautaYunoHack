@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>img{max-width:100%}[hidden]{display:none!important}body{margin:0}</style>
+<title>PagoTotal Intelligence</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    color-scheme: dark;
+    --bg:        #08090C;
+    --bg-2:      #0C0E13;
+    --surface:   #111420;
+    --surface-2: #161A28;
+    --raised:    #1B2030;
+    --line:      #232838;
+    --line-soft: #1A1E2B;
+    --ink:       #EAEEF6;
+    --ink-soft:  #98A2B3;
+    --ink-faint: #616B7D;
+    --ok:        #34D399;
+    --ok-dim:    #0F2C24;
+    --warn:      #F2B23D;
+    --warn-dim:  #2E2410;
+    --crit:      #FF5B57;
+    --crit-dim:  #2E1417;
+    --money:     #F5CE7B;
+    --money-glow:#f5ce7b26;
+    --info:      #6AA5F5;
+    --shadow:    0 1px 0 rgba(255,255,255,.02) inset, 0 10px 30px rgba(0,0,0,.45);
+    --r:         14px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Manrope', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  ::selection { background: #2b3450; }
+
+  /* ---------- App shell ---------- */
+  .app { display: grid; grid-template-columns: 236px 1fr; min-height: 100vh; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    background: linear-gradient(180deg, var(--bg-2), var(--bg));
+    border-right: 1px solid var(--line);
+    display: flex; flex-direction: column;
+    padding: 20px 14px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 20px; }
+  .brand .logo {
+    width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+    background: radial-gradient(120% 120% at 30% 20%, #2a3350, #10131f);
+    border: 1px solid #333c58; position: relative;
+    display: grid; place-items: center;
+  }
+  .brand .logo::after {
+    content: ""; width: 11px; height: 11px; border-radius: 50%;
+    background: var(--money); box-shadow: 0 0 12px var(--money);
+  }
+  .brand .name { font-weight: 800; font-size: 14px; letter-spacing: .2px; line-height: 1.1; }
+  .brand .sub { font-size: 10px; color: var(--ink-faint); letter-spacing: 1.5px; text-transform: uppercase; }
+
+  .nav-label { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-faint); padding: 14px 10px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 9px 10px; border-radius: 9px; cursor: pointer;
+    color: var(--ink-soft); font-weight: 600; font-size: 13.5px;
+    border: 1px solid transparent; transition: background .15s, color .15s, border-color .15s;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--surface); color: var(--ink); }
+  .nav-item.active { background: var(--surface-2); color: var(--ink); border-color: var(--line); }
+  .nav-item .ico { width: 16px; height: 16px; flex-shrink: 0; color: currentColor; opacity: .9; }
+  .nav-item.active .ico { color: var(--money); opacity: 1; }
+  .nav-item .badge { margin-left: auto; font-size: 11px; font-weight: 700; background: var(--crit); color: #fff; border-radius: 20px; padding: 1px 7px; }
+  .nav-spacer { flex: 1; }
+
+  .trial-btn {
+    margin: 6px 6px 14px; padding: 11px 12px; border-radius: 11px; cursor: pointer;
+    background: linear-gradient(180deg, #241017, #1a0d12);
+    border: 1px solid #55231f; color: #ffb4a8; font-weight: 700; font-size: 13px;
+    display: flex; align-items: center; gap: 9px; justify-content: center;
+    transition: border-color .15s, transform .05s, box-shadow .2s;
+  }
+  .trial-btn:hover { border-color: var(--crit); box-shadow: 0 0 22px #ff5b5722; }
+  .trial-btn:active { transform: translateY(1px); }
+
+  .sys-mini { padding: 10px; border-top: 1px solid var(--line); margin-top: 4px; }
+  .sys-mini .row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); padding: 4px 2px; }
+  .sys-mini .dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* ---------- Main ---------- */
+  .main { min-width: 0; display: flex; flex-direction: column; }
+  .topbar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 28px; border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+  }
+  .topbar h1 { font-size: 16px; font-weight: 800; margin: 0; letter-spacing: .2px; }
+  .topbar .crumb { color: var(--ink-faint); font-size: 13px; }
+  .live-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11.5px; font-weight: 700; letter-spacing: .8px;
+    color: var(--ok); background: var(--ok-dim);
+    border: 1px solid #1c5843; border-radius: 20px; padding: 4px 11px 4px 9px;
+  }
+  .live-pill .beat { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 var(--ok); animation: beat 1.8s infinite; }
+  @keyframes beat { 0%{ box-shadow: 0 0 0 0 #34d39966;} 70%{ box-shadow: 0 0 0 7px #34d39900;} 100%{ box-shadow: 0 0 0 0 #34d39900;} }
+  .topbar .spacer { flex: 1; }
+  .clock { font-size: 13px; color: var(--ink-soft); }
+
+  .view { padding: 28px; display: none; animation: fade .25s ease both; max-width: 1400px; }
+  .view.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: none; } }
+
+  .section-h { display: flex; align-items: baseline; gap: 12px; margin: 6px 0 14px; }
+  .section-h h2 { font-size: 12.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-soft); margin: 0; }
+  .section-h .hint { font-size: 12px; color: var(--ink-faint); }
+
+  /* ---------- Cards ---------- */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+  .pad { padding: 20px; }
+
+  /* Command grid */
+  .cmd-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+  .cmd-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .cmd-side { display: flex; flex-direction: column; gap: 20px; }
+
+  /* Hero money card */
+  .hero {
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(120% 160% at 88% -10%, #23202a 0%, transparent 55%),
+      linear-gradient(180deg, #14161f, #101019);
+    border: 1px solid #2a2634;
+    border-radius: 18px; padding: 24px 26px;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(60% 120% at 85% 0%, var(--money-glow), transparent 60%);
+    pointer-events: none;
+  }
+  .hero .lbl { position: relative; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--money); }
+  .hero .big { position: relative; font-size: clamp(48px, 7vw, 76px); font-weight: 800; line-height: .98; letter-spacing: -1.5px; margin: 8px 0 2px; color: #fff; }
+  .hero .big .cur { color: var(--money); }
+  .hero .unit { position: relative; font-size: 15px; color: var(--ink-soft); font-weight: 600; }
+  .hero .trend { position: relative; display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 12.5px; font-weight: 600; color: var(--crit); background: var(--crit-dim); border: 1px solid #5a2420; padding: 4px 10px; border-radius: 20px; }
+
+  /* KPI row */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 15px 16px; }
+  .kpi .k { font-size: 11px; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; }
+  .kpi .v { font-size: 27px; font-weight: 800; margin-top: 6px; letter-spacing: -.5px; }
+  .kpi .m { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .kpi.state-crit .v { color: var(--crit); }
+  .kpi .health-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; margin-top: 8px; }
+
+  /* Chart */
+  .chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-soft); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .legend .swatch { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+  .chart-wrap { position: relative; width: 100%; }
+  svg.chart { display: block; width: 100%; height: auto; }
+  .rule-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-soft); }
+  .rule-strip .rs-item b { color: var(--ink); font-weight: 800; font-family: 'IBM Plex Mono', monospace; }
+  .rule-strip .rs-sep { color: var(--ink-faint); }
+  .rule-strip .rs-muted { color: var(--ink-faint); }
+
+  /* Incident cards */
+  .inc-list { display: flex; flex-direction: column; gap: 14px; }
+  .inc {
+    display: grid; grid-template-columns: 44px 1fr; gap: 0;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; overflow: hidden; cursor: pointer;
+    transition: border-color .15s, transform .08s, background .15s;
+  }
+  .inc:hover { border-color: #34405c; background: var(--surface-2); }
+  .inc:active { transform: translateY(1px); }
+  .inc .rail { width: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: #fff; writing-mode: initial; }
+  .inc.sev-crit .rail { background: linear-gradient(180deg, #ff5b57, #c53430); }
+  .inc.sev-high .rail { background: linear-gradient(180deg, #f2b23d, #b9821f); color: #201400; }
+  .inc.sev-warn .rail { background: linear-gradient(180deg, #6aa5f5, #3d6fbd); }
+  .inc .body { padding: 16px 18px; min-width: 0; }
+  .inc .top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .chip { font-size: 10.5px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; }
+  .chip.crit { background: var(--crit-dim); color: var(--crit); border: 1px solid #5a2420; }
+  .chip.high { background: var(--warn-dim); color: var(--warn); border: 1px solid #5c4718; }
+  .chip.warn { background: #12233d; color: var(--info); border: 1px solid #234067; }
+  .chip.ok   { background: var(--ok-dim); color: var(--ok); border: 1px solid #1c5843; }
+  .chip.ghost{ background: var(--raised); color: var(--ink-soft); border: 1px solid var(--line); }
+  .inc .prio { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--ink-faint); letter-spacing: .5px; }
+  .inc .sig { font-size: 18px; font-weight: 800; margin: 9px 0 2px; letter-spacing: -.3px; }
+  .inc .path { color: var(--ink-soft); }
+  .inc-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px; }
+  .im .k { font-size: 10.5px; letter-spacing: .5px; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; }
+  .im .v { font-size: 16px; font-weight: 800; margin-top: 3px; letter-spacing: -.2px; }
+  .im .v.money { color: var(--money); }
+  .im .v.drop { color: var(--crit); }
+  .conv-mini { display: inline-flex; align-items: center; gap: 6px; }
+  .conv-mini .from { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: #4a5366; }
+  .conv-mini .to { color: var(--crit); }
+
+  /* Live stream */
+  .stream { padding: 0; overflow: hidden; }
+  .stream .sh { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border-bottom: 1px solid var(--line); }
+  .stream .sh h3 { margin: 0; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-soft); font-weight: 700; }
+  .stream-body { max-height: 420px; overflow: hidden; }
+  .tx {
+    display: grid; grid-template-columns: 62px 1fr auto; gap: 10px; align-items: center;
+    padding: 10px 16px; border-bottom: 1px solid var(--line-soft);
+    animation: txin .35s ease both;
+  }
+  @keyframes txin { from { opacity: 0; transform: translateY(-8px); background: #1a2233; } to { opacity: 1; transform: none; } }
+  .tx .t { font-size: 11px; color: var(--ink-faint); }
+  .tx .meta { font-size: 12px; color: var(--ink-soft); min-width: 0; }
+  .tx .meta b { color: var(--ink); font-weight: 700; }
+  .tx .meta .dim { color: var(--ink-faint); }
+  .tx .right { text-align: right; }
+  .tx .amt { font-weight: 700; font-size: 13px; }
+  .tx .st { font-size: 10.5px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+  .tx .st.ok { color: var(--ok); }
+  .tx .st.no { color: var(--crit); }
+
+  .sys-card .srow { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+  .sys-card .srow:last-child { border-bottom: 0; }
+  .sys-card .srow .lab { color: var(--ink-soft); }
+  .status-dot { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 12.5px; }
+  .status-dot .d { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ---------- Incidents table view ---------- */
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .tab { padding: 9px 15px; font-size: 13px; font-weight: 700; color: var(--ink-faint); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; gap: 8px; align-items: center; }
+  .tab:hover { color: var(--ink-soft); }
+  .tab.active { color: var(--ink); border-bottom-color: var(--money); }
+  .tab .count { font-size: 11px; background: var(--raised); color: var(--ink-soft); border-radius: 20px; padding: 0 7px; font-weight: 700; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filter { font-size: 12px; font-weight: 600; color: var(--ink-soft); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: border-color .15s, color .15s; }
+  .filter:hover { border-color: #34405c; color: var(--ink); }
+  .filter .cv { color: var(--ink-faint); }
+  .filter.on { border-color: var(--money); color: var(--ink); }
+
+  .itable { width: 100%; }
+  .grow-head, .grow {
+    display: grid; grid-template-columns: 96px 1.4fr 1fr 1fr 110px 120px 90px 96px;
+    gap: 12px; align-items: center; padding: 13px 16px;
+  }
+  .grow-head { font-size: 10.5px; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-faint); font-weight: 700; border-bottom: 1px solid var(--line); }
+  .grow { border-bottom: 1px solid var(--line-soft); cursor: pointer; transition: background .12s; }
+  .grow:hover { background: var(--surface-2); }
+  .grow:last-child { border-bottom: 0; }
+  .grow .who b { display: block; }
+  .grow .who span { font-size: 12px; color: var(--ink-faint); }
+  .cellmoney { font-weight: 800; color: var(--money); }
+  .celldrop { font-weight: 700; color: var(--crit); }
+
+  /* ---------- Root cause explorer ---------- */
+  .rc-grid { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+  .rc-switch { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .rc-pill { font-size: 12.5px; font-weight: 700; padding: 8px 13px; border-radius: 9px; cursor: pointer; background: var(--surface); border: 1px solid var(--line); color: var(--ink-soft); display: flex; gap: 8px; align-items: center; }
+  .rc-pill:hover { border-color: #34405c; color: var(--ink); }
+  .rc-pill.active { border-color: var(--money); color: var(--ink); background: var(--surface-2); }
+  .rc-pill .mk { width: 8px; height: 8px; border-radius: 50%; }
+
+  .tree { display: flex; flex-direction: column; gap: 6px; }
+  .tlevel { }
+  .tlevel .dimlab { font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-faint); font-weight: 700; margin: 4px 0 8px; padding-left: 2px; }
+  .nodes { display: flex; gap: 10px; flex-wrap: wrap; }
+  .node {
+    flex: 1 1 auto; min-width: 120px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+    padding: 12px 14px; cursor: pointer; position: relative;
+    transition: border-color .15s, background .15s, transform .08s;
+  }
+  .node:hover { border-color: #34405c; }
+  .node.sel { border-color: var(--money); background: var(--surface-2); box-shadow: 0 0 0 1px var(--money) inset; }
+  .node.anomaly { border-color: #5a2420; }
+  .node.anomaly.sel { border-color: var(--crit); box-shadow: 0 0 0 1px var(--crit) inset; }
+  .node .nlab { font-weight: 700; font-size: 14px; }
+  .node .nstat { font-size: 10.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; margin-top: 4px; }
+  .node.normal .nstat { color: var(--ok); }
+  .node.anomaly .nstat { color: var(--crit); }
+  .node .nconv { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+  .tconnect { display: flex; justify-content: flex-start; padding-left: 22px; }
+  .tconnect svg { color: var(--ink-faint); }
+
+  .node-detail { margin-top: 18px; }
+  .nd-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+  .nd { background: var(--raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .nd .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-faint); font-weight: 600; }
+  .nd .v { font-size: 19px; font-weight: 800; margin-top: 4px; }
+
+  /* Evidence panel */
+  .evi { position: sticky; top: 88px; display: flex; flex-direction: column; gap: 16px; }
+  .evi-card { background: linear-gradient(180deg, var(--surface), #0f1119); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .evi-card .eh { padding: 16px 18px 14px; border-bottom: 1px solid var(--line); }
+  .evi-card .eh .why { font-size: 12px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--money); }
+  .evi-card .eh .rc { font-size: 21px; font-weight: 800; margin-top: 8px; letter-spacing: -.3px; }
+  .evi-card .eh .rc.muted { color: var(--warn); }
+  .evi-body { padding: 8px 18px 18px; }
+  .echain { list-style: none; margin: 0; padding: 0; }
+  .echain li { position: relative; padding: 12px 0 12px 26px; border-bottom: 1px dashed var(--line); }
+  .echain li:last-child { border-bottom: 0; }
+  .echain li::before {
+    content: ""; position: absolute; left: 6px; top: 17px;
+    width: 9px; height: 9px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-dim);
+  }
+  .echain li.bad::before { background: var(--crit); box-shadow: 0 0 0 3px var(--crit-dim); }
+  .echain li.key::before { background: var(--money); box-shadow: 0 0 0 3px var(--money-glow); }
+  .echain li::after {
+    content: ""; position: absolute; left: 10px; top: 24px; bottom: -12px; width: 1px; background: var(--line);
+  }
+  .echain li:last-child::after { display: none; }
+  .echain .el { font-size: 12px; color: var(--ink-faint); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .echain .ev { font-size: 14px; font-weight: 700; margin-top: 2px; }
+  .echain .ev .a { color: var(--ink); }
+  .echain .ev .big { color: var(--crit); }
+  .echain .ev .ok { color: var(--ok); }
+  .echain .sub { font-size: 12px; color: var(--ink-soft); font-weight: 500; margin-top: 2px; }
+
+  .conf-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+  .conf-top { display: flex; align-items: baseline; justify-content: space-between; }
+  .conf-top .lbl { font-size: 12px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-soft); }
+  .conf-top .pct { font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
+  .conf-bar { height: 8px; border-radius: 6px; background: var(--raised); margin-top: 12px; overflow: hidden; }
+  .conf-bar .fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #34d399, #a7f3d0); }
+  .conf-note { font-size: 12.5px; color: var(--ink-soft); margin-top: 10px; font-weight: 600; }
+  .conf-note.strong { color: var(--ok); }
+  .conf-note.weak { color: var(--warn); }
+
+  /* Financial impact */
+  .fin { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .fin .f { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .fin .f .v { font-size: 28px; font-weight: 800; letter-spacing: -.5px; }
+  .fin .f.money .v { color: var(--money); }
+  .fin .f .k { font-size: 12px; color: var(--ink-soft); margin-top: 4px; font-weight: 600; }
+  .fin-note { font-size: 12px; color: var(--ink-faint); margin-top: 12px; display: flex; gap: 8px; align-items: flex-start; }
+
+  /* Recommendation */
+  .rec { background: linear-gradient(180deg, #121722, #0f131c); border: 1px solid #26405f; border-radius: 16px; padding: 20px; }
+  .rec .rl { font-size: 12px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--info); }
+  .rec .action { font-size: 18px; font-weight: 700; margin: 10px 0 14px; line-height: 1.4; }
+  .rec .why h4 { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 8px; }
+  .rec .why ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+  .rec .why li { font-size: 13.5px; color: var(--ink-soft); display: flex; gap: 9px; align-items: flex-start; }
+  .rec .why li svg { flex-shrink: 0; margin-top: 3px; color: var(--ok); }
+  .rec .actions { display: flex; gap: 10px; margin-top: 18px; align-items: center; }
+  .btn {
+    font-family: inherit; font-weight: 700; font-size: 13.5px; cursor: pointer;
+    padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--raised); color: var(--ink);
+    transition: border-color .15s, background .15s, transform .05s;
+  }
+  .btn:hover { border-color: #3a465e; }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: #1c2c46; border-color: #2f5487; color: #cfe0ff; }
+  .btn.primary:hover { border-color: var(--info); }
+  .btn.ghost { background: transparent; }
+  .no-exec { font-size: 11.5px; color: var(--ink-faint); margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+  /* Uncertainty inline */
+  .uncert { border-color: #5c4718 !important; }
+
+  /* ---------- Memory ---------- */
+  .mem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .mem-compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center; }
+  .mem-side .mlab { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-faint); font-weight: 700; }
+  .mem-side .sig { font-size: 17px; font-weight: 800; margin: 6px 0; }
+  .mem-side .date { font-size: 12.5px; color: var(--ink-soft); }
+  .mem-side .row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+  .mem-side .row .v { font-weight: 700; }
+  .mem-arrow { display: grid; place-items: center; color: var(--ink-faint); }
+  .sim-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--warn-dim); border: 1px solid #5c4718; color: var(--warn); font-weight: 800; padding: 6px 12px; border-radius: 20px; font-size: 13px; letter-spacing: .3px; }
+  .mem-list .mrow { display: grid; grid-template-columns: 1fr 90px 120px 100px; gap: 12px; align-items: center; padding: 13px 4px; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+  .mem-list .mrow:last-child { border-bottom: 0; }
+
+  /* ---------- Trial by Fire overlay ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100; display: none;
+    align-items: center; justify-content: center; padding: 24px;
+    background: rgba(4,5,8,.72); backdrop-filter: blur(6px);
+  }
+  .overlay.open { display: flex; animation: fade .2s ease both; }
+  .tbf {
+    width: 100%; max-width: 560px; background: linear-gradient(180deg, #14161f, #0e1017);
+    border: 1px solid #3a2320; border-radius: 20px; padding: 28px; box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  }
+  .tbf .th { display: flex; align-items: center; gap: 10px; }
+  .tbf .th .fire { font-size: 22px; }
+  .tbf .th h3 { margin: 0; font-size: 16px; font-weight: 800; }
+  .tbf .th .x { margin-left: auto; cursor: pointer; color: var(--ink-faint); font-size: 20px; line-height: 1; padding: 4px; }
+  .tbf .detected { margin-top: 18px; padding: 14px 16px; border-radius: 12px; background: var(--crit-dim); border: 1px solid #5a2420; }
+  .tbf .detected .l { font-size: 11px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--crit); }
+  .tbf .detected .m { font-size: 13.5px; color: var(--ink-soft); margin-top: 4px; }
+  .tbf .steps { margin: 18px 0 4px; display: flex; flex-direction: column; gap: 2px; }
+  .tstep { display: flex; align-items: center; gap: 12px; padding: 10px 4px; font-size: 14px; color: var(--ink-faint); opacity: .5; transition: opacity .25s, color .25s; }
+  .tstep.run { opacity: 1; color: var(--ink); }
+  .tstep.done { opacity: 1; color: var(--ink-soft); }
+  .tstep .sp { width: 18px; height: 18px; flex-shrink: 0; display: grid; place-items: center; }
+  .tstep .ring { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--money); animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .tstep .tick { color: var(--ok); }
+  .tstep .lab { flex: 1; }
+  .tbf .result { margin-top: 16px; padding: 18px; border-radius: 14px; background: linear-gradient(180deg, #101a16, #0d1512); border: 1px solid #1c5843; display: none; animation: fade .3s ease both; }
+  .tbf .result.show { display: block; }
+  .tbf .result .rl { font-size: 11px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ok); }
+  .tbf .result .rsig { font-size: 22px; font-weight: 800; margin: 8px 0 12px; letter-spacing: -.3px; }
+  .tbf .result .rgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .tbf .result .rg .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-faint); font-weight: 600; }
+  .tbf .result .rg .v { font-size: 18px; font-weight: 800; margin-top: 3px; }
+  .tbf .result .narr { font-size: 12.5px; color: var(--ink-soft); margin-top: 14px; font-style: italic; border-top: 1px solid var(--line); padding-top: 12px; }
+  .tbf .result .actions { margin-top: 16px; display: flex; gap: 10px; }
+
+  /* ---------- Toast ---------- */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); z-index: 200;
+    background: var(--surface-2); border: 1px solid #2f5487; color: #cfe0ff; padding: 12px 18px; border-radius: 12px;
+    font-size: 13.5px; font-weight: 600; box-shadow: 0 20px 50px rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; display: flex; gap: 10px; align-items: center; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1180px) {
+    .cmd-grid { grid-template-columns: 1fr; }
+    .rc-grid { grid-template-columns: 1fr; }
+    .evi { position: static; }
+    .mem-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 64px 1fr; }
+    .brand .name, .brand .sub, .nav-item span.t, .nav-label, .trial-btn span.t, .sys-mini { display: none; }
+    .nav-item { justify-content: center; }
+    .kpis { grid-template-columns: repeat(2,1fr); }
+    .grow-head, .grow { grid-template-columns: 80px 1.4fr 1fr 100px 90px; }
+    .grow .colhide, .grow-head .colhide { display: none; }
+    .fin { grid-template-columns: 1fr; }
+    .inc-metrics { grid-template-columns: repeat(2,1fr); }
+  }
+  @media (max-width: 560px) {
+    .view { padding: 16px; }
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .mem-compare { grid-template-columns: 1fr; }
+    .mem-arrow { transform: rotate(90deg); }
+  }
+</style>
+
+<div class="app">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <div class="name">PagoTotal</div>
+        <div class="sub">Intelligence</div>
+      </div>
+    </div>
+
+    <div class="nav-label">Operations</div>
+    <div class="nav-item active" data-view="command">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+      <span class="t">Command Center</span>
+    </div>
+    <div class="nav-item" data-view="incidents">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      <span class="t">Incidents</span>
+      <span class="badge" id="nav-inc-badge">2</span>
+    </div>
+    <div class="nav-item" data-view="explorer">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <span class="t">Root Cause Explorer</span>
+    </div>
+    <div class="nav-item" data-view="memory">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 12v8"/></svg>
+      <span class="t">Incident Memory</span>
+    </div>
+
+    <div class="nav-spacer"></div>
+
+    <button class="trial-btn" id="open-trial">🔥 <span class="t">Trial by Fire</span></button>
+
+    <div class="nav-label">System</div>
+    <div class="sys-mini">
+      <div class="row"><span class="dot" style="background:var(--ok)"></span> Stream ingest · <span style="color:var(--ok);font-weight:700">online</span></div>
+      <div class="row"><span class="dot" style="background:var(--ok)"></span> Detection engine</div>
+      <div class="row"><span class="dot" style="background:var(--warn)"></span> 2 active investigations</div>
+    </div>
+    <div class="nav-item" data-view="incidents" style="font-size:12.5px">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 7"/></svg>
+      <span class="t">Settings</span>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <div class="main">
+    <div class="topbar">
+      <span class="live-pill"><span class="beat"></span> LIVE</span>
+      <span class="crumb" id="crumb">Command Center</span>
+      <span class="spacer"></span>
+      <span class="clock mono" id="clock">14:32:07</span>
+    </div>
+
+    <!-- ============ VIEW: COMMAND CENTER ============ -->
+    <section class="view active" id="view-command">
+      <div class="cmd-grid">
+        <div class="cmd-main">
+          <!-- HERO -->
+          <div class="hero">
+            <div class="lbl">Money at risk</div>
+            <div class="big"><span class="cur">$</span><span id="mar-value" class="tnum">22,640</span></div>
+            <div class="unit" id="mar-unit">per hour · across 2 active incidents</div>
+            <div class="trend">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 7 6 6 4-4 8 8"/><path d="M21 17v-6h-6"/></svg>
+              Money tells us what matters — prioritized by financial impact, not % drop
+            </div>
+          </div>
+
+          <!-- KPIs -->
+          <div class="kpis">
+            <div class="kpi state-crit" id="kpi-conv-card">
+              <div class="k">Current conversion</div>
+              <div class="v tnum" id="kpi-conv">74.2%</div>
+              <div class="m" id="kpi-conv-expected">expected 91.0%</div>
+            </div>
+            <div class="kpi">
+              <div class="k">Transactions</div>
+              <div class="v tnum" id="kpi-tx">12,482</div>
+              <div class="m" id="kpi-tx-note">last 60 min</div>
+            </div>
+            <div class="kpi">
+              <div class="k">Active incidents</div>
+              <div class="v tnum" id="kpi-active">2</div>
+              <div class="m" id="kpi-active-breakdown">1 critical · 1 high</div>
+            </div>
+            <div class="kpi">
+              <div class="k">System health</div>
+              <div class="health-chip" id="kpi-health" style="color:var(--warn)"><span style="width:9px;height:9px;border-radius:50%;background:var(--warn);display:inline-block"></span> Degraded</div>
+              <div class="m" id="kpi-health-note">2 of 5 regions affected</div>
+            </div>
+          </div>
+
+          <!-- CHART -->
+          <div class="card pad">
+            <div class="chart-head">
+              <div class="section-h" style="margin:0">
+                <h2>Conversion vs expected</h2>
+                <span class="hint">last 30 minutes · 1-min periods</span>
+              </div>
+              <div class="legend">
+                <span><i class="swatch" style="background:#8892a4;opacity:.55"></i> Expected range</span>
+                <span><i class="swatch" style="background:var(--ok)"></i> Healthy</span>
+                <span><i class="swatch" style="background:var(--warn)"></i> Breach</span>
+                <span><i class="swatch" style="background:var(--crit)"></i> Incident</span>
+              </div>
+            </div>
+            <div class="chart-wrap" id="chart-wrap"></div>
+            <div class="rule-strip" id="rule-strip">
+              <span class="rs-item"><b>1-min</b> periods</span>
+              <span class="rs-sep">·</span>
+              <span class="rs-item"><b>5-min</b> rolling window → expected range</span>
+              <span class="rs-sep">·</span>
+              <span class="rs-item"><b>3</b> consecutive breached minutes → incident fires</span>
+              <span class="rs-sep">·</span>
+              <span class="rs-item rs-muted">a single breached minute is treated as noise and ignored</span>
+            </div>
+          </div>
+
+          <!-- ACTIVE INCIDENTS -->
+          <div>
+            <div class="section-h">
+              <h2>Active incidents</h2>
+              <span class="hint">Prioritized by financial impact</span>
+            </div>
+            <div class="inc-list" id="cmd-incidents"></div>
+          </div>
+        </div>
+
+        <!-- SIDE: LIVE STREAM + STATUS -->
+        <div class="cmd-side">
+          <div class="card stream">
+            <div class="sh">
+              <h3>Live transaction stream</h3>
+              <span class="live-pill" style="font-size:10px;padding:3px 8px"><span class="beat"></span> LIVE</span>
+            </div>
+            <div class="stream-body" id="stream-body"></div>
+          </div>
+
+          <div class="card pad sys-card">
+            <div class="section-h" style="margin:0 0 6px"><h2>System status</h2></div>
+            <div class="srow"><span class="lab">Ingest pipeline</span><span class="status-dot" style="color:var(--ok)"><span class="d" style="background:var(--ok)"></span>Online</span></div>
+            <div class="srow"><span class="lab">Detection engine</span><span class="status-dot" style="color:var(--ok)"><span class="d" style="background:var(--ok)"></span>Nominal</span></div>
+            <div class="srow"><span class="lab">Diagnosis engine</span><span class="status-dot" style="color:var(--warn)"><span class="d" style="background:var(--warn)"></span>2 running</span></div>
+            <div class="srow"><span class="lab">Providers monitored</span><span class="mono">4</span></div>
+            <div class="srow"><span class="lab">Dimensions tracked</span><span class="mono">6</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: INCIDENTS ============ -->
+    <section class="view" id="view-incidents">
+      <div class="tabs">
+        <div class="tab active" data-status="active">Active <span class="count" id="c-active">2</span></div>
+        <div class="tab" data-status="investigating">Investigating <span class="count" id="c-inv">1</span></div>
+        <div class="tab" data-status="resolved">Resolved <span class="count" id="c-res">3</span></div>
+      </div>
+      <div class="filters" id="filters"></div>
+      <div class="card">
+        <div class="grow-head">
+          <span>Severity</span><span>Merchant / Root cause</span><span class="colhide">Provider · Country</span><span class="colhide">Method</span><span>Conversion</span><span>Money / hr</span><span class="colhide">Affected</span><span>Confidence</span>
+        </div>
+        <div id="inc-rows"></div>
+      </div>
+      <p style="color:var(--ink-faint);font-size:12.5px;margin-top:14px;display:flex;gap:8px;align-items:center">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+        The system has already investigated every incident. Filters are for exploration — you don't need them to find the root cause.
+      </p>
+    </section>
+
+    <!-- ============ VIEW: ROOT CAUSE EXPLORER ============ -->
+    <section class="view" id="view-explorer">
+      <div class="rc-switch" id="rc-switch"></div>
+      <div class="rc-grid">
+        <div>
+          <div class="card pad">
+            <div class="section-h" style="margin:0 0 16px">
+              <h2>Investigation path</h2>
+              <span class="hint">the system drilled through 6 dimensions — normal branches shown for comparison</span>
+            </div>
+            <div class="tree" id="tree"></div>
+            <div class="node-detail card pad" style="background:var(--bg-2)">
+              <div class="section-h" style="margin:0"><h2 id="nd-title">All transactions</h2><span class="hint" id="nd-status"></span></div>
+              <div class="nd-grid" id="nd-grid"></div>
+            </div>
+          </div>
+
+          <div style="height:20px"></div>
+
+          <!-- FINANCIAL -->
+          <div class="card pad">
+            <div class="section-h" style="margin:0 0 14px"><h2>Financial impact</h2></div>
+            <div class="fin" id="fin"></div>
+            <div class="fin-note">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px;color:var(--ink-faint)"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+              <span id="fin-note">Estimated using historical expected conversion, current transaction volume and average transaction value. Figures are directional estimates, not exact accounting.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVIDENCE + CONFIDENCE + RECOMMENDATION -->
+        <div class="evi">
+          <div class="evi-card">
+            <div class="eh">
+              <div class="why">Why we believe this</div>
+              <div class="rc" id="evi-rc">dLocal × Brazil × PIX</div>
+            </div>
+            <div class="evi-body">
+              <ul class="echain" id="echain"></ul>
+            </div>
+          </div>
+
+          <div class="conf-card">
+            <div class="conf-top">
+              <span class="lbl">Confidence</span>
+              <span class="pct" id="conf-pct">96%</span>
+            </div>
+            <div class="conf-bar"><div class="fill" id="conf-fill" style="width:96%"></div></div>
+            <div class="conf-note strong" id="conf-note">Strong evidence — degradation is isolated to a single provider × country × method.</div>
+          </div>
+
+          <div class="rec" id="rec-card">
+            <div class="rl">Recommended action</div>
+            <div class="action" id="rec-action">Temporarily route affected Brazil PIX traffic through an alternative provider.</div>
+            <div class="why">
+              <h4>Why?</h4>
+              <ul id="rec-why"></ul>
+            </div>
+            <div class="actions">
+              <button class="btn primary" id="rec-review">Review recommendation</button>
+              <button class="btn ghost">Dismiss</button>
+              <span class="no-exec"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Never auto-executes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: MEMORY ============ -->
+    <section class="view" id="view-memory">
+      <div class="section-h"><h2>Recurrence check</h2><span class="hint">every new incident is matched against operational history</span></div>
+      <div class="card pad" style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+          <div class="sim-badge">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.7 1 6.3 2.7L21 8"/><path d="M21 3v5h-5"/></svg>
+            Similar incident found · 91% similarity
+          </div>
+          <div style="font-size:12.5px;color:var(--ink-soft)">Signature match on <b class="mono" style="color:var(--ink)">provider × country × method</b></div>
+        </div>
+        <div class="mem-compare">
+          <div class="mem-side">
+            <div class="mlab">Previous incident</div>
+            <div class="sig">dLocal × Brazil × PIX</div>
+            <div class="date">August 17, 2026 · resolved in 41 min</div>
+            <div style="margin-top:12px">
+              <div class="row"><span>Conversion impact</span><span class="v" style="color:var(--crit)">−24 pp</span></div>
+              <div class="row"><span>Financial impact</span><span class="v" style="color:var(--money)">$11.8K / hr</span></div>
+              <div class="row"><span>Decline code</span><span class="v mono">05</span></div>
+            </div>
+          </div>
+          <div class="mem-arrow">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+          </div>
+          <div class="mem-side">
+            <div class="mlab">Current incident</div>
+            <div class="sig" style="color:var(--crit)">dLocal × Brazil × PIX</div>
+            <div class="date">Today · active for 18 min</div>
+            <div style="margin-top:12px">
+              <div class="row"><span>Conversion impact</span><span class="v" style="color:var(--crit)">−27 pp</span></div>
+              <div class="row"><span>Financial impact</span><span class="v" style="color:var(--money)">$14.2K / hr</span></div>
+              <div class="row"><span>Decline code</span><span class="v mono">05</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:18px;padding:14px 16px;background:var(--ok-dim);border:1px solid #1c5843;border-radius:12px;font-size:13.5px;color:#a7f3d0;display:flex;gap:10px;align-items:flex-start">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+          <span><b>Previous resolution:</b> traffic was rerouted to an alternative provider (Adyen). Conversion recovered within 12 minutes. The same play is recommended now.</span>
+        </div>
+      </div>
+
+      <div class="section-h"><h2>Incident history</h2></div>
+      <div class="card pad">
+        <div class="mem-list" id="mem-list"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ===================== TRIAL BY FIRE OVERLAY ===================== -->
+<div class="overlay" id="overlay">
+  <div class="tbf">
+    <div class="th">
+      <span class="fire">🔥</span>
+      <h3>Trial by Fire</h3>
+      <span class="x" id="tbf-close">✕</span>
+    </div>
+    <div class="detected">
+      <div class="l">⚠ Anomaly detected</div>
+      <div class="m">A significant conversion drop just appeared. The system was <b>not told</b> what to look for — it is now investigating every dimension.</div>
+    </div>
+    <div class="steps" id="tbf-steps"></div>
+    <div class="result" id="tbf-result">
+      <div class="rl">✓ Root cause identified</div>
+      <div class="rsig">Adyen × Colombia × Card × Bancolombia</div>
+      <div class="rgrid">
+        <div class="rg"><div class="k">Confidence</div><div class="v" style="color:var(--ok)">94%</div></div>
+        <div class="rg"><div class="k">Money at risk</div><div class="v" style="color:var(--money)">$8,740/hr</div></div>
+        <div class="rg"><div class="k">Decline code</div><div class="v mono">51</div></div>
+      </div>
+      <div class="narr">"The system wasn't told what to look for. It investigated the dimensions and found the strongest explanation — an issuing bank over-declining card payments for one provider in one country."</div>
+      <div class="actions">
+        <button class="btn primary" id="tbf-open-explorer">Open in Root Cause Explorer</button>
+        <button class="btn ghost" id="tbf-dismiss">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const money = n => "$" + Math.round(n).toLocaleString("en-US");
+
+  /* ------------------------------------------------ DATA ------------------------------------------------ */
+  /* Fallback demo data — used only if dashboard_data.json (written by src/build_dashboard.py)
+     cannot be loaded, e.g. when opening this file directly without the pipeline having run. */
+  const MOCK_INCIDENTS = {
+    santander: {
+      key:"santander", priority:1, severity:"crit", sevLabel:"Critical", status:"active",
+      merchant:"PagoModa", provider:"Stripe", country:"Mexico", method:"Card", bank:"Santander MX",
+      rootCause:"PagoModa × Mexico × Santander",
+      convFrom:92.1, convTo:71.2, money:18420, affected:5200, confidence:94,
+      start:"14:14", duration:"18 min",
+      tree:[
+        {dim:"All transactions", nodes:[{label:"All transactions", status:"anomaly", conv:"74.2%", baseline:"91.0%", volume:"12,482/hr", change:"−16.8 pp", sel:true}]},
+        {dim:"Merchant", nodes:[
+          {label:"PagoModa", status:"anomaly", conv:"71.2%", baseline:"92.1%", volume:"6,900/hr", change:"−20.9 pp", sel:true},
+          {label:"TravelNow", status:"normal", conv:"90.4%", baseline:"90.8%", volume:"3,100/hr", change:"−0.4 pp"},
+          {label:"TechStore", status:"normal", conv:"89.9%", baseline:"90.2%", volume:"2,482/hr", change:"−0.3 pp"}]},
+        {dim:"Country", nodes:[
+          {label:"Mexico", status:"anomaly", conv:"68.0%", baseline:"91.6%", volume:"4,800/hr", change:"−23.6 pp", sel:true},
+          {label:"Colombia", status:"normal", conv:"90.1%", baseline:"90.5%", volume:"1,300/hr", change:"−0.4 pp"},
+          {label:"Brazil", status:"normal", conv:"91.2%", baseline:"91.0%", volume:"800/hr", change:"+0.2 pp"}]},
+        {dim:"Issuing bank", nodes:[
+          {label:"Santander MX", status:"anomaly", conv:"58.4%", baseline:"92.3%", volume:"5,200/hr", change:"−33.9 pp", sel:true},
+          {label:"BBVA MX", status:"normal", conv:"90.7%", baseline:"91.0%", volume:"3,400/hr", change:"−0.3 pp"},
+          {label:"Banorte", status:"normal", conv:"91.1%", baseline:"91.2%", volume:"2,100/hr", change:"−0.1 pp"}]},
+        {dim:"Decline code", nodes:[
+          {label:"Code 05", status:"anomaly", conv:"—", baseline:"6.1%", volume:"share 41.0%", change:"+572%", sel:true},
+          {label:"Code 51", status:"normal", conv:"—", baseline:"3.2%", volume:"share 3.4%", change:"+6%"},
+          {label:"Other", status:"normal", conv:"—", baseline:"90.7%", volume:"share 55.6%", change:"normal"}]}
+      ],
+      evidence:[
+        {el:"Root cause", cls:"key", v:'<span class="a">PagoModa × Mexico × Santander</span>', sub:"one merchant, one country, one issuing bank"},
+        {el:"Expected conversion", v:'<span class="a">92.1%</span>'},
+        {el:"Actual conversion", cls:"bad", v:'<span class="big">58.4%</span> on Santander cards', sub:"−33.9 pp on the isolated segment"},
+        {el:"Decline code 05", cls:"bad", v:'6.1% → <span class="big">41.0%</span>', sub:"+572% — issuing bank is refusing authorizations"},
+        {el:"Other Mexico banks", v:'<span class="ok">NORMAL ✓</span>', sub:"BBVA, Banorte unaffected — not a country outage"},
+        {el:"Other providers", v:'<span class="ok">NORMAL ✓</span>', sub:"Santander cards fail only through this route"},
+        {el:"Affected volume", v:'<span class="a">5,200 tx / hour</span>'}
+      ],
+      confNote:{cls:"strong", text:"Strong evidence — the drop is isolated to a single issuing bank for one merchant. Concentrated, not diffuse."},
+      financial:{revenue:"$18,420", lost:"1,690", daily:"$442K"},
+      recommendation:{
+        action:"Escalate to the issuing-bank liaison and temporarily reroute Santander MX card traffic through a secondary acquirer.",
+        why:["94% diagnosis confidence","Highest financial impact of all active incidents","Isolated issuing-bank degradation (not provider-wide)","Decline code 05 spike points to authorization refusals"]
+      }
+    },
+
+    dlocal: {
+      key:"dlocal", priority:2, severity:"high", sevLabel:"High", status:"active",
+      merchant:"TechStore", provider:"dLocal", country:"Brazil", method:"PIX", bank:"—",
+      rootCause:"dLocal × Brazil × PIX",
+      convFrom:91.4, convTo:64.3, money:4220, affected:420, confidence:96,
+      start:"14:09", duration:"23 min",
+      tree:[
+        {dim:"All transactions", nodes:[{label:"All transactions", status:"anomaly", conv:"74.2%", baseline:"91.0%", volume:"12,482/hr", change:"−16.8 pp", sel:true}]},
+        {dim:"Provider", nodes:[
+          {label:"dLocal", status:"anomaly", conv:"70.1%", baseline:"91.2%", volume:"2,900/hr", change:"−21.1 pp", sel:true},
+          {label:"Stripe", status:"normal", conv:"90.6%", baseline:"90.9%", volume:"5,600/hr", change:"−0.3 pp"},
+          {label:"Adyen", status:"normal", conv:"91.0%", baseline:"91.1%", volume:"3,982/hr", change:"−0.1 pp"}]},
+        {dim:"Country", nodes:[
+          {label:"Brazil", status:"anomaly", conv:"64.3%", baseline:"91.4%", volume:"1,200/hr", change:"−27.1 pp", sel:true},
+          {label:"Mexico", status:"normal", conv:"90.8%", baseline:"91.0%", volume:"1,100/hr", change:"−0.2 pp"},
+          {label:"Colombia", status:"normal", conv:"90.5%", baseline:"90.7%", volume:"600/hr", change:"−0.2 pp"}]},
+        {dim:"Payment method", nodes:[
+          {label:"PIX", status:"anomaly", conv:"64.3%", baseline:"91.4%", volume:"420/hr", change:"−27.1 pp", sel:true},
+          {label:"Card", status:"normal", conv:"90.3%", baseline:"90.6%", volume:"560/hr", change:"−0.3 pp"},
+          {label:"Wallet", status:"normal", conv:"91.0%", baseline:"91.2%", volume:"220/hr", change:"−0.2 pp"}]},
+        {dim:"Decline code", nodes:[
+          {label:"Code 05", status:"anomaly", conv:"—", baseline:"8.2%", volume:"share 36.7%", change:"+347%", sel:true},
+          {label:"Code 12", status:"normal", conv:"—", baseline:"2.1%", volume:"share 2.3%", change:"+9%"},
+          {label:"Other", status:"normal", conv:"—", baseline:"89.7%", volume:"share 61.0%", change:"normal"}]}
+      ],
+      evidence:[
+        {el:"Root cause", cls:"key", v:'<span class="a">dLocal × Brazil × PIX</span>', sub:"one provider, one country, one method"},
+        {el:"Expected conversion", v:'<span class="a">91.4%</span>'},
+        {el:"Actual conversion", cls:"bad", v:'<span class="big">64.3%</span>', sub:"change of −27.1 pp"},
+        {el:"Decline code 05", cls:"bad", v:'8.2% → <span class="big">36.7%</span>', sub:"+347% share of all declines"},
+        {el:"Other dLocal countries", v:'<span class="ok">NORMAL ✓</span>', sub:"Mexico & Colombia on dLocal are healthy"},
+        {el:"Other Brazil providers", v:'<span class="ok">NORMAL ✓</span>', sub:"Stripe & Adyen in Brazil are healthy"},
+        {el:"Affected volume", v:'<span class="a">8,420 tx / hour</span>', sub:"attempted PIX payments at risk"}
+      ],
+      confNote:{cls:"strong", text:"Strong evidence — degradation is isolated to a single provider × country × method. Neighboring segments are all normal."},
+      financial:{revenue:"$14,200", lost:"1,247", daily:"$340K"},
+      recommendation:{
+        action:"Temporarily route affected Brazil PIX traffic through an alternative provider.",
+        why:["96% diagnosis confidence","Significant financial impact","Localized provider + country + method degradation","Similar incident found in memory (Aug 17)"]
+      }
+    },
+
+    uncertainty: {
+      key:"uncertainty", priority:3, severity:"warn", sevLabel:"Investigating", status:"investigating",
+      merchant:"Multiple", provider:"Mixed", country:"Multiple", method:"Mixed", bank:"—",
+      rootCause:null,
+      convFrom:91.2, convTo:76.4, money:0, affected:0, confidence:54,
+      start:"14:26", duration:"6 min",
+      tree:[
+        {dim:"All transactions", nodes:[{label:"All transactions", status:"anomaly", conv:"76.4%", baseline:"91.2%", volume:"11,900/hr", change:"−14.8 pp", sel:true}]},
+        {dim:"Provider", nodes:[
+          {label:"dLocal", status:"anomaly", conv:"84.0%", baseline:"91.2%", volume:"2,700/hr", change:"−7.2 pp", sel:true},
+          {label:"Stripe", status:"anomaly", conv:"83.1%", baseline:"90.9%", volume:"5,400/hr", change:"−7.8 pp"},
+          {label:"Adyen", status:"anomaly", conv:"85.0%", baseline:"91.1%", volume:"3,800/hr", change:"−6.1 pp"}]},
+        {dim:"Country", nodes:[
+          {label:"Mexico", status:"anomaly", conv:"84.2%", baseline:"91.0%", volume:"4,600/hr", change:"−6.8 pp", sel:true},
+          {label:"Brazil", status:"anomaly", conv:"83.6%", baseline:"91.4%", volume:"3,900/hr", change:"−7.8 pp"},
+          {label:"Colombia", status:"anomaly", conv:"84.8%", baseline:"90.6%", volume:"3,400/hr", change:"−5.8 pp"}]}
+      ],
+      evidence:[
+        {el:"Anomaly", cls:"bad", v:'<span class="big">91.2% → 76.4%</span>', sub:"a real, significant drop — detection is confident"},
+        {el:"Provider split", v:'all providers −6 to −8 pp', sub:"no single provider stands out"},
+        {el:"Country split", v:'all countries −6 to −8 pp', sub:"degradation is diffuse, not concentrated"},
+        {el:"Concentration test", cls:"key", v:'<span class="a">No dimension explains &gt; 30%</span>', sub:"drops are spread evenly across every segment"}
+      ],
+      confNote:{cls:"weak", text:"The anomaly is real, but no single dimension concentrates enough of the drop to name a confident root cause."},
+      financial:null,
+      recommendation:{
+        action:"Continue monitoring and investigate broader system conditions (network, 3DS provider, shared gateway).",
+        why:["Anomaly confirmed — this is not noise","But no dimension isolates the cause","Pattern suggests a system-wide factor, not one segment","Naming a single culprit now would be a guess"]
+      }
+    }
+  };
+
+  const MOCK_RESOLVED = [
+    {sev:"high", who:"dLocal × Brazil × PIX", meta:"dLocal · Brazil", method:"PIX", conv:"91.4→67.1", money:"$11.8K", affected:"390/hr", conf:"95%", date:"Aug 17"},
+    {sev:"crit", who:"Nubank × Brazil card decline", meta:"Adyen · Brazil", method:"Card", conv:"90.2→70.9", money:"$9.4K", affected:"2,100/hr", conf:"92%", date:"Aug 11"},
+    {sev:"high", who:"MercadoPago wallet timeout", meta:"MercadoPago · Mexico", method:"Wallet", conv:"89.9→74.4", money:"$6.1K", affected:"880/hr", conf:"88%", date:"Aug 04"}
+  ];
+
+  /* ------------------------------------------------ REAL DATA: pipeline -> view-model ------------------------------------------------ */
+  const COUNTRY_NAMES = {MX:"Mexico", CO:"Colombia", BR:"Brazil"};
+  const PROVIDER_NAMES = {stripe:"Stripe", adyen:"Adyen", dlocal:"dLocal", mercadopago:"MercadoPago"};
+  const DIMENSION_LABELS = {merchant:"Merchant", provider:"Provider", payment_method:"Payment method", country:"Country", issuing_bank:"Issuing bank"};
+  const DIM_ORDER = ["merchant","provider","country","payment_method","issuing_bank"];
+  const displayValue = (dim, value) => dim==="country" ? (COUNTRY_NAMES[value]||value) : dim==="provider" ? (PROVIDER_NAMES[value]||value) : value;
+  const pct1 = n => (Math.round(n*10)/10).toFixed(1);
+  const signedPP = n => (n>=0 ? "−"+pct1(n) : "+"+pct1(-n)) + " pp";
+
+  function segmentToDisplay(segment){
+    const merchant = segment.merchant || "Multiple";
+    const provider = segment.provider ? (PROVIDER_NAMES[segment.provider]||segment.provider) : "Mixed";
+    const country = segment.country ? (COUNTRY_NAMES[segment.country]||segment.country) : "Multiple";
+    const method = segment.payment_method || "Mixed";
+    const bank = segment.issuing_bank || "—";
+    const rootCause = DIM_ORDER.filter(d=>segment[d]).map(d=>displayValue(d, segment[d])).join(" × ") || null;
+    return {merchant, provider, country, method, bank, rootCause};
+  }
+
+  function buildTree(diagnosis){
+    const m = diagnosis.root_metrics;
+    const levels = [{dim:"All transactions", nodes:[{
+      label:"All transactions", status:"anomaly",
+      conv:(m.observed_conversion*100).toFixed(1)+"%", baseline:(m.expected_conversion*100).toFixed(1)+"%",
+      volume:m.attempts.toLocaleString()+" tx", change:signedPP(m.conversion_drop_pp), sel:true,
+    }]}];
+    (diagnosis.drill_down_path||[]).forEach(step=>{
+      const siblings = step.siblings && step.siblings.length ? step.siblings : [step];
+      levels.push({dim:DIMENSION_LABELS[step.dimension]||step.dimension, nodes: siblings.map(row=>({
+        label: displayValue(step.dimension, row.value),
+        status: row.is_anomalous ? "anomaly" : "normal",
+        conv: (row.observed_conversion*100).toFixed(1)+"%", baseline:(row.expected_conversion*100).toFixed(1)+"%",
+        volume: row.attempts.toLocaleString()+" tx", change: signedPP(row.conversion_drop_pp),
+        sel: !!row.is_selected,
+      }))});
+    });
+    return levels;
+  }
+
+  function buildEvidence(diagnosis){
+    const m = diagnosis.root_metrics;
+    const disp = segmentToDisplay(diagnosis.root_cause_segment||{});
+    const chain = [
+      {el:"Root cause", cls:"key", v:`<span class="a">${disp.rootCause || "Insufficient evidence"}</span>`, sub:`${(diagnosis.drill_down_path||[]).length+1} dimension(s) isolated`},
+      {el:"Expected conversion", v:`<span class="a">${(m.expected_conversion*100).toFixed(1)}%</span>`},
+      {el:"Actual conversion", cls:"bad", v:`<span class="big">${(m.observed_conversion*100).toFixed(1)}%</span>`, sub:`${signedPP(m.conversion_drop_pp)} vs. expected`},
+    ];
+    const dd = diagnosis.dominant_decline;
+    if (dd) chain.push({el:`Decline code ${dd.decline_reason}`, cls:"bad", v:`<span class="big">${(dd.share_of_excess_declines*100).toFixed(0)}%</span> of excess declines`, sub:`+${dd.excess_declines} declines above baseline share`});
+    const lastStep = (diagnosis.drill_down_path||[]).at(-1);
+    if (lastStep && lastStep.siblings) {
+      lastStep.siblings.filter(s=>!s.is_selected && !s.is_anomalous).slice(0,2).forEach(s=>{
+        chain.push({el:`Other ${DIMENSION_LABELS[lastStep.dimension]||lastStep.dimension}`, v:`<span class="ok">${displayValue(lastStep.dimension, s.value)} — NORMAL ✓</span>`, sub:`${(s.observed_conversion*100).toFixed(1)}% vs ${(s.expected_conversion*100).toFixed(1)}% expected`});
+      });
+    }
+    chain.push({el:"Affected volume", v:`<span class="a">${m.attempts.toLocaleString()} tx in window</span>`});
+    return chain;
+  }
+
+  function realIncidentToView(entry){
+    const d = entry.diagnosis, m = d.root_metrics, disp = segmentToDisplay(d.root_cause_segment||{});
+    const windowStart = d.incident_window && d.incident_window.started_at ? new Date(d.incident_window.started_at) : null;
+    const sevLabel = entry.status==="investigating" ? "Investigating" : entry.severity==="crit" ? "Critical" : entry.severity==="high" ? "High" : "Elevated";
+    const explanation = d.explanation || {};
+    const confNote = {
+      cls: entry.confidence_pct>=80 ? "strong" : entry.confidence_pct>=60 ? "" : "weak",
+      text: explanation.operational_explanation || (d.reason || "Evidence collected; see the drill-down for details."),
+    };
+    const why = [`${entry.confidence_pct}% diagnosis confidence`, `Priority #${entry.priority_rank} by estimated financial impact`];
+    if (entry.readings>1) why.push(`Confirmed independently across ${entry.readings} detector readings`);
+    if (d.dominant_decline) why.push(`Decline code ${d.dominant_decline.decline_reason} spike (+${(d.dominant_decline.share_of_excess_declines*100).toFixed(0)}% of excess declines)`);
+    if (!d.evidence_sufficient) why.push("Evidence not yet concentrated enough to name a single segment");
+    return {
+      key: entry.incident_id, priority: entry.priority_rank, severity: entry.severity, sevLabel, status: entry.status,
+      merchant: disp.merchant, provider: disp.provider, country: disp.country, method: disp.method, bank: disp.bank,
+      rootCause: disp.rootCause,
+      convFrom: +(m.expected_conversion*100).toFixed(1), convTo: +(m.observed_conversion*100).toFixed(1),
+      money: d.evidence_sufficient ? Math.round(m.lost_amount_per_hour_usd||0) : 0,
+      affected: Math.round(m.attempts||0), confidence: entry.confidence_pct,
+      start: windowStart ? windowStart.toISOString().slice(11,16) : "—",
+      duration: entry.duration_minutes!=null ? `${entry.duration_minutes} min` : "—",
+      tree: buildTree(d), evidence: buildEvidence(d), confNote,
+      financial: d.evidence_sufficient ? {
+        revenue: "$"+Math.round(m.lost_amount_per_hour_usd||0).toLocaleString("en-US"),
+        lost: Math.round((m.lost_approvals||0) * (entry.duration_minutes ? 60/entry.duration_minutes : 1)).toLocaleString("en-US"),
+        daily: "$"+Math.round((m.lost_amount_per_hour_usd||0)*24).toLocaleString("en-US"),
+      } : null,
+      recommendation: {action: d.recommended_action || "Continue monitoring; evidence is not yet sufficient for a specific action.", why},
+    };
+  }
+
+  function resolvedEntryToView(r){
+    const disp = segmentToDisplay(r.root_cause_segment||{});
+    return {sev: r.severity||"high", who: disp.rootCause||"Unknown segment", meta:`${disp.provider} · ${disp.country}`,
+      method: disp.method, conv:"—", money: r.cost_per_hour_usd ? "$"+Math.round(r.cost_per_hour_usd).toLocaleString("en-US") : "—",
+      affected: r.attempts ? r.attempts.toLocaleString()+"/hr" : "—", conf: r.confidence_pct ? r.confidence_pct+"%" : "—",
+      date: r.resolved_at ? new Date(r.resolved_at).toLocaleDateString("en-US", {month:"short", day:"2-digit"}) : "—"};
+  }
+
+  let INCIDENTS = MOCK_INCIDENTS, RESOLVED = MOCK_RESOLVED, rcOrder = ["santander","dlocal","uncertainty"], usingRealData = false;
+
+  async function loadDashboardData(){
+    try {
+      const res = await fetch("./dashboard_data.json", {cache:"no-store"});
+      if (!res.ok) throw new Error("no dashboard_data.json");
+      const data = await res.json();
+      if (!data.incidents || !data.incidents.length) throw new Error("empty dataset");
+      const built = {};
+      data.incidents.forEach(entry => { built[entry.incident_id] = realIncidentToView(entry); });
+      INCIDENTS = built;
+      RESOLVED = (data.resolved||[]).map(resolvedEntryToView);
+      rcOrder = data.incidents.map(e=>e.incident_id);
+      usingRealData = true;
+      return data;
+    } catch (err) {
+      INCIDENTS = MOCK_INCIDENTS; RESOLVED = MOCK_RESOLVED; rcOrder = ["santander","dlocal","uncertainty"]; usingRealData = false;
+      return null;
+    }
+  }
+
+  const FILTER_DEFS = ["All merchants","dLocal","Stripe","Adyen","Mexico","Brazil","Colombia","PIX","Card","Critical","High"];
+
+  /* ------------------------------------------------ RENDER: COMMAND INCIDENTS ------------------------------------------------ */
+  function incCard(inc){
+    const drop = (inc.convFrom - inc.convTo).toFixed(1);
+    return `<div class="inc sev-${inc.severity}" data-open="${inc.key}">
+      <div class="rail">${inc.priority}</div>
+      <div class="body">
+        <div class="top">
+          <span class="chip ${inc.severity==='crit'?'crit':inc.severity==='high'?'high':'warn'}">${inc.sevLabel}</span>
+          <span class="sig" style="margin:0;font-size:15px">${inc.rootCause||'Root cause pending'}</span>
+          <span class="prio">PRIORITY #${inc.priority}</span>
+        </div>
+        <div class="inc-metrics">
+          <div class="im"><div class="k">Conversion</div><div class="v"><span class="conv-mini"><span class="from tnum">${inc.convFrom}%</span> <span class="to tnum">${inc.convTo}%</span></span></div></div>
+          <div class="im"><div class="k">Money at risk</div><div class="v money tnum">${money(inc.money)}/hr</div></div>
+          <div class="im"><div class="k">Affected</div><div class="v tnum">${inc.affected.toLocaleString()} tx/hr</div></div>
+          <div class="im"><div class="k">Confidence</div><div class="v tnum">${inc.confidence}%</div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+  function renderCommandIncidents(){
+    const active = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active").sort((a,b)=>a.priority-b.priority);
+    $("#cmd-incidents").innerHTML = active.length ? active.map(incCard).join("")
+      : '<div class="card pad" style="color:var(--ink-faint);font-size:13.5px">No active incidents — conversion is within the expected range.</div>';
+  }
+
+  function renderKpis(data){
+    const active = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active");
+    const crit = active.filter(i=>i.severity==="crit").length;
+    const high = active.filter(i=>i.severity==="high").length;
+    const moneyAtRisk = active.reduce((sum,i)=>sum+(i.money||0),0);
+    $("#nav-inc-badge").textContent = rcOrder.length;
+    $("#mar-value").textContent = Math.round(moneyAtRisk).toLocaleString("en-US");
+    $("#mar-unit").textContent = `per hour · across ${active.length} active incident${active.length===1?'':'s'}`;
+    if (data && data.kpis && data.kpis.current_conversion_pct!=null) {
+      $("#kpi-conv").textContent = data.kpis.current_conversion_pct.toFixed(1)+"%";
+      $("#kpi-conv-expected").textContent = "expected "+data.kpis.expected_conversion_pct.toFixed(1)+"%";
+    }
+    $("#kpi-conv-card").classList.toggle("state-crit", active.some(i=>i.severity==="crit"));
+    if (data && data.kpis) $("#kpi-tx-note").textContent = `last ${Math.round((data.kpis.transactions_window||0))} transactions`;
+    $("#kpi-active").textContent = active.length;
+    $("#kpi-active-breakdown").textContent = active.length ? `${crit} critical · ${high} high` : "all clear";
+    const healthEl = $("#kpi-health");
+    if (crit>0) { healthEl.style.color="var(--crit)"; healthEl.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:var(--crit);display:inline-block"></span> Degraded'; }
+    else if (active.length>0) { healthEl.style.color="var(--warn)"; healthEl.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:var(--warn);display:inline-block"></span> Degraded'; }
+    else { healthEl.style.color="var(--ok)"; healthEl.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:var(--ok);display:inline-block"></span> Nominal'; }
+    const segmentsAffected = new Set(active.flatMap(i=>[i.provider,i.country].filter(Boolean))).size;
+    $("#kpi-health-note").textContent = active.length ? `${segmentsAffected} segment(s) affected` : "no incidents in this window";
+  }
+
+  /* ------------------------------------------------ CHART ------------------------------------------------ */
+  function buildChart(chartData){
+    const W=720, H=252, padL=40, padR=14, padT=30, padB=34;
+    const COL={ok:"#34D399", breach:"#F2B23D", incident:"#FF5B57"};
+    const sev={ok:0, breach:1, incident:2};
+
+    let expected, actual, threshold, states, timeLabels;
+    if (chartData && chartData.points && chartData.points.length >= 2) {
+      const pts = chartData.points;
+      expected = pts.map(p=>p.expected_pct);
+      actual = pts.map(p=>p.observed_pct);
+      threshold = pts.map(p=>p.threshold_pct);
+      states = pts.map(p=>p.state);
+      timeLabels = pts.map(p=>new Date(p.t).toISOString().slice(11,16));
+    } else {
+      // Synthetic fallback so the chart still renders something meaningful without real data.
+      const N=30, BAND=2.5, SUSTAIN=3;
+      expected=[]; actual=[]; threshold=[];
+      for(let i=0;i<N;i++){ const e = 91 + Math.sin(i/4)*0.4; expected.push(e); threshold.push(e-BAND); actual.push(90.4 + Math.sin(i/3)*0.5); }
+      actual[11]=86.3; actual[12]=90.0;
+      const drop=[86.6,81.7,74.6,73.4,72.6,73.9,72.8,73.6,72.9];
+      for(let k=0;k<drop.length;k++) actual[21+k]=drop[k];
+      const breach = actual.map((a,i)=> a < threshold[i]);
+      let run=0, fi=-1;
+      for(let i=0;i<N;i++){ run = breach[i]?run+1:0; if(run>=SUSTAIN && fi<0) fi=i; }
+      states = actual.map((a,i)=> (fi>=0 && i>=fi) ? "incident" : (breach[i] ? "breach" : "ok"));
+      timeLabels = actual.map((_,i)=> "14:"+String(2+i).padStart(2,"0"));
+    }
+    const N = actual.length;
+    const SUSTAIN = chartData ? (chartData.sustain_evaluations||3) : 3;
+    let fireIndex = states.indexOf("incident");
+    const state = i => states[i];
+
+    const yMin = Math.max(0, Math.floor(Math.min(...actual, ...threshold) - 4));
+    const yMax = Math.min(100, Math.ceil(Math.max(...actual, ...expected) + 3));
+    const x = i => padL + (N>1 ? (i/(N-1))*(W-padL-padR) : 0);
+    const y = v => padT + (1-(v-yMin)/(yMax-yMin))*(H-padT-padB);
+    const path = arr => arr.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+
+    // horizontal gridlines
+    let grid="";
+    const gridLines = [yMin, Math.round((yMin+yMax)/2), yMax];
+    gridLines.forEach(v=>{ grid += `<line x1="${padL}" y1="${y(v)}" x2="${W-padR}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${padL-8}" y="${y(v)+4}" fill="var(--ink-faint)" font-size="11" text-anchor="end" font-family="IBM Plex Mono">${v}%</text>`; });
+
+    // per-minute vertical ticks (the "1-min periods") + a few time labels
+    let ticks="";
+    for(let i=0;i<N;i++){ ticks += `<line x1="${x(i)}" y1="${padT}" x2="${x(i)}" y2="${H-padB}" stroke="#ffffff" stroke-opacity="0.045" stroke-width="1"/>`; }
+    const tLab = i => timeLabels[i];
+    const labelStep = Math.max(1, Math.round(N/5));
+    for(let i=0;i<N-1;i+=labelStep){ ticks += `<text x="${x(i)}" y="${H-padB+16}" fill="var(--ink-faint)" font-size="10.5" text-anchor="middle" font-family="IBM Plex Mono">${tLab(i)}</text>`; }
+    ticks += `<text x="${x(N-1)}" y="${H-padB+16}" fill="var(--ok)" font-size="10.5" text-anchor="end" font-family="IBM Plex Mono">now</text>`;
+
+    // expected range band: shaded between the detection threshold and a mirrored upper bound
+    const halfWidth = expected.map((v,i)=> v - threshold[i]);
+    const bandTop = expected.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v+halfWidth[i]).toFixed(1)}`).join(" ");
+    const bandBot = expected.map((v,i)=>`L${x(i).toFixed(1)},${y(threshold[i]).toFixed(1)}`).reverse().join(" ");
+
+    // region shading: 3-min build-up (amber) and incident (red)
+    let regions="";
+    if(fireIndex>=0){
+      const bx = x(fireIndex-SUSTAIN+1);
+      regions += `<rect x="${bx}" y="${padT}" width="${x(fireIndex)-bx}" height="${H-padT-padB}" fill="#f2b23d14"/>`;
+      regions += `<rect x="${x(fireIndex)}" y="${padT}" width="${(W-padR)-x(fireIndex)}" height="${H-padT-padB}" fill="#ff5b570f"/>`;
+    }
+
+    // colored actual line, one segment per minute (color = worst of the two endpoints)
+    let segs="";
+    for(let i=1;i<N;i++){
+      const s = sev[state(i)]>=sev[state(i-1)] ? state(i) : state(i-1);
+      segs += `<line x1="${x(i-1)}" y1="${y(actual[i-1])}" x2="${x(i)}" y2="${y(actual[i])}" stroke="${COL[s]}" stroke-width="2.6" stroke-linecap="round"/>`;
+    }
+    // per-minute dots
+    let dots="";
+    for(let i=0;i<N;i++){ const st=state(i); const big = st!=="ok"; dots += `<circle cx="${x(i)}" cy="${y(actual[i])}" r="${big?3.4:2.1}" fill="${COL[st]}" ${st==="ok"?'opacity="0.9"':''}/>`; }
+
+    // breach counter badges over the sustained run
+    let badges="";
+    if(fireIndex>=0){
+      for(let k=0;k<SUSTAIN && fireIndex-SUSTAIN+1+k>=0;k++){ const i=fireIndex-SUSTAIN+1+k; badges += `<text x="${x(i)}" y="${y(actual[i])-11}" fill="${k===SUSTAIN-1?'var(--crit)':'var(--warn)'}" font-size="11" font-weight="800" text-anchor="middle" font-family="IBM Plex Mono">${k+1}</text>`; }
+    }
+    // isolated-noise callout (synthetic demo only — real data speaks for itself via state colors)
+    let noise = chartData ? "" : `<text x="${x(11)}" y="${y(actual[11])-10}" fill="var(--warn)" font-size="11" font-weight="800" text-anchor="middle" font-family="IBM Plex Mono">1</text>
+      <text x="${x(11)}" y="${y(actual[11])+18}" fill="var(--ink-faint)" font-size="9.5" text-anchor="middle" font-family="IBM Plex Mono">1-min dip → ignored ↺</text>`;
+
+    // fire marker
+    let fire="";
+    if(fireIndex>=0){
+      const fx=x(fireIndex);
+      fire = `<line x1="${fx}" y1="${padT}" x2="${fx}" y2="${H-padB}" stroke="var(--crit)" stroke-width="1.4" stroke-dasharray="4 4"/>
+        <text x="${fx-6}" y="${padT-14}" fill="var(--crit)" font-size="11" font-weight="800" text-anchor="end" font-family="IBM Plex Mono">⚠ INCIDENT FIRED · ${tLab(fireIndex)}</text>
+        <text x="${fx-6}" y="${padT-2}" fill="var(--ink-faint)" font-size="10" text-anchor="end" font-family="IBM Plex Mono">${SUSTAIN} / ${SUSTAIN} breached periods</text>
+        <circle cx="${x(N-1)}" cy="${y(actual[N-1])}" r="4.5" fill="var(--crit)"/><circle cx="${x(N-1)}" cy="${y(actual[N-1])}" r="4.5" fill="none" stroke="var(--crit)" stroke-opacity="0.4"><animate attributeName="r" values="4.5;9;4.5" dur="1.8s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values="0.5;0;0.5" dur="1.8s" repeatCount="indefinite"/></circle>`;
+    }
+
+    const thY=y(threshold[0]);
+    const svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Per-minute conversion versus expected range with sustained-breach detection">
+      ${ticks}
+      ${grid}
+      ${regions}
+      <path d="${bandTop} ${bandBot} Z" fill="#8892a41f" stroke="none"/>
+      <path d="${path(threshold)}" fill="none" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="2 4" opacity="0.75"/>
+      <text x="${W-padR}" y="${thY-5}" fill="var(--warn)" font-size="10" text-anchor="end" font-family="IBM Plex Mono" opacity="0.9">detection threshold</text>
+      <path d="${path(expected)}" fill="none" stroke="var(--ink-faint)" stroke-width="1.6" stroke-dasharray="5 4"/>
+      ${segs}
+      ${dots}
+      ${regions?'':''}
+      ${badges}
+      ${noise}
+      ${fire}
+    </svg>`;
+    $("#chart-wrap").innerHTML = svg;
+  }
+
+  /* ------------------------------------------------ LIVE STREAM ------------------------------------------------ */
+  const MERCHANTS=["PagoModa","TravelNow","TechStore"];
+  const ROUTES=[
+    {p:"Adyen",c:"Mexico",m:"Card"},{p:"Stripe",c:"Brazil",m:"PIX"},{p:"dLocal",c:"Brazil",m:"PIX"},
+    {p:"Stripe",c:"Colombia",m:"Card"},{p:"dLocal",c:"Mexico",m:"Wallet"},{p:"Adyen",c:"Colombia",m:"Card"},
+    {p:"Stripe",c:"Mexico",m:"Card"},{p:"MercadoPago",c:"Brazil",m:"Wallet"}
+  ];
+  let incidentRoutes = [];
+  function refreshIncidentRoutes(){
+    incidentRoutes = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active" && i.provider && i.country)
+      .map(i=>({p:i.provider, c:i.country, m:i.method}));
+  }
+  let clockT = new Date();
+  function tick(){ clockT = new Date(clockT.getTime()+1000); $("#clock").textContent = clockT.toTimeString().slice(0,8); }
+  function fmtT(){ return clockT.toTimeString().slice(0,8); }
+
+  let txCount = 12482;
+  function pushTx(){
+    const mrc = MERCHANTS[Math.random()*MERCHANTS.length|0];
+    const r = ROUTES[Math.random()*ROUTES.length|0];
+    // Bias declines toward whatever incidents are currently active, so the ticker matches the board
+    let declined = Math.random() < 0.14;
+    let code = "";
+    if(incidentRoutes.some(ir=> ir.p===r.p && ir.c===r.c)){ declined = Math.random()<0.42; }
+    if(declined) code = Math.random()<0.7 ? "05" : "51";
+    const amt = 40 + (Math.random()*180|0);
+    txCount++;
+    const el = document.createElement("div");
+    el.className="tx";
+    el.innerHTML = `<span class="t mono">${fmtT()}</span>
+      <span class="meta"><b>${mrc}</b> · <span class="dim">${r.p} · ${r.c} · ${r.m}</span></span>
+      <span class="right"><span class="amt mono">$${amt}</span><br><span class="st ${declined?'no':'ok'}">${declined?'Declined'+(code?' · '+code:''):'Approved'}</span></span>`;
+    const body = $("#stream-body");
+    body.insertBefore(el, body.firstChild);
+    while(body.children.length>7) body.removeChild(body.lastChild);
+    // subtle KPI update
+    $("#kpi-tx").textContent = txCount.toLocaleString();
+  }
+
+  /* ------------------------------------------------ INCIDENTS TABLE ------------------------------------------------ */
+  function sevChip(s){ return s==="crit"?'<span class="chip crit">Critical</span>':s==="high"?'<span class="chip high">High</span>':'<span class="chip warn">Investigating</span>'; }
+  function renderIncidentsTable(status){
+    const all = rcOrder.map(k=>INCIDENTS[k]).filter(Boolean).sort((a,b)=>a.priority-b.priority);
+    let rows=[];
+    if(status==="active"){ rows = all.filter(i=>i.status==="active"); }
+    else if(status==="investigating"){ rows = all.filter(i=>i.status==="investigating"); }
+    if(status==="resolved"){
+      $("#inc-rows").innerHTML = RESOLVED.map(r=>`<div class="grow" style="cursor:default">
+        <span>${sevChip(r.sev)}</span>
+        <span class="who"><b>${r.who}</b><span>resolved · ${r.date}</span></span>
+        <span class="colhide" style="color:var(--ink-soft)">${r.meta}</span>
+        <span class="colhide mono" style="color:var(--ink-soft)">${r.method}</span>
+        <span class="tnum" style="color:var(--ink-soft)">${r.conv}</span>
+        <span class="cellmoney">${r.money}/hr</span>
+        <span class="colhide mono">${r.affected}</span>
+        <span class="chip ok" style="justify-self:start">resolved</span>
+      </div>`).join("");
+      return;
+    }
+    $("#inc-rows").innerHTML = rows.map(inc=>{
+      const rc = inc.rootCause || '<span style="color:var(--warn)">Insufficient evidence</span>';
+      return `<div class="grow" data-open="${inc.key}">
+        <span>${sevChip(inc.severity)}</span>
+        <span class="who"><b>${inc.merchant}</b><span>${rc}</span></span>
+        <span class="colhide" style="color:var(--ink-soft)">${inc.provider} · ${inc.country}</span>
+        <span class="colhide mono" style="color:var(--ink-soft)">${inc.method}</span>
+        <span class="tnum celldrop">${inc.convFrom}→${inc.convTo}%</span>
+        <span class="cellmoney tnum">${inc.money?money(inc.money):'—'}${inc.money?'/hr':''}</span>
+        <span class="colhide mono">${inc.affected?inc.affected.toLocaleString()+'/hr':'—'}</span>
+        <span class="tnum">${inc.confidence}%</span>
+      </div>`;
+    }).join("");
+  }
+  function renderTabCounts(){
+    const all = rcOrder.map(k=>INCIDENTS[k]).filter(Boolean);
+    $("#c-active").textContent = all.filter(i=>i.status==="active").length;
+    $("#c-inv").textContent = all.filter(i=>i.status==="investigating").length;
+    $("#c-res").textContent = RESOLVED.length;
+  }
+  $$(".tab").forEach(t=> t.addEventListener("click", ()=>{
+    $$(".tab").forEach(x=>x.classList.remove("active")); t.classList.add("active");
+    renderIncidentsTable(t.dataset.status);
+  }));
+  $("#filters").innerHTML = FILTER_DEFS.map(f=>`<div class="filter"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8Z"/></svg>${f}</div>`).join("");
+  $$("#filters .filter").forEach(f=> f.addEventListener("click", ()=> f.classList.toggle("on")));
+
+  /* ------------------------------------------------ RESOLVED / MEMORY LIST ------------------------------------------------ */
+  function renderMemoryList(){
+    $("#mem-list").innerHTML = RESOLVED.length ? RESOLVED.map(m=>`<div class="mrow">
+      <span><b>${m.who}</b></span>
+      <span class="mono" style="color:var(--ink-faint)">${m.date}</span>
+      <span class="cellmoney">${m.money}</span>
+      <span style="color:var(--ink-soft);font-size:12px">${m.method||""}${m.conf?' · confidence '+m.conf:''}</span>
+    </div>`).join("") : '<div style="padding:18px 4px;color:var(--ink-faint);font-size:13px">No resolved incidents yet — incident memory isn\'t connected to live data in this build.</div>';
+  }
+
+  /* ------------------------------------------------ ROOT CAUSE EXPLORER ------------------------------------------------ */
+  let currentInc = null;
+  function renderSwitch(){
+    $("#rc-switch").innerHTML = rcOrder.map(k=>{
+      const i=INCIDENTS[k]; const color = i.severity==='crit'?'var(--crit)':i.severity==='high'?'var(--warn)':'var(--info)';
+      return `<div class="rc-pill ${k===currentInc?'active':''}" data-inc="${k}"><span class="mk" style="background:${color}"></span>${i.rootCause||'Insufficient evidence'} · ${i.money?money(i.money)+'/hr':'—'}</div>`;
+    }).join("");
+    $$("#rc-switch .rc-pill").forEach(p=> p.addEventListener("click", ()=>{ currentInc=p.dataset.inc; renderExplorer(); }));
+  }
+  function nodeDetail(n){
+    $("#nd-title").textContent = n.label;
+    $("#nd-status").innerHTML = n.status==="anomaly" ? '<span style="color:var(--crit);font-weight:800">● ANOMALY</span>' : '<span style="color:var(--ok);font-weight:800">● NORMAL</span>';
+    const cells = [
+      {k:"Conversion", v:n.conv}, {k:"Baseline", v:n.baseline}, {k:"Volume", v:n.volume},
+      {k:"Change", v:n.change}, {k:"Status", v:n.status==="anomaly"?"Anomaly":"Normal"}, {k:"Dimension value", v:n.label}
+    ];
+    $("#nd-grid").innerHTML = cells.map(c=>`<div class="nd"><div class="k">${c.k}</div><div class="v" style="${c.k==='Change'&&(c.v+'').includes('−')?'color:var(--crit)':c.k==='Change'?'color:var(--ok)':''}">${c.v}</div></div>`).join("");
+  }
+  function renderTree(){
+    const inc = INCIDENTS[currentInc];
+    let html="";
+    inc.tree.forEach((lvl, li)=>{
+      html += `<div class="tlevel"><div class="dimlab">${lvl.dim}</div><div class="nodes">`;
+      lvl.nodes.forEach((n, ni)=>{
+        html += `<div class="node ${n.status} ${n.sel?'sel':''}" data-l="${li}" data-n="${ni}">
+          <div class="nlab">${n.label}</div>
+          <div class="nstat">${n.status==='anomaly'?'● Anomaly':'● Normal'}</div>
+          <div class="nconv">${n.conv!=='—'?n.conv+' vs '+n.baseline:'decline share '+n.volume.replace('share ','')}</div>
+        </div>`;
+      });
+      html += `</div>`;
+      if(li < inc.tree.length-1){ html += `<div class="tconnect"><svg width="18" height="20" viewBox="0 0 18 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 1v14m0 0-4-4m4 4 4-4"/></svg></div>`; }
+      html += `</div>`;
+    });
+    $("#tree").innerHTML = html;
+    $$("#tree .node").forEach(nd=> nd.addEventListener("click", ()=>{
+      const inc = INCIDENTS[currentInc];
+      $$("#tree .node").forEach(x=>x.classList.remove("sel"));
+      nd.classList.add("sel");
+      nodeDetail(inc.tree[+nd.dataset.l].nodes[+nd.dataset.n]);
+    }));
+    // default select the last anomaly node (the root cause tip)
+    const sel = inc.tree.flatMap((l,li)=>l.nodes.map((n,ni)=>({n,li,ni}))).filter(o=>o.n.sel).pop();
+    if(sel) nodeDetail(sel.n);
+  }
+  function renderEvidence(){
+    const inc = INCIDENTS[currentInc];
+    $("#evi-rc").textContent = inc.rootCause || "Insufficient evidence";
+    $("#evi-rc").className = "rc" + (inc.rootCause?"":" muted");
+    $("#echain").innerHTML = inc.evidence.map(e=>`<li class="${e.cls||''}"><div class="el">${e.el}</div><div class="ev">${e.v}</div>${e.sub?`<div class="sub">${e.sub}</div>`:''}</li>`).join("");
+    $("#conf-pct").textContent = inc.confidence+"%";
+    $("#conf-fill").style.width = inc.confidence+"%";
+    $("#conf-fill").style.background = inc.confidence>=80?"linear-gradient(90deg,#34d399,#a7f3d0)":inc.confidence>=65?"linear-gradient(90deg,#f2b23d,#ffd98a)":"linear-gradient(90deg,#f2b23d,#ff8f6b)";
+    const cn = $("#conf-note"); cn.textContent = inc.confNote.text; cn.className = "conf-note "+inc.confNote.cls;
+    // recommendation
+    $("#rec-action").textContent = inc.recommendation.action;
+    $("#rec-why").innerHTML = inc.recommendation.why.map(w=>`<li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>${w}</li>`).join("");
+    const recCard = $("#rec-card");
+    if(!inc.rootCause){ recCard.style.borderColor="#5c4718"; $(".rl",recCard).style.color="var(--warn)"; }
+    else { recCard.style.borderColor="#26405f"; $(".rl",recCard).style.color="var(--info)"; }
+    // financial
+    if(inc.financial){
+      $("#fin").innerHTML = `
+        <div class="f money"><div class="v tnum">${inc.financial.revenue}</div><div class="k">Revenue at risk / hour</div></div>
+        <div class="f"><div class="v tnum">${inc.financial.lost}</div><div class="k">Estimated lost approvals / hr</div></div>
+        <div class="f"><div class="v tnum">${inc.financial.daily}</div><div class="k">Projected daily impact</div></div>`;
+      $("#fin-note").textContent = "Estimated using historical expected conversion, current transaction volume and average transaction value. Directional estimate, not exact accounting.";
+    } else {
+      $("#fin").innerHTML = `<div class="f" style="grid-column:1/-1;border-color:#5c4718"><div class="v" style="color:var(--warn);font-size:19px">Not quantified yet</div><div class="k">Financial impact is withheld until a root cause reaches sufficient confidence. The system does not attach a dollar figure to a guess.</div></div>`;
+      $("#fin-note").textContent = "No confident root cause → no defensible cost estimate. Honesty over false precision.";
+    }
+  }
+  function renderExplorer(){ renderSwitch(); renderTree(); renderEvidence(); }
+
+  /* ------------------------------------------------ NAVIGATION ------------------------------------------------ */
+  const VIEW_TITLES = {command:"Command Center", incidents:"Incidents", explorer:"Root Cause Explorer", memory:"Incident Memory"};
+  function go(view){
+    $$(".view").forEach(v=>v.classList.remove("active"));
+    $("#view-"+view).classList.add("active");
+    $$(".nav-item").forEach(n=>n.classList.remove("active"));
+    const navMatch = $$('.nav-item').find(n=>n.dataset.view===view);
+    if(navMatch) navMatch.classList.add("active");
+    $("#crumb").textContent = VIEW_TITLES[view];
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+  $$(".nav-item").forEach(n=> n.addEventListener("click", ()=> go(n.dataset.view)));
+
+  // open incident -> explorer
+  function openIncident(key){ currentInc = key==="uncertainty"?"uncertainty":key; renderExplorer(); go("explorer"); }
+  document.addEventListener("click", e=>{
+    const t = e.target.closest("[data-open]");
+    if(t){ openIncident(t.dataset.open); }
+  });
+
+  /* ------------------------------------------------ TOAST ------------------------------------------------ */
+  let toastT;
+  function toast(msg){
+    const el=$("#toast"); el.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>'+msg;
+    el.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),3200);
+  }
+  $("#rec-review").addEventListener("click", ()=> toast("Recommendation sent to operations for review — no changes executed."));
+
+  /* ------------------------------------------------ TRIAL BY FIRE ------------------------------------------------ */
+  const STEPS = ["Analyzing provider…","Analyzing country…","Analyzing payment method…","Analyzing merchant…","Analyzing issuing bank…","Analyzing decline codes…"];
+  let tbfRunning=false;
+  function openTrial(){
+    const ov=$("#overlay"); ov.classList.add("open");
+    $("#tbf-result").classList.remove("show");
+    const stepsEl=$("#tbf-steps");
+    stepsEl.innerHTML = STEPS.map((s,i)=>`<div class="tstep" data-i="${i}"><span class="sp"></span><span class="lab">${s}</span></div>`).join("");
+    if(tbfRunning) return;
+    tbfRunning=true;
+    const steps=$$("#tbf-steps .tstep");
+    let i=0;
+    function run(){
+      if(i>0){ const prev=steps[i-1]; prev.classList.remove("run"); prev.classList.add("done"); prev.querySelector(".sp").innerHTML='<svg class="tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>'; }
+      if(i>=steps.length){ $("#tbf-result").classList.add("show"); tbfRunning=false; return; }
+      const cur=steps[i]; cur.classList.add("run"); cur.querySelector(".sp").innerHTML='<span class="ring"></span>';
+      i++; setTimeout(run, 620);
+    }
+    setTimeout(run, 450);
+  }
+  $("#open-trial").addEventListener("click", openTrial);
+  $("#tbf-close").addEventListener("click", ()=> $("#overlay").classList.remove("open"));
+  $("#tbf-dismiss").addEventListener("click", ()=> $("#overlay").classList.remove("open"));
+  $("#overlay").addEventListener("click", e=>{ if(e.target===$("#overlay")) $("#overlay").classList.remove("open"); });
+  $("#tbf-open-explorer").addEventListener("click", ()=>{
+    // inject the trial incident live
+    if(!INCIDENTS.trial){
+      INCIDENTS.trial = {
+        key:"trial", priority:3, severity:"high", sevLabel:"High", status:"active",
+        merchant:"TravelNow", provider:"Adyen", country:"Colombia", method:"Card", bank:"Bancolombia",
+        rootCause:"Adyen × Colombia × Card × Bancolombia",
+        convFrom:90.7, convTo:63.9, money:8740, affected:1180, confidence:94, start:"14:31", duration:"1 min",
+        tree:[
+          {dim:"All transactions", nodes:[{label:"All transactions", status:"anomaly", conv:"—", baseline:"91.0%", volume:"12,900/hr", change:"drop detected", sel:true}]},
+          {dim:"Provider", nodes:[
+            {label:"Adyen", status:"anomaly", conv:"78.0%", baseline:"91.1%", volume:"3,900/hr", change:"−13.1 pp", sel:true},
+            {label:"Stripe", status:"normal", conv:"90.7%", baseline:"90.9%", volume:"5,600/hr", change:"−0.2 pp"},
+            {label:"dLocal", status:"normal", conv:"90.9%", baseline:"91.2%", volume:"2,900/hr", change:"−0.3 pp"}]},
+          {dim:"Country", nodes:[
+            {label:"Colombia", status:"anomaly", conv:"70.2%", baseline:"90.6%", volume:"1,700/hr", change:"−20.4 pp", sel:true},
+            {label:"Mexico", status:"normal", conv:"90.8%", baseline:"91.0%", volume:"1,300/hr", change:"−0.2 pp"},
+            {label:"Brazil", status:"normal", conv:"91.0%", baseline:"91.1%", volume:"900/hr", change:"−0.1 pp"}]},
+          {dim:"Issuing bank", nodes:[
+            {label:"Bancolombia", status:"anomaly", conv:"63.9%", baseline:"90.7%", volume:"1,180/hr", change:"−26.8 pp", sel:true},
+            {label:"Davivienda", status:"normal", conv:"90.4%", baseline:"90.6%", volume:"340/hr", change:"−0.2 pp"},
+            {label:"BBVA CO", status:"normal", conv:"90.9%", baseline:"91.0%", volume:"180/hr", change:"−0.1 pp"}]},
+          {dim:"Decline code", nodes:[
+            {label:"Code 51", status:"anomaly", conv:"—", baseline:"4.0%", volume:"share 33.1%", change:"+728%", sel:true},
+            {label:"Code 05", status:"normal", conv:"—", baseline:"5.1%", volume:"share 5.6%", change:"+10%"},
+            {label:"Other", status:"normal", conv:"—", baseline:"90.9%", volume:"share 61.3%", change:"normal"}]}
+        ],
+        evidence:[
+          {el:"Root cause", cls:"key", v:'<span class="a">Adyen × Colombia × Card × Bancolombia</span>', sub:"a 4-dimension combination the system was never pre-configured for"},
+          {el:"Expected conversion", v:'<span class="a">90.7%</span>'},
+          {el:"Actual conversion", cls:"bad", v:'<span class="big">63.9%</span>', sub:"−26.8 pp on Bancolombia cards"},
+          {el:"Decline code 51", cls:"bad", v:'4.0% → <span class="big">33.1%</span>', sub:"+728% — insufficient funds / issuer refusal spike"},
+          {el:"Other CO banks", v:'<span class="ok">NORMAL ✓</span>', sub:"Davivienda, BBVA CO healthy"},
+          {el:"Other providers", v:'<span class="ok">NORMAL ✓</span>', sub:"Bancolombia works on Stripe & dLocal"},
+          {el:"Affected volume", v:'<span class="a">1,180 tx / hour</span>'}
+        ],
+        confNote:{cls:"strong", text:"Strong evidence — isolated to one issuing bank on one provider in one country. The system found this unaided."},
+        financial:{revenue:"$8,740", lost:"760", daily:"$210K"},
+        recommendation:{ action:"Temporarily reroute Bancolombia card traffic away from Adyen while the issuer decline spike persists.", why:["94% diagnosis confidence","Newly emerged, unrehearsed incident","Isolated issuing-bank + provider degradation","Decline code 51 spike (+728%)"] }
+      };
+      if(!rcOrder.includes("trial")) rcOrder.push("trial");
+    }
+    $("#overlay").classList.remove("open");
+    refreshIncidentRoutes(); renderCommandIncidents(); renderKpis(null); renderTabCounts();
+    currentInc="trial"; renderExplorer(); go("explorer");
+    toast("New incident diagnosed live and added to the board.");
+  });
+
+  /* ------------------------------------------------ INIT ------------------------------------------------ */
+  let marBase = 22640;
+  async function init(){
+    const data = await loadDashboardData();
+    if (!usingRealData) toast("No dashboard_data.json found — showing illustrative demo data. Run src/build_dashboard.py to see live results.");
+
+    currentInc = rcOrder[0] || null;
+    refreshIncidentRoutes();
+    renderCommandIncidents();
+    renderKpis(data);
+    buildChart(data && data.chart);
+    renderIncidentsTable("active");
+    renderTabCounts();
+    renderMemoryList();
+    if (currentInc) renderExplorer();
+
+    const activeMoney = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active").reduce((s,i)=>s+(i.money||0),0);
+    marBase = activeMoney || marBase;
+    txCount = (data && data.kpis && data.kpis.transactions_window) || txCount;
+    $("#kpi-tx").textContent = txCount.toLocaleString();
+
+    /* ------------------------------------------------ LOOPS ------------------------------------------------ */
+    setInterval(tick, 1000);
+    pushTx(); pushTx(); pushTx();
+    setInterval(pushTx, 1600);
+    // subtle money-at-risk shimmer to feel live, centered on the real figure once loaded
+    setInterval(()=>{ const v = marBase + (Math.random()*180-40|0); $("#mar-value").textContent = Math.max(0,v).toLocaleString(); }, 2500);
+  }
+  init();
+
+})();
+</script>
+</body></html>
