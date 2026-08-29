@@ -1014,14 +1014,17 @@
       date: r.resolved_at ? new Date(r.resolved_at).toLocaleDateString("en-US", {month:"short", day:"2-digit"}) : "—"};
   }
 
-  let INCIDENTS = MOCK_INCIDENTS, RESOLVED = MOCK_RESOLVED, MEMORY = [], MEMORY_MATCHES = [], rcOrder = ["santander","dlocal","uncertainty"], usingRealData = false;
+  let INCIDENTS = MOCK_INCIDENTS, RESOLVED = MOCK_RESOLVED, MEMORY = [], MEMORY_MATCHES = [], rcOrder = ["santander","dlocal","uncertainty"], usingRealData = false, lastGeneratedAt = null;
+  const POLL_MS = 8000;
 
-  async function loadDashboardData(){
+  async function loadDashboardData(isPoll){
     try {
       const res = await fetch("./dashboard_data.json", {cache:"no-store"});
       if (!res.ok) throw new Error("no dashboard_data.json");
       const data = await res.json();
-      if (!data.incidents || !data.incidents.length) throw new Error("empty dataset");
+      if (data.generated_at === lastGeneratedAt) return null; // no new snapshot since last poll — skip a redundant re-render
+      if (!data.incidents) throw new Error("malformed dataset");
+      lastGeneratedAt = data.generated_at;
       const built = {};
       data.incidents.forEach(entry => { built[entry.incident_id] = realIncidentToView(entry); });
       INCIDENTS = built;
@@ -1032,6 +1035,9 @@
       usingRealData = true;
       return data;
     } catch (err) {
+      // A poll can transiently fail (file mid-write, momentarily absent before the live script's first refresh) —
+      // keep showing the last good real data instead of yanking the view back to the mock demo.
+      if (isPoll && usingRealData) return null;
       INCIDENTS = MOCK_INCIDENTS; RESOLVED = MOCK_RESOLVED; MEMORY = []; MEMORY_MATCHES = []; rcOrder = ["santander","dlocal","uncertainty"]; usingRealData = false;
       return null;
     }
@@ -1083,7 +1089,7 @@
       $("#kpi-conv-expected").textContent = "expected "+data.kpis.expected_conversion_pct.toFixed(1)+"%";
     }
     $("#kpi-conv-card").classList.toggle("state-crit", active.some(i=>i.severity==="crit"));
-    if (data && data.kpis) $("#kpi-tx-note").textContent = `last ${Math.round((data.kpis.transactions_window||0))} transactions`;
+    if (data && data.kpis) $("#kpi-tx-note").textContent = `last ${Math.round((data.kpis.transactions_window||0)).toLocaleString("en-US")} transactions`;
     $("#kpi-active").textContent = active.length;
     $("#kpi-active-breakdown").textContent = active.length ? `${crit} critical · ${high} high` : "all clear";
     const healthEl = $("#kpi-health");
@@ -1182,9 +1188,13 @@
     let fire="";
     if(fireIndex>=0){
       const fx=x(fireIndex);
+      // Near the left edge an end-anchored label would overflow past the axis labels; flip it to start-anchored.
+      const nearLeftEdge = fx < padL+140;
+      const labelX = nearLeftEdge ? fx+8 : fx-6;
+      const anchor = nearLeftEdge ? "start" : "end";
       fire = `<line x1="${fx}" y1="${padT}" x2="${fx}" y2="${H-padB}" stroke="var(--crit)" stroke-width="1.4" stroke-dasharray="4 4"/>
-        <text x="${fx-6}" y="${padT-14}" fill="var(--crit)" font-size="11" font-weight="800" text-anchor="end" font-family="IBM Plex Mono">⚠ INCIDENT FIRED · ${tLab(fireIndex)}</text>
-        <text x="${fx-6}" y="${padT-2}" fill="var(--ink-faint)" font-size="10" text-anchor="end" font-family="IBM Plex Mono">${SUSTAIN} / ${SUSTAIN} breached periods</text>
+        <text x="${labelX}" y="${padT-14}" fill="var(--crit)" font-size="11" font-weight="800" text-anchor="${anchor}" font-family="IBM Plex Mono">⚠ INCIDENT FIRED · ${tLab(fireIndex)}</text>
+        <text x="${labelX}" y="${padT-2}" fill="var(--ink-faint)" font-size="10" text-anchor="${anchor}" font-family="IBM Plex Mono">${SUSTAIN} / ${SUSTAIN} breached periods</text>
         <circle cx="${x(N-1)}" cy="${y(actual[N-1])}" r="4.5" fill="var(--crit)"/><circle cx="${x(N-1)}" cy="${y(actual[N-1])}" r="4.5" fill="none" stroke="var(--crit)" stroke-opacity="0.4"><animate attributeName="r" values="4.5;9;4.5" dur="1.8s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values="0.5;0;0.5" dur="1.8s" repeatCount="indefinite"/></circle>`;
     }
 
@@ -1500,16 +1510,16 @@
 
   /* ------------------------------------------------ INIT ------------------------------------------------ */
   let marBase = 22640;
-  async function init(){
-    const data = await loadDashboardData();
-    if (!usingRealData) toast("No dashboard_data.json found — showing illustrative demo data. Run src/build_dashboard.py to see live results.");
 
-    currentInc = rcOrder[0] || null;
+  function renderAll(data){
+    // Keep the current explorer selection if that incident is still around; otherwise fall back to the top one.
+    currentInc = (currentInc && INCIDENTS[currentInc]) ? currentInc : (rcOrder[0] || null);
+    const activeTab = $(".tab.active");
     refreshIncidentRoutes();
     renderCommandIncidents();
     renderKpis(data);
     buildChart(data && data.chart);
-    renderIncidentsTable("active");
+    renderIncidentsTable(activeTab ? activeTab.dataset.status : "active");
     renderTabCounts();
     renderMemoryList();
     renderMemoryPanel();
@@ -1517,8 +1527,22 @@
 
     const activeMoney = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active").reduce((s,i)=>s+(i.money||0),0);
     marBase = activeMoney || marBase;
-    txCount = (data && data.kpis && data.kpis.transactions_window) || txCount;
-    $("#kpi-tx").textContent = txCount.toLocaleString();
+    if (data && data.kpis && data.kpis.transactions_window) {
+      txCount = data.kpis.transactions_window;
+      $("#kpi-tx").textContent = txCount.toLocaleString();
+    }
+  }
+
+  async function refreshDashboard(){
+    const data = await loadDashboardData(true);
+    if (data) renderAll(data); // null means "nothing new" or "poll failed, kept last good state" — skip a no-op re-render
+  }
+
+  async function init(){
+    const data = await loadDashboardData(false);
+    if (!usingRealData) toast("No dashboard_data.json found — showing illustrative demo data. Run src/live_dashboard.py or build_dashboard.py to see live results.");
+    renderAll(data);
+    setInterval(refreshDashboard, POLL_MS);
 
     /* ------------------------------------------------ LOOPS ------------------------------------------------ */
     setInterval(tick, 1000);
