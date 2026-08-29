@@ -697,7 +697,7 @@
     <!-- ============ VIEW: MEMORY ============ -->
     <section class="view" id="view-memory">
       <div class="section-h"><h2>Recurrence check</h2><span class="hint">every new incident is matched against operational history</span></div>
-      <div class="card pad" style="margin-bottom:20px">
+      <div class="card pad" id="memory-current" style="margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
           <div class="sim-badge">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.7 1 6.3 2.7L21 8"/><path d="M21 3v5h-5"/></svg>
@@ -1008,7 +1008,7 @@
       date: r.resolved_at ? new Date(r.resolved_at).toLocaleDateString("en-US", {month:"short", day:"2-digit"}) : "—"};
   }
 
-  let INCIDENTS = MOCK_INCIDENTS, RESOLVED = MOCK_RESOLVED, rcOrder = ["santander","dlocal","uncertainty"], usingRealData = false;
+  let INCIDENTS = MOCK_INCIDENTS, RESOLVED = MOCK_RESOLVED, MEMORY = [], MEMORY_MATCHES = [], rcOrder = ["santander","dlocal","uncertainty"], usingRealData = false;
 
   async function loadDashboardData(){
     try {
@@ -1020,11 +1020,13 @@
       data.incidents.forEach(entry => { built[entry.incident_id] = realIncidentToView(entry); });
       INCIDENTS = built;
       RESOLVED = (data.resolved||[]).map(resolvedEntryToView);
+      MEMORY = data.resolved||[];
+      MEMORY_MATCHES = data.incidents.filter(entry => entry.recurrence);
       rcOrder = data.incidents.map(e=>e.incident_id);
       usingRealData = true;
       return data;
     } catch (err) {
-      INCIDENTS = MOCK_INCIDENTS; RESOLVED = MOCK_RESOLVED; rcOrder = ["santander","dlocal","uncertainty"]; usingRealData = false;
+      INCIDENTS = MOCK_INCIDENTS; RESOLVED = MOCK_RESOLVED; MEMORY = []; MEMORY_MATCHES = []; rcOrder = ["santander","dlocal","uncertainty"]; usingRealData = false;
       return null;
     }
   }
@@ -1290,6 +1292,27 @@
     </div>`).join("") : '<div style="padding:18px 4px;color:var(--ink-faint);font-size:13px">No resolved incidents yet — incident memory isn\'t connected to live data in this build.</div>';
   }
 
+  function memorySignature(segment){ return Object.entries(segment||{}).map(([key,value])=>`${key}=${value}`).join(" × "); }
+  function renderMemoryPanel(){
+    if(!usingRealData) return;
+    const target = $("#memory-current");
+    const match = MEMORY_MATCHES[0];
+    if(!match){
+      target.innerHTML = `<div style="padding:8px 2px"><div class="section-h"><h2>No recurrence detected</h2></div><p style="color:var(--ink-soft);font-size:13.5px;margin:0">${MEMORY.length} resolved incident(s) were checked. None matches an active incident strongly enough to claim a recurrence.</p></div>`;
+      return;
+    }
+    const previous = match.recurrence.previous_incident;
+    const current = match.diagnosis;
+    const similarity = Math.round(match.recurrence.similarity*100);
+    const currentCost = match.cost_per_hour_usd || 0;
+    target.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+      <div class="sim-badge">Similar incident found · ${similarity}% similarity</div>
+      <div style="font-size:12.5px;color:var(--ink-soft)">Matched against resolved operational history</div></div>
+      <div class="mem-compare"><div class="mem-side"><div class="mlab">Previous resolved incident</div><div class="sig">${memorySignature(previous.root_cause_segment)}</div><div class="date">${new Date(previous.resolved_at).toLocaleDateString()} · resolved in ${previous.duration_minutes||"—"} min</div><div style="margin-top:12px"><div class="row"><span>Financial impact</span><span class="v" style="color:var(--money)">$${Math.round(previous.cost_per_hour_usd||0).toLocaleString()}/hr</span></div><div class="row"><span>Decline reason</span><span class="v mono">${previous.decline_reason||"—"}</span></div></div></div>
+      <div class="mem-arrow">→</div><div class="mem-side"><div class="mlab">Current incident</div><div class="sig" style="color:var(--crit)">${memorySignature(match.root_cause_segment)}</div><div class="date">Active now · confidence ${match.confidence_pct||"—"}%</div><div style="margin-top:12px"><div class="row"><span>Financial impact</span><span class="v" style="color:var(--money)">$${Math.round(currentCost).toLocaleString()}/hr</span></div><div class="row"><span>Decline reason</span><span class="v mono">${(current.dominant_decline||{}).decline_reason||"—"}</span></div></div></div></div>
+      <div style="margin-top:18px;padding:14px 16px;background:var(--ok-dim);border:1px solid #1c5843;border-radius:12px;font-size:13.5px;color:#a7f3d0"><b>Previous resolution:</b> ${previous.resolution_note||"No resolution note available."}</div>`;
+  }
+
   /* ------------------------------------------------ ROOT CAUSE EXPLORER ------------------------------------------------ */
   let currentInc = null;
   function renderSwitch(){
@@ -1478,6 +1501,7 @@
     renderIncidentsTable("active");
     renderTabCounts();
     renderMemoryList();
+    renderMemoryPanel();
     if (currentInc) renderExplorer();
 
     const activeMoney = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active").reduce((s,i)=>s+(i.money||0),0);

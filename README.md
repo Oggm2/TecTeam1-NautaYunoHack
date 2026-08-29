@@ -73,7 +73,7 @@ sin detener el pipeline:
 
 ```powershell
 py src/generator.py --events-per-second 50 --injections examples/injections.json |
-  Tee-Object -FilePath data/live_transactions.jsonl |
+  Tee-Object -FilePath data/live_transactions.jsonl -Encoding utf8 |
   py src/detector.py --history data/history.jsonl --window-seconds 60 --evaluation-seconds 15 --persistence 2 --min-attempts 30 --min-history-attempts 50 |
   Tee-Object -FilePath data/alerts.jsonl
 ```

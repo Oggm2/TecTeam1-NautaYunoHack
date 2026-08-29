@@ -1,0 +1,22 @@
+{
+  "incidents": [
+    {
+      "incident_id": "memory-stripe-br-2026-08-26",
+      "root_cause_segment": {"provider": "stripe", "country": "BR"},
+      "decline_reason": "do_not_honor",
+      "resolved_at": "2026-08-26T18:42:00+00:00",
+      "duration_minutes": 41,
+      "cost_per_hour_usd": 48400,
+      "resolution_note": "Stripe confirmó degradación regional; se enrutararon temporalmente pagos de Brasil a un provider alterno."
+    },
+    {
+      "incident_id": "memory-banorte-2026-08-19",
+      "root_cause_segment": {"merchant": "PagoModa", "country": "MX", "issuing_bank": "Banorte", "payment_method": "card"},
+      "decline_reason": "issuer_unavailable",
+      "resolved_at": "2026-08-19T15:18:00+00:00",
+      "duration_minutes": 27,
+      "cost_per_hour_usd": 16100,
+      "resolution_note": "Banorte restableció el servicio; se monitoreó la recuperación de conversión."
+    }
+  ]
+}

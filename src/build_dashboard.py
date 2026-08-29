@@ -1,21 +1,15 @@
-"""End-to-end orchestrator: simulate a live window, detect, diagnose, cost,
+"""End-to-end orchestrator: replay captured live transactions, detect, diagnose, cost,
 prioritize and explain every incident, then write a single JSON file the
 frontend renders directly.
 
-This exists so the whole pipeline can be exercised (and the dashboard
-rebuilt) without juggling multiple terminals piping into each other. It
-reuses the exact same engines the manual pipeline in the README uses —
-generator.create_event, detector.DetectionEngine, diagnoser.diagnose,
-explainer.deterministic_explanation, prioritizer.prioritize — it just drives
-them in-process over a compressed time range instead of real wall-clock time,
-against the same historical baseline (data/history.jsonl by default).
+It uses data/live_transactions.jsonl produced by generator.py, not a separate
+compressed simulation. The frontend reads the snapshot it writes.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import random
 import sys
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
@@ -25,7 +19,7 @@ from typing import Any
 import detector
 import diagnoser
 import explainer
-import generator
+import incident_memory
 import prioritizer
 from baseline import BaselineStore
 from detector import CONVERSION_STATUSES, parse_timestamp
@@ -33,10 +27,13 @@ from detector import CONVERSION_STATUSES, parse_timestamp
 
 def load_jsonl(path: str) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
-    with Path(path).open(encoding="utf-8") as source:
-        for line in source:
-            if line.strip():
-                events.append(json.loads(line))
+    raw = Path(path).read_bytes()
+    # Windows PowerShell's Tee-Object writes UTF-16 by default; Python tools
+    # and the generator itself write UTF-8. Support both captured formats.
+    encoding = "utf-16" if raw.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig"
+    for line in raw.decode(encoding).splitlines():
+        if line.strip():
+            events.append(json.loads(line))
     return events
 
 
@@ -75,7 +72,7 @@ def expected_conversion_at(buckets: dict[tuple[int, int], list[int]], totals: li
     return (totals[1] + 1) / (totals[0] + 2)
 
 
-def simulate(history_events: list[dict[str, Any]], args: argparse.Namespace) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def replay_transactions(history_events: list[dict[str, Any]], events: list[dict[str, Any]], args: argparse.Namespace) -> list[dict[str, Any]]:
     detector_store = build_store(history_events, detector.SEGMENT_DEFINITIONS)
     detector_args = argparse.Namespace(
         window_seconds=args.window_seconds, evaluation_seconds=args.evaluation_seconds,
@@ -84,25 +81,24 @@ def simulate(history_events: list[dict[str, Any]], args: argparse.Namespace) -> 
         z_threshold=args.z_threshold,
     )
     engine = detector.DetectionEngine(detector_store, detector_args)
-    injections = generator.load_injections(args.injections)
-
-    rng = random.Random(args.seed)
-    interval = 1 / args.events_per_second
-    start_time = datetime.now(UTC) - timedelta(seconds=args.sim_seconds)
-    events: list[dict[str, Any]] = []
     alerts: list[dict[str, Any]] = []
-    elapsed, last_evaluation = 0.0, 0.0
-    while elapsed <= args.sim_seconds:
-        timestamp = start_time + timedelta(seconds=elapsed)
-        event = generator.create_event(timestamp, elapsed, rng, injections, include_processing=False)
+    ordered = sorted(events, key=lambda event: parse_timestamp(event.get("completed_at")) or datetime.min.replace(tzinfo=UTC))
+    first_time = next((parse_timestamp(event.get("completed_at")) for event in ordered if parse_timestamp(event.get("completed_at"))), None)
+    if first_time is None:
+        return alerts
+    next_evaluation = first_time + timedelta(seconds=args.evaluation_seconds)
+    last_time = first_time
+    for event in ordered:
+        timestamp = parse_timestamp(event.get("completed_at"))
+        if timestamp is None:
+            continue
+        while timestamp >= next_evaluation:
+            alerts.extend(engine.evaluate(next_evaluation))
+            next_evaluation += timedelta(seconds=args.evaluation_seconds)
         engine.add(event)
-        events.append(event)
-        elapsed += interval
-        if elapsed - last_evaluation >= args.evaluation_seconds:
-            alerts.extend(engine.evaluate(start_time + timedelta(seconds=elapsed)))
-            last_evaluation = elapsed
-    alerts.extend(engine.evaluate(start_time + timedelta(seconds=elapsed)))
-    return events, alerts
+        last_time = timestamp
+    alerts.extend(engine.evaluate(last_time))
+    return alerts
 
 
 def diagnose_alerts(alerts: list[dict[str, Any]], events: list[dict[str, Any]], history_events: list[dict[str, Any]], args: argparse.Namespace) -> list[dict[str, Any]]:
@@ -137,7 +133,7 @@ def confidence_percent(diagnosis: dict[str, Any]) -> int:
     return {"high": 90, "medium": 70, "low": 40}.get(diagnosis.get("confidence", "low"), 40)
 
 
-def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident]) -> list[dict[str, Any]]:
+def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident], memory: list[dict[str, Any]]) -> list[dict[str, Any]]:
     entries = []
     for incident in prioritized:
         diagnosis = incident.latest_diagnosis
@@ -145,6 +141,7 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident]) -
         window = diagnosis.get("incident_window", {})
         started_at, ended_at = parse_timestamp(window.get("started_at")), parse_timestamp(window.get("ended_at"))
         severity, status = classify_severity(diagnosis, incident.priority_rank)
+        recurrence = incident_memory.match(diagnosis, memory)
         entries.append({
             "incident_id": diagnosis.get("incident_id"),
             "alert_id": diagnosis.get("alert_id"),
@@ -161,6 +158,7 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident]) -
             "root_cause_segment": segment,
             "root_cause_label": " × ".join(segment.values()) if segment else None,
             "duration_minutes": round((ended_at - started_at).total_seconds() / 60, 1) if started_at and ended_at else None,
+            "recurrence": recurrence,
             "diagnosis": diagnosis,
         })
     return entries
@@ -222,11 +220,9 @@ def build_kpis(entries: list[dict[str, Any]], chart: dict[str, Any], transaction
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Simulate a live window and build the full dashboard JSON for the frontend.")
+    parser = argparse.ArgumentParser(description="Build dashboard data from captured live transaction JSONL.")
     parser.add_argument("--history", default="data/history.jsonl")
-    parser.add_argument("--injections", default="examples/injections.json")
-    parser.add_argument("--sim-seconds", type=int, default=900)
-    parser.add_argument("--events-per-second", type=float, default=15.0)
+    parser.add_argument("--transactions", default="data/live_transactions.jsonl")
     parser.add_argument("--window-seconds", type=int, default=300)
     parser.add_argument("--evaluation-seconds", type=int, default=30)
     parser.add_argument("--persistence", type=int, default=3)
@@ -238,9 +234,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-contribution", type=float, default=0.60)
     parser.add_argument("--max-depth", type=int, default=3)
     parser.add_argument("--chart-minutes", type=int, default=30)
-    parser.add_argument("--seed", type=int)
     parser.add_argument("--diagnoses-out", default="data/diagnoses.jsonl")
     parser.add_argument("--priorities-out", default="data/priorities.json")
+    parser.add_argument("--alerts-out", default="data/alerts.jsonl")
+    parser.add_argument("--memory", default="data/incident_memory.json")
     parser.add_argument("--output", default="frontend/dashboard_data.json")
     return parser.parse_args()
 
@@ -248,8 +245,14 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     history_events = load_jsonl(args.history)
-    events, alerts = simulate(history_events, args)
-    print(f"simulated {len(events)} transactions, {len(alerts)} alert(s)", file=sys.stderr)
+    events = load_jsonl(args.transactions)
+    alerts = replay_transactions(history_events, events, args)
+    print(f"replayed {len(events)} captured transactions, {len(alerts)} alert(s)", file=sys.stderr)
+
+    Path(args.alerts_out).parent.mkdir(parents=True, exist_ok=True)
+    with Path(args.alerts_out).open("w", encoding="utf-8") as sink:
+        for alert in alerts:
+            sink.write(json.dumps(alert, separators=(",", ":")) + "\n")
 
     diagnoses = diagnose_alerts(alerts, events, history_events, args)
     Path(args.diagnoses_out).parent.mkdir(parents=True, exist_ok=True)
@@ -260,7 +263,8 @@ def main() -> None:
     prioritized = prioritizer.prioritize(diagnoses)
     Path(args.priorities_out).write_text(json.dumps(prioritizer.to_json(prioritized), indent=2), encoding="utf-8")
 
-    entries = build_incident_entries(prioritized)
+    memory = incident_memory.load(args.memory)
+    entries = build_incident_entries(prioritized, memory)
     chart = build_chart(events, alerts, history_events, args)
     kpis = build_kpis(entries, chart, transactions_window=len(events))
 
@@ -269,7 +273,7 @@ def main() -> None:
         "kpis": kpis,
         "chart": chart,
         "incidents": entries,
-        "resolved": [],
+        "resolved": memory,
     }
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
