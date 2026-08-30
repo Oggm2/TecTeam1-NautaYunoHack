@@ -53,11 +53,20 @@ class Injection:
     filters: dict[str, str]
     decline_reason: str = "do_not_honor"
     duration_seconds: float | None = None
+    traffic_share: float = 0.0
+    activated_at: datetime | None = None
 
-    def applies_to(self, event: dict[str, Any], elapsed_seconds: float) -> bool:
+    def active_at(self, timestamp: datetime, elapsed_seconds: float) -> bool:
+        if self.activated_at is not None:
+            if timestamp < self.activated_at:
+                return False
+            return self.duration_seconds is None or timestamp <= self.activated_at + timedelta(seconds=self.duration_seconds)
         if elapsed_seconds < self.start_after_seconds:
             return False
-        if self.duration_seconds is not None and elapsed_seconds > self.start_after_seconds + self.duration_seconds:
+        return self.duration_seconds is None or elapsed_seconds <= self.start_after_seconds + self.duration_seconds
+
+    def applies_to(self, event: dict[str, Any], timestamp: datetime, elapsed_seconds: float) -> bool:
+        if not self.active_at(timestamp, elapsed_seconds):
             return False
         return all(event.get(field) == value for field, value in self.filters.items())
 
@@ -83,11 +92,16 @@ def load_injections(path: str | None) -> list[Injection]:
         if not 0 <= approval_rate <= 1:
             raise ValueError("approval_rate must be between 0 and 1.")
         reason = item.get("decline_reason", item.get("decline_code", "do_not_honor"))
+        traffic_share = float(item.get("traffic_share", 0))
+        if not 0 <= traffic_share <= 1:
+            raise ValueError("traffic_share must be between 0 and 1.")
+        activated_at = item.get("activated_at")
         injections.append(Injection(
             name=item.get("name", f"injection-{index + 1}"),
             start_after_seconds=float(item.get("start_after_seconds", 0)),
             duration_seconds=float(item["duration_seconds"]) if item.get("duration_seconds") is not None else None,
-            approval_rate=approval_rate, filters=filters, decline_reason=reason,
+            approval_rate=approval_rate, filters=filters, decline_reason=reason, traffic_share=traffic_share,
+            activated_at=datetime.fromisoformat(str(activated_at).replace("Z", "+00:00")).astimezone(UTC) if activated_at else None,
         ))
     return injections
 
@@ -156,14 +170,31 @@ def set_decline(event: dict[str, Any], reason: str | None, rng: random.Random) -
         event["decline_reason"] = DECLINES[code]
 
 
+def force_candidate_dimensions(event: dict[str, Any], injection: Injection, rng: random.Random) -> None:
+    """Give an active live trial enough representative traffic for statistical detection."""
+    filters = injection.filters
+    country = filters.get("country")
+    if country:
+        event["country"] = country
+        event["currency"] = CURRENCIES[country]
+        event["amount"] = amount_for(country, rng)
+        event["amount_usd"] = round(event["amount"] * USD_PER_LOCAL_CURRENCY[event["currency"]], 2)
+    for field, value in filters.items():
+        event[field] = value
+
+
 def create_event(timestamp: datetime, elapsed_seconds: float, rng: random.Random,
                  injections: list[Injection], include_processing: bool = True) -> dict[str, Any]:
     event = make_candidate(timestamp, rng)
+    forced = [item for item in injections if item.active_at(timestamp, elapsed_seconds) and item.traffic_share and rng.random() < item.traffic_share]
+    if forced:
+        force_candidate_dimensions(event, min(forced, key=lambda item: item.approval_rate), rng)
     rate = baseline_approval_rate(event, timestamp)
-    active = [item for item in injections if item.applies_to(event, elapsed_seconds)]
+    active = [item for item in injections if item.applies_to(event, timestamp, elapsed_seconds)]
     selected = min(active, key=lambda item: item.approval_rate) if active else None
     if selected:
         rate = selected.approval_rate
+        event["simulation_injection"] = selected.name
     if include_processing and not selected and rng.random() < 0.01:
         status = "processing"
     elif rng.random() < rate:

@@ -24,6 +24,11 @@ from pathlib import Path
 from typing import Any
 
 CONFIDENCE_RANK = {"high": 2, "medium": 1, "low": 0}
+DEFAULT_PRIORITY_CONFIG = {
+    "priority_preset": "balanced",
+    "priority_weights": {"financial": 50.0, "urgency": 25.0, "conversion_drop": 15.0, "merchant": 10.0},
+    "merchant_multipliers": {"PagoModa": 1.0, "TravelNow": 1.0, "TechStore": 1.0},
+}
 
 
 def parse_timestamp(value: str | None) -> datetime | None:
@@ -114,17 +119,31 @@ class PrioritizedIncident:
     urgency: float
     urgency_basis: str
     priority_score: float
+    priority_factors: dict[str, Any]
     priority_rank: int = 0
 
 
-def prioritize(diagnoses: list[dict[str, Any]]) -> list[PrioritizedIncident]:
-    """Rank incidents by expected unrecovered GMV per hour x urgency.
+def normalize_priority_config(config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Validate and normalize runtime business-priority settings."""
+    config = config or {}
+    raw_weights = config.get("priority_weights", {})
+    weights = {name: max(0.0, float(raw_weights.get(name, default))) for name, default in DEFAULT_PRIORITY_CONFIG["priority_weights"].items()}
+    total = sum(weights.values()) or 1.0
+    weights = {name: value / total for name, value in weights.items()}
+    raw_merchants = config.get("merchant_multipliers", {})
+    merchants = {name: min(3.0, max(0.5, float(raw_merchants.get(name, default)))) for name, default in DEFAULT_PRIORITY_CONFIG["merchant_multipliers"].items()}
+    return {"priority_preset": str(config.get("priority_preset", DEFAULT_PRIORITY_CONFIG["priority_preset"])), "priority_weights": weights, "merchant_multipliers": merchants}
 
-    Urgency caps its contribution at +100% of cost so a single incident with
-    an extreme z-score can't outrank one costing an order of magnitude more —
-    cost stays the primary signal, urgency just breaks ties and surfaces
-    incidents that are actively worsening.
+
+def prioritize(diagnoses: list[dict[str, Any]], priority_config: dict[str, Any] | None = None) -> list[PrioritizedIncident]:
+    """Rank incidents from configurable financial, urgency, severity and merchant signals.
+
+    All weights add to 100%. The financial component is always the expected
+    unrecovered GMV per hour. Urgency and conversion-drop signals are capped at
+    1, while a merchant multiplier makes strategic accounts more prominent.
     """
+    config = normalize_priority_config(priority_config)
+    weights = config["priority_weights"]
     incidents: list[PrioritizedIncident] = []
     for group in group_incidents(diagnoses):
         latest = representative(group)
@@ -132,7 +151,24 @@ def prioritize(diagnoses: list[dict[str, Any]]) -> list[PrioritizedIncident]:
         cost_per_hour = metrics.get("expected_unrecovered_amount_per_hour_usd") or metrics.get("gross_lost_amount_per_hour_usd") or 0.0
         urgency, basis = urgency_score(group)
         normalizer = 500.0 if basis == "growth_rate_usd_per_min" else 8.0
-        urgency_multiplier = 1 + min(urgency / normalizer, 1.0)
+        urgency_signal = min(urgency / normalizer, 1.0)
+        drop_pp = max(0.0, float(metrics.get("conversion_drop_pp", 0.0)))
+        conversion_drop_signal = min(drop_pp / 30.0, 1.0)
+        merchant = str(latest.get("root_cause_segment", {}).get("merchant", ""))
+        merchant_multiplier = config["merchant_multipliers"].get(merchant, 1.0)
+        score_multiplier = (
+            weights["financial"]
+            + weights["urgency"] * (1 + urgency_signal)
+            + weights["conversion_drop"] * (1 + conversion_drop_signal)
+            + weights["merchant"] * merchant_multiplier
+        )
+        factors = {
+            "preset": config["priority_preset"],
+            "weights_pct": {name: round(value * 100, 1) for name, value in weights.items()},
+            "urgency_signal": round(urgency_signal, 3), "conversion_drop_signal": round(conversion_drop_signal, 3),
+            "merchant": merchant or None, "merchant_multiplier": merchant_multiplier,
+            "score_multiplier": round(score_multiplier, 3),
+        }
         signature = " ∧ ".join(f"{k}={v}" for k, v in sorted(latest.get("root_cause_segment", {}).items()))
         incidents.append(PrioritizedIncident(
             incident_key=signature or latest.get("incident_id", "unknown"),
@@ -141,7 +177,8 @@ def prioritize(diagnoses: list[dict[str, Any]]) -> list[PrioritizedIncident]:
             cost_per_hour_usd=round(cost_per_hour, 2),
             urgency=round(urgency, 4),
             urgency_basis=basis,
-            priority_score=round(cost_per_hour * urgency_multiplier, 2),
+            priority_score=round(cost_per_hour * score_multiplier, 2),
+            priority_factors=factors,
         ))
     incidents.sort(key=lambda incident: incident.priority_score, reverse=True)
     for rank, incident in enumerate(incidents, start=1):
@@ -167,6 +204,7 @@ def to_json(incidents: list[PrioritizedIncident]) -> list[dict[str, Any]]:
             "cost_per_hour_usd": incident.cost_per_hour_usd,
             "urgency": incident.urgency,
             "urgency_basis": incident.urgency_basis,
+            "priority_factors": incident.priority_factors,
             "readings": incident.readings,
             "diagnosis": incident.latest_diagnosis,
         }

@@ -46,6 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate a live transaction stream and keep the dashboard JSON continuously up to date.")
     parser.add_argument("--history", default="data/history.jsonl")
     parser.add_argument("--injections", default="examples/injections.json")
+    parser.add_argument("--live-injections", default="data/live_injections.json", help="Runtime judge-controlled injections read without restarting the stream.")
     parser.add_argument("--events-per-second", type=float, default=15.0)
     parser.add_argument("--refresh-seconds", type=float, default=10.0, help="How often to re-diagnose and rewrite the dashboard JSON.")
     parser.add_argument("--retain-seconds", type=int, default=1800, help="How much transaction history to keep in memory for chart/diagnosis context.")
@@ -84,9 +85,14 @@ def main() -> None:
     )
     engine = detector.DetectionEngine(detector_store, detector_args, recovery_estimator)
     injections = generator.load_injections(args.injections)
+    live_injections_path = Path(args.live_injections)
+    live_injections_mtime: int | None = None
+    live_injections: list[generator.Injection] = []
     memory = incident_memory.load(args.memory)
+    priority_config = prioritizer.normalize_priority_config()
 
     def reload_controls() -> bool:
+        nonlocal priority_config
         try:
             controls = json.loads(Path(args.runtime_config).read_text(encoding="utf-8"))
             if any(controls[key] <= 0 for key in RUNTIME_FIELDS):
@@ -94,9 +100,22 @@ def main() -> None:
             changed = any(getattr(detector_args, key) != controls[key] for key in RUNTIME_FIELDS)
             for key in RUNTIME_FIELDS:
                 setattr(detector_args, key, controls[key])
+            priority_config = prioritizer.normalize_priority_config(controls)
             return changed
         except (OSError, KeyError, ValueError, json.JSONDecodeError):
             return False
+
+    def reload_live_injections() -> None:
+        nonlocal live_injections_mtime, live_injections
+        mtime = live_injections_path.stat().st_mtime_ns if live_injections_path.exists() else None
+        if mtime == live_injections_mtime:
+            return
+        try:
+            live_injections = generator.load_injections(str(live_injections_path)) if mtime is not None else []
+            live_injections_mtime = mtime
+            print(f"loaded {len(live_injections)} live trial injection(s)", file=sys.stderr)
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            print(f"could not load live injections: {error}", file=sys.stderr)
 
     rng = random.Random(args.seed)
     interval = 1 / args.events_per_second
@@ -126,7 +145,8 @@ def main() -> None:
 
             now = datetime.now(UTC)
             elapsed = (now - wall_start).total_seconds()
-            event = generator.create_event(now, elapsed, rng, injections, include_processing=False)
+            reload_live_injections()
+            event = generator.create_event(now, elapsed, rng, [*injections, *live_injections], include_processing=False)
             engine.add(event)
             retained.append(event)
             transactions_sink.write(json.dumps(event, separators=(",", ":")) + "\n")
@@ -174,10 +194,13 @@ def main() -> None:
                     if diagnosis.get("alert_id") in new_alert_ids:
                         print(f"[{now.isoformat()}] new incident: {diagnosis.get('root_cause_segment')}", file=sys.stderr)
 
-            prioritized = prioritizer.prioritize(active_diagnoses) if active_diagnoses else []
+            prioritized = prioritizer.prioritize(active_diagnoses, priority_config) if active_diagnoses else []
             entries = bd.build_incident_entries(prioritized, memory)
             bd.update_accumulated_unrecovered_gmv(entries, loss_tracker, now)
             chart = bd.build_chart(retained, list(active_alerts.values()), history_events, args)
+            # Keep the dashboard's timeline tied to this process, even during
+            # the first minute when there is only one aggregate data point.
+            chart["stream_started_at"] = wall_start.isoformat()
             kpis = bd.build_kpis(
                 entries, chart, transactions_window=len(retained), recovery_horizon_hours=args.recovery_horizon_hours,
             )

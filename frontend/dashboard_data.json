@@ -1,766 +1,77 @@
 {
-  "generated_at": "2026-08-30T04:33:52.009700+00:00",
+  "generated_at": "2026-08-30T05:17:13.153515+00:00",
   "kpis": {
-    "current_conversion_pct": 100.0,
-    "expected_conversion_pct": 91.94,
-    "transactions_window": 1804,
-    "active_incidents": 2,
-    "critical_count": 1,
-    "high_count": 1,
+    "current_conversion_pct": 53.92,
+    "expected_conversion_pct": 93.16,
+    "transactions_window": 7073,
+    "active_incidents": 0,
+    "critical_count": 0,
+    "high_count": 0,
     "investigating_count": 0,
-    "accumulated_incidence_cost_usd": 57.62,
-    "current_incidence_cost_per_hour_usd": 2857.64,
-    "expected_unrecovered_gmv_per_hour_usd": 2857.64,
-    "gross_lost_gmv_per_hour_usd": 4591.57,
+    "accumulated_incidence_cost_usd": 0,
+    "current_incidence_cost_per_hour_usd": 0,
+    "expected_unrecovered_gmv_per_hour_usd": 0,
+    "gross_lost_gmv_per_hour_usd": 0,
     "recovery_horizon_hours": 24.0
   },
   "chart": {
     "period_seconds": 60,
-    "window_seconds": 15,
-    "sustain_evaluations": 2,
+    "window_seconds": 300,
+    "sustain_evaluations": 3,
+    "stream_started_at": "2026-08-30T05:09:21.721991+00:00",
     "points": [
       {
-        "t": "2026-08-30T04:30:00+00:00",
-        "observed_pct": 94.86,
-        "expected_pct": 91.94,
-        "threshold_pct": 86.36,
-        "state": "incident"
+        "t": "2026-08-30T05:09:00+00:00",
+        "observed_pct": 91.58,
+        "expected_pct": 93.16,
+        "threshold_pct": 89.95,
+        "state": "ok"
       },
       {
-        "t": "2026-08-30T04:31:00+00:00",
-        "observed_pct": 90.59,
-        "expected_pct": 91.94,
-        "threshold_pct": 89.89,
-        "state": "incident"
+        "t": "2026-08-30T05:10:00+00:00",
+        "observed_pct": 77.3,
+        "expected_pct": 93.16,
+        "threshold_pct": 89.09,
+        "state": "breach"
       },
       {
-        "t": "2026-08-30T04:32:00+00:00",
+        "t": "2026-08-30T05:11:00+00:00",
         "observed_pct": 100.0,
-        "expected_pct": 91.94,
-        "threshold_pct": 10.27,
-        "state": "incident"
+        "expected_pct": 93.16,
+        "threshold_pct": 17.4,
+        "state": "ok"
       },
       {
-        "t": "2026-08-30T04:33:00+00:00",
-        "observed_pct": 100.0,
-        "expected_pct": 91.94,
-        "threshold_pct": 10.27,
-        "state": "incident"
+        "t": "2026-08-30T05:12:00+00:00",
+        "observed_pct": 0.0,
+        "expected_pct": 93.16,
+        "threshold_pct": 17.4,
+        "state": "breach"
+      },
+      {
+        "t": "2026-08-30T05:14:00+00:00",
+        "observed_pct": 0.0,
+        "expected_pct": 93.16,
+        "threshold_pct": 17.4,
+        "state": "breach"
+      },
+      {
+        "t": "2026-08-30T05:16:00+00:00",
+        "observed_pct": 48.19,
+        "expected_pct": 93.16,
+        "threshold_pct": 92.17,
+        "state": "breach"
+      },
+      {
+        "t": "2026-08-30T05:17:00+00:00",
+        "observed_pct": 53.92,
+        "expected_pct": 93.16,
+        "threshold_pct": 88.01,
+        "state": "breach"
       }
     ]
   },
-  "incidents": [
-    {
-      "incident_id": "782cc29b-527b-4185-a898-9ce0022877ba",
-      "alert_id": "6c9305c8-a58d-45a6-a89f-624741c55bf1",
-      "incident_key": "country=CO \u2227 issuing_bank=Nequi \u2227 provider=adyen",
-      "priority_rank": 1,
-      "priority_score": 2343.44,
-      "cost_per_hour_usd": 1572.09,
-      "current_expected_unrecovered_gmv_per_hour_usd": 1572.09,
-      "accumulated_expected_unrecovered_gmv_usd": 31.7,
-      "gross_lost_amount_per_hour_usd": 2462.81,
-      "urgency": 3.9252,
-      "urgency_basis": "z_score_proxy",
-      "readings": 1,
-      "severity": "crit",
-      "status": "active",
-      "confidence_pct": 99,
-      "root_cause_segment": {
-        "issuing_bank": "Nequi",
-        "country": "CO",
-        "provider": "adyen"
-      },
-      "root_cause_label": "Nequi \u00d7 CO \u00d7 adyen",
-      "duration_minutes": 5.0,
-      "recurrence": null,
-      "diagnosis": {
-        "incident_id": "782cc29b-527b-4185-a898-9ce0022877ba",
-        "alert_id": "6c9305c8-a58d-45a6-a89f-624741c55bf1",
-        "diagnosed_at": "2026-08-30T04:34:59.065066+00:00",
-        "evidence_sufficient": true,
-        "confidence": "high",
-        "root_cause_segment": {
-          "issuing_bank": "Nequi",
-          "country": "CO",
-          "provider": "adyen"
-        },
-        "incident_window": {
-          "started_at": "2026-08-30T04:28:52.009700+00:00",
-          "ended_at": "2026-08-30T04:33:52.009700+00:00"
-        },
-        "root_metrics": {
-          "attempts": 49,
-          "approved": 38,
-          "observed_conversion": 0.7755,
-          "expected_conversion": 0.9241,
-          "conversion_drop_pp": 14.8546,
-          "z_score": -3.9252,
-          "lost_approvals": 7.28,
-          "gross_lost_amount_usd": 205.23,
-          "gross_lost_amount_per_hour_usd": 2462.81,
-          "expected_recovered_amount_usd": 74.23,
-          "expected_unrecovered_amount_usd": 131.01,
-          "expected_unrecovered_amount_per_hour_usd": 1572.09,
-          "expected_recovery_rate": 0.3617,
-          "recovery_model_source": "default_by_payment_method",
-          "recovery_model_sample_size": 0
-        },
-        "drill_down_path": [
-          {
-            "value": "adyen",
-            "segment": {
-              "issuing_bank": "Nequi",
-              "country": "CO",
-              "provider": "adyen"
-            },
-            "baseline_attempts": 4554,
-            "baseline_source": "all_time_segment",
-            "attempts": 49,
-            "approved": 38,
-            "observed_conversion": 0.7755102040816326,
-            "expected_conversion": 0.9240561896400351,
-            "conversion_drop_pp": 14.854598555840248,
-            "z_score": -3.92521615532716,
-            "lost_approvals": 7.28,
-            "gross_lost_amount_usd": 205.23,
-            "gross_lost_amount_per_hour_usd": 2462.81,
-            "expected_recovered_amount_usd": 74.23,
-            "expected_unrecovered_amount_usd": 131.01,
-            "expected_unrecovered_amount_per_hour_usd": 1572.09,
-            "expected_recovery_rate": 0.3617,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "contribution_to_parent_loss": 1.1934426229508197,
-            "dimension": "provider",
-            "is_anomalous": true,
-            "is_selected": true,
-            "siblings": [
-              {
-                "value": "adyen",
-                "segment": {
-                  "issuing_bank": "Nequi",
-                  "country": "CO",
-                  "provider": "adyen"
-                },
-                "baseline_attempts": 4554,
-                "baseline_source": "all_time_segment",
-                "attempts": 49,
-                "approved": 38,
-                "observed_conversion": 0.7755102040816326,
-                "expected_conversion": 0.9240561896400351,
-                "conversion_drop_pp": 14.854598555840248,
-                "z_score": -3.92521615532716,
-                "lost_approvals": 7.28,
-                "gross_lost_amount_usd": 205.23,
-                "gross_lost_amount_per_hour_usd": 2462.81,
-                "expected_recovered_amount_usd": 74.23,
-                "expected_unrecovered_amount_usd": 131.01,
-                "expected_unrecovered_amount_per_hour_usd": 1572.09,
-                "expected_recovery_rate": 0.3617,
-                "recovery_model_source": "default_by_payment_method",
-                "recovery_model_sample_size": 0,
-                "contribution_to_parent_loss": 1.1934426229508197,
-                "dimension": "provider",
-                "is_anomalous": true,
-                "is_selected": true
-              },
-              {
-                "value": "dlocal",
-                "segment": {
-                  "issuing_bank": "Nequi",
-                  "country": "CO",
-                  "provider": "dlocal"
-                },
-                "baseline_attempts": 3184,
-                "baseline_source": "all_time_segment",
-                "attempts": 27,
-                "approved": 25,
-                "observed_conversion": 0.9259259259259259,
-                "expected_conversion": 0.9315756434400502,
-                "conversion_drop_pp": 0.5649717514124242,
-                "z_score": -0.11627710008872932,
-                "lost_approvals": 0.15,
-                "gross_lost_amount_usd": 2.27,
-                "gross_lost_amount_per_hour_usd": 27.2,
-                "expected_recovered_amount_usd": 1.09,
-                "expected_unrecovered_amount_usd": 1.18,
-                "expected_unrecovered_amount_per_hour_usd": 14.14,
-                "expected_recovery_rate": 0.48,
-                "recovery_model_source": "default_by_payment_method",
-                "recovery_model_sample_size": 0,
-                "contribution_to_parent_loss": 0.02459016393442623,
-                "dimension": "provider",
-                "is_anomalous": false,
-                "is_selected": false
-              },
-              {
-                "value": "stripe",
-                "segment": {
-                  "issuing_bank": "Nequi",
-                  "country": "CO",
-                  "provider": "stripe"
-                },
-                "baseline_attempts": 5040,
-                "baseline_source": "all_time_segment",
-                "attempts": 44,
-                "approved": 38,
-                "observed_conversion": 0.8636363636363636,
-                "expected_conversion": 0.9266164220547402,
-                "conversion_drop_pp": 6.29800584183765,
-                "z_score": -1.6020643620405797,
-                "lost_approvals": 2.77,
-                "gross_lost_amount_usd": 63.89,
-                "gross_lost_amount_per_hour_usd": 766.66,
-                "expected_recovered_amount_usd": 30.67,
-                "expected_unrecovered_amount_usd": 33.22,
-                "expected_unrecovered_amount_per_hour_usd": 398.66,
-                "expected_recovery_rate": 0.48,
-                "recovery_model_source": "default_by_payment_method",
-                "recovery_model_sample_size": 0,
-                "contribution_to_parent_loss": 0.4540983606557377,
-                "dimension": "provider",
-                "is_anomalous": false,
-                "is_selected": false
-              }
-            ]
-          }
-        ],
-        "payment_method_impact": [
-          {
-            "value": "card",
-            "segment": {
-              "issuing_bank": "Nequi",
-              "country": "CO",
-              "payment_method": "card"
-            },
-            "baseline_attempts": 55,
-            "baseline_source": "same_weekday_hour_segment",
-            "attempts": 72,
-            "approved": 58,
-            "observed_conversion": 0.8055555555555556,
-            "expected_conversion": 0.8947368421052632,
-            "conversion_drop_pp": 8.918128654970758,
-            "z_score": -2.4657788545360515,
-            "lost_approvals": 6.42,
-            "gross_lost_amount_usd": 151.67,
-            "gross_lost_amount_per_hour_usd": 1819.98,
-            "expected_recovered_amount_usd": 72.8,
-            "expected_unrecovered_amount_usd": 78.87,
-            "expected_unrecovered_amount_per_hour_usd": 946.39,
-            "expected_recovery_rate": 0.48,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "dimension": "payment_method",
-            "is_anomalous": false,
-            "impact_share_of_lost_approvals": 1.0525,
-            "is_selected": false
-          },
-          {
-            "value": "pse",
-            "segment": {
-              "issuing_bank": "Nequi",
-              "country": "CO",
-              "payment_method": "pse"
-            },
-            "baseline_attempts": 2879,
-            "baseline_source": "all_time_segment",
-            "attempts": 23,
-            "approved": 20,
-            "observed_conversion": 0.8695652173913043,
-            "expected_conversion": 0.9014231169732732,
-            "conversion_drop_pp": 3.185789958196883,
-            "z_score": -0.5125416592005062,
-            "lost_approvals": 0.73,
-            "gross_lost_amount_usd": 16.7,
-            "gross_lost_amount_per_hour_usd": 200.39,
-            "expected_recovered_amount_usd": 6.01,
-            "expected_unrecovered_amount_usd": 10.69,
-            "expected_unrecovered_amount_per_hour_usd": 128.25,
-            "expected_recovery_rate": 0.36,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "dimension": "payment_method",
-            "is_anomalous": false,
-            "impact_share_of_lost_approvals": 0.1197,
-            "is_selected": false
-          },
-          {
-            "value": "wallet",
-            "segment": {
-              "issuing_bank": "Nequi",
-              "country": "CO",
-              "payment_method": "wallet"
-            },
-            "baseline_attempts": 1937,
-            "baseline_source": "all_time_segment",
-            "attempts": 18,
-            "approved": 18,
-            "observed_conversion": 1.0,
-            "expected_conversion": 0.9381124290871583,
-            "conversion_drop_pp": -6.188757091284169,
-            "z_score": 1.089708970533781,
-            "lost_approvals": 0.0,
-            "gross_lost_amount_usd": 0.0,
-            "gross_lost_amount_per_hour_usd": 0.0,
-            "expected_recovered_amount_usd": 0.0,
-            "expected_unrecovered_amount_usd": 0.0,
-            "expected_unrecovered_amount_per_hour_usd": 0.0,
-            "expected_recovery_rate": 0.0,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "dimension": "payment_method",
-            "is_anomalous": false,
-            "impact_share_of_lost_approvals": 0.0,
-            "is_selected": false
-          }
-        ],
-        "dominant_decline": {
-          "decline_reason": "invalid_card",
-          "excess_declines": 3.6,
-          "share_of_excess_declines": 0.4294
-        },
-        "recommended_action": "Contactar a adyen y evaluar el enrutamiento temporal de pagos afectados hacia otro provider.",
-        "recurrence": null,
-        "explanation": {
-          "mode": "deterministic",
-          "incident_id": "782cc29b-527b-4185-a898-9ce0022877ba",
-          "executive_summary": "Incidente en banco emisor=Nequi, pa\u00eds=CO, provider=adyen: costo estimado de la incidencia de USD 131.01 en la ventana analizada.",
-          "operational_explanation": "La conversi\u00f3n observada fue 77.5%, frente a 92.4% esperada (14.9 puntos porcentuales menos) en banco emisor=Nequi, pa\u00eds=CO, provider=adyen. El motivo de rechazo con mayor exceso fue invalid_card (43% de los rechazos adicionales).",
-          "recommended_action": "Contactar a adyen y evaluar el enrutamiento temporal de pagos afectados hacia otro provider.",
-          "confidence": "high",
-          "evidence_sufficient": true,
-          "window_started_at": "2026-08-30T04:28:52.009700+00:00",
-          "window_ended_at": "2026-08-30T04:33:52.009700+00:00",
-          "profiles": {
-            "technical": "La conversi\u00f3n observada fue 77.5%, frente a 92.4% esperada (14.9 puntos porcentuales menos) en banco emisor=Nequi, pa\u00eds=CO, provider=adyen. El motivo de rechazo con mayor exceso fue invalid_card (43% de los rechazos adicionales).",
-            "financial": "El costo estimado de la incidencia es USD 131.01 en esta ventana; la proyecci\u00f3n por hora est\u00e1 en las m\u00e9tricas del incidente.",
-            "simple": "Hay un problema en banco emisor=Nequi, pa\u00eds=CO, provider=adyen: est\u00e1n aprob\u00e1ndose menos pagos de lo normal. El equipo debe revisar la acci\u00f3n recomendada."
-          }
-        }
-      },
-      "incident_started_at": "2026-08-30T04:32:39.423983+00:00",
-      "accumulated_duration_seconds": 72.6
-    },
-    {
-      "incident_id": "59983f9d-2256-4ac9-80c5-606d94d549b0",
-      "alert_id": "3706b70b-666e-40d8-892f-881fca06dff3",
-      "incident_key": "country=BR \u2227 issuing_bank=Nubank \u2227 merchant=PagoModa \u2227 provider=stripe",
-      "priority_rank": 2,
-      "priority_score": 1285.55,
-      "cost_per_hour_usd": 1285.55,
-      "current_expected_unrecovered_gmv_per_hour_usd": 1285.55,
-      "accumulated_expected_unrecovered_gmv_usd": 25.92,
-      "gross_lost_amount_per_hour_usd": 2128.76,
-      "urgency": 0.0,
-      "urgency_basis": "growth_rate_usd_per_min",
-      "readings": 11,
-      "severity": "high",
-      "status": "active",
-      "confidence_pct": 99,
-      "root_cause_segment": {
-        "issuing_bank": "Nubank",
-        "country": "BR",
-        "merchant": "PagoModa",
-        "provider": "stripe"
-      },
-      "root_cause_label": "Nubank \u00d7 BR \u00d7 PagoModa \u00d7 stripe",
-      "duration_minutes": 5.0,
-      "recurrence": {
-        "similarity": 0.6669,
-        "previous_incident": {
-          "incident_id": "67840df6-1a37-44ca-898b-9e96f91a862c",
-          "root_cause_segment": {
-            "merchant": "TechStore",
-            "country": "BR",
-            "issuing_bank": "Nubank"
-          },
-          "decline_reason": "issuer_unavailable",
-          "observed_at": "2026-08-30T00:57:25.383030+00:00",
-          "duration_minutes": 5.0,
-          "cost_per_hour_usd": 16691.7,
-          "resolution_note": null
-        },
-        "method": "knn_cosine_v1"
-      },
-      "diagnosis": {
-        "incident_id": "59983f9d-2256-4ac9-80c5-606d94d549b0",
-        "alert_id": "3706b70b-666e-40d8-892f-881fca06dff3",
-        "diagnosed_at": "2026-08-30T04:35:14.318200+00:00",
-        "evidence_sufficient": true,
-        "confidence": "high",
-        "root_cause_segment": {
-          "issuing_bank": "Nubank",
-          "country": "BR",
-          "merchant": "PagoModa",
-          "provider": "stripe"
-        },
-        "incident_window": {
-          "started_at": "2026-08-30T04:28:52.009700+00:00",
-          "ended_at": "2026-08-30T04:33:52.009700+00:00"
-        },
-        "root_metrics": {
-          "attempts": 26,
-          "approved": 18,
-          "observed_conversion": 0.6923,
-          "expected_conversion": 0.9557,
-          "conversion_drop_pp": 26.3434,
-          "z_score": -6.5312,
-          "lost_approvals": 6.85,
-          "gross_lost_amount_usd": 177.4,
-          "gross_lost_amount_per_hour_usd": 2128.76,
-          "expected_recovered_amount_usd": 70.27,
-          "expected_unrecovered_amount_usd": 107.13,
-          "expected_unrecovered_amount_per_hour_usd": 1285.55,
-          "expected_recovery_rate": 0.3961,
-          "recovery_model_source": "default_by_payment_method",
-          "recovery_model_sample_size": 0
-        },
-        "drill_down_path": [
-          {
-            "value": "PagoModa",
-            "segment": {
-              "issuing_bank": "Nubank",
-              "country": "BR",
-              "merchant": "PagoModa"
-            },
-            "baseline_attempts": 6149,
-            "baseline_source": "all_time_segment",
-            "attempts": 54,
-            "approved": 45,
-            "observed_conversion": 0.8333333333333334,
-            "expected_conversion": 0.9544789465127621,
-            "conversion_drop_pp": 12.114561317942874,
-            "z_score": -4.270859096960406,
-            "lost_approvals": 6.54,
-            "gross_lost_amount_usd": 164.48,
-            "gross_lost_amount_per_hour_usd": 1973.72,
-            "expected_recovered_amount_usd": 66.31,
-            "expected_unrecovered_amount_usd": 98.16,
-            "expected_unrecovered_amount_per_hour_usd": 1177.96,
-            "expected_recovery_rate": 0.4032,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "contribution_to_parent_loss": 1.2339622641509433,
-            "dimension": "merchant",
-            "is_anomalous": true,
-            "is_selected": true,
-            "siblings": [
-              {
-                "value": "TravelNow",
-                "segment": {
-                  "issuing_bank": "Nubank",
-                  "country": "BR",
-                  "merchant": "TravelNow"
-                },
-                "baseline_attempts": 4455,
-                "baseline_source": "all_time_segment",
-                "attempts": 38,
-                "approved": 35,
-                "observed_conversion": 0.9210526315789473,
-                "expected_conversion": 0.9537805698900605,
-                "conversion_drop_pp": 3.2727938311113203,
-                "z_score": -0.9608905396798701,
-                "lost_approvals": 1.24,
-                "gross_lost_amount_usd": 27.83,
-                "gross_lost_amount_per_hour_usd": 334.0,
-                "expected_recovered_amount_usd": 14.58,
-                "expected_unrecovered_amount_usd": 13.26,
-                "expected_unrecovered_amount_per_hour_usd": 159.06,
-                "expected_recovery_rate": 0.5238,
-                "recovery_model_source": "default_by_payment_method",
-                "recovery_model_sample_size": 0,
-                "contribution_to_parent_loss": 0.2339622641509434,
-                "dimension": "merchant",
-                "is_anomalous": false,
-                "is_selected": false
-              },
-              {
-                "value": "TechStore",
-                "segment": {
-                  "issuing_bank": "Nubank",
-                  "country": "BR",
-                  "merchant": "TechStore"
-                },
-                "baseline_attempts": 7147,
-                "baseline_source": "all_time_segment",
-                "attempts": 59,
-                "approved": 53,
-                "observed_conversion": 0.8983050847457628,
-                "expected_conversion": 0.9488040285354595,
-                "conversion_drop_pp": 5.049894378969677,
-                "z_score": -1.7599573619132245,
-                "lost_approvals": 2.98,
-                "gross_lost_amount_usd": 103.35,
-                "gross_lost_amount_per_hour_usd": 1240.16,
-                "expected_recovered_amount_usd": 51.87,
-                "expected_unrecovered_amount_usd": 51.47,
-                "expected_unrecovered_amount_per_hour_usd": 617.67,
-                "expected_recovery_rate": 0.5019,
-                "recovery_model_source": "default_by_payment_method",
-                "recovery_model_sample_size": 0,
-                "contribution_to_parent_loss": 0.5622641509433962,
-                "dimension": "merchant",
-                "is_anomalous": false,
-                "is_selected": false
-              },
-              {
-                "value": "PagoModa",
-                "segment": {
-                  "issuing_bank": "Nubank",
-                  "country": "BR",
-                  "merchant": "PagoModa"
-                },
-                "baseline_attempts": 6149,
-                "baseline_source": "all_time_segment",
-                "attempts": 54,
-                "approved": 45,
-                "observed_conversion": 0.8333333333333334,
-                "expected_conversion": 0.9544789465127621,
-                "conversion_drop_pp": 12.114561317942874,
-                "z_score": -4.270859096960406,
-                "lost_approvals": 6.54,
-                "gross_lost_amount_usd": 164.48,
-                "gross_lost_amount_per_hour_usd": 1973.72,
-                "expected_recovered_amount_usd": 66.31,
-                "expected_unrecovered_amount_usd": 98.16,
-                "expected_unrecovered_amount_per_hour_usd": 1177.96,
-                "expected_recovery_rate": 0.4032,
-                "recovery_model_source": "default_by_payment_method",
-                "recovery_model_sample_size": 0,
-                "contribution_to_parent_loss": 1.2339622641509433,
-                "dimension": "merchant",
-                "is_anomalous": true,
-                "is_selected": true
-              }
-            ]
-          },
-          {
-            "value": "stripe",
-            "segment": {
-              "issuing_bank": "Nubank",
-              "country": "BR",
-              "merchant": "PagoModa",
-              "provider": "stripe"
-            },
-            "baseline_attempts": 2506,
-            "baseline_source": "all_time_segment",
-            "attempts": 26,
-            "approved": 18,
-            "observed_conversion": 0.6923076923076923,
-            "expected_conversion": 0.9557416267942583,
-            "conversion_drop_pp": 26.343393448656606,
-            "z_score": -6.531161425597169,
-            "lost_approvals": 6.85,
-            "gross_lost_amount_usd": 177.4,
-            "gross_lost_amount_per_hour_usd": 2128.76,
-            "expected_recovered_amount_usd": 70.27,
-            "expected_unrecovered_amount_usd": 107.13,
-            "expected_unrecovered_amount_per_hour_usd": 1285.55,
-            "expected_recovery_rate": 0.3961,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "contribution_to_parent_loss": 1.047400611620795,
-            "dimension": "provider",
-            "is_anomalous": true,
-            "is_selected": true,
-            "siblings": [
-              {
-                "value": "stripe",
-                "segment": {
-                  "issuing_bank": "Nubank",
-                  "country": "BR",
-                  "merchant": "PagoModa",
-                  "provider": "stripe"
-                },
-                "baseline_attempts": 2506,
-                "baseline_source": "all_time_segment",
-                "attempts": 26,
-                "approved": 18,
-                "observed_conversion": 0.6923076923076923,
-                "expected_conversion": 0.9557416267942583,
-                "conversion_drop_pp": 26.343393448656606,
-                "z_score": -6.531161425597169,
-                "lost_approvals": 6.85,
-                "gross_lost_amount_usd": 177.4,
-                "gross_lost_amount_per_hour_usd": 2128.76,
-                "expected_recovered_amount_usd": 70.27,
-                "expected_unrecovered_amount_usd": 107.13,
-                "expected_unrecovered_amount_per_hour_usd": 1285.55,
-                "expected_recovery_rate": 0.3961,
-                "recovery_model_source": "default_by_payment_method",
-                "recovery_model_sample_size": 0,
-                "contribution_to_parent_loss": 1.047400611620795,
-                "dimension": "provider",
-                "is_anomalous": true,
-                "is_selected": true
-              },
-              {
-                "value": "adyen",
-                "segment": {
-                  "issuing_bank": "Nubank",
-                  "country": "BR",
-                  "merchant": "PagoModa",
-                  "provider": "adyen"
-                },
-                "baseline_attempts": 2114,
-                "baseline_source": "all_time_segment",
-                "attempts": 16,
-                "approved": 15,
-                "observed_conversion": 0.9375,
-                "expected_conversion": 0.9532136105860114,
-                "conversion_drop_pp": 1.5713610586011395,
-                "z_score": -0.29763300870615306,
-                "lost_approvals": 0.25,
-                "gross_lost_amount_usd": 4.8,
-                "gross_lost_amount_per_hour_usd": 57.56,
-                "expected_recovered_amount_usd": 2.3,
-                "expected_unrecovered_amount_usd": 2.49,
-                "expected_unrecovered_amount_per_hour_usd": 29.93,
-                "expected_recovery_rate": 0.48,
-                "recovery_model_source": "default_by_payment_method",
-                "recovery_model_sample_size": 0,
-                "contribution_to_parent_loss": 0.0382262996941896,
-                "dimension": "provider",
-                "is_anomalous": false,
-                "is_selected": false
-              }
-            ]
-          }
-        ],
-        "payment_method_impact": [
-          {
-            "value": "wallet",
-            "segment": {
-              "issuing_bank": "Nubank",
-              "country": "BR",
-              "payment_method": "wallet"
-            },
-            "baseline_attempts": 3140,
-            "baseline_source": "all_time_segment",
-            "attempts": 30,
-            "approved": 24,
-            "observed_conversion": 0.8,
-            "expected_conversion": 0.9576702737110121,
-            "conversion_drop_pp": 15.767027371101205,
-            "z_score": -4.2892337565511,
-            "lost_approvals": 4.73,
-            "gross_lost_amount_usd": 102.98,
-            "gross_lost_amount_per_hour_usd": 1235.79,
-            "expected_recovered_amount_usd": 56.64,
-            "expected_unrecovered_amount_usd": 46.34,
-            "expected_unrecovered_amount_per_hour_usd": 556.1,
-            "expected_recovery_rate": 0.55,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "dimension": "payment_method",
-            "is_anomalous": true,
-            "impact_share_of_lost_approvals": 0.8925,
-            "is_selected": false
-          },
-          {
-            "value": "card",
-            "segment": {
-              "issuing_bank": "Nubank",
-              "country": "BR",
-              "payment_method": "card"
-            },
-            "baseline_attempts": 8262,
-            "baseline_source": "all_time_segment",
-            "attempts": 75,
-            "approved": 67,
-            "observed_conversion": 0.8933333333333333,
-            "expected_conversion": 0.9499031945788964,
-            "conversion_drop_pp": 5.6569861245563065,
-            "z_score": -2.2457998825187873,
-            "lost_approvals": 4.24,
-            "gross_lost_amount_usd": 117.23,
-            "gross_lost_amount_per_hour_usd": 1406.72,
-            "expected_recovered_amount_usd": 56.27,
-            "expected_unrecovered_amount_usd": 60.96,
-            "expected_unrecovered_amount_per_hour_usd": 731.5,
-            "expected_recovery_rate": 0.48,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "dimension": "payment_method",
-            "is_anomalous": false,
-            "impact_share_of_lost_approvals": 0.8,
-            "is_selected": false
-          },
-          {
-            "value": "pix",
-            "segment": {
-              "issuing_bank": "Nubank",
-              "country": "BR",
-              "payment_method": "pix"
-            },
-            "baseline_attempts": 5375,
-            "baseline_source": "all_time_segment",
-            "attempts": 36,
-            "approved": 33,
-            "observed_conversion": 0.9166666666666666,
-            "expected_conversion": 0.9642923563325274,
-            "conversion_drop_pp": 4.762568966586079,
-            "z_score": -1.5399533676569626,
-            "lost_approvals": 1.71,
-            "gross_lost_amount_usd": 52.53,
-            "gross_lost_amount_per_hour_usd": 630.4,
-            "expected_recovered_amount_usd": 26.27,
-            "expected_unrecovered_amount_usd": 26.27,
-            "expected_unrecovered_amount_per_hour_usd": 315.2,
-            "expected_recovery_rate": 0.5,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "dimension": "payment_method",
-            "is_anomalous": false,
-            "impact_share_of_lost_approvals": 0.3226,
-            "is_selected": false
-          }
-        ],
-        "dominant_decline": {
-          "decline_reason": "do_not_honor",
-          "excess_declines": 7.8,
-          "share_of_excess_declines": 1.0
-        },
-        "recommended_action": "Contactar a stripe y evaluar el enrutamiento temporal de pagos afectados hacia otro provider.",
-        "recurrence": {
-          "similarity": 0.6669,
-          "previous_incident": {
-            "incident_id": "67840df6-1a37-44ca-898b-9e96f91a862c",
-            "root_cause_segment": {
-              "merchant": "TechStore",
-              "country": "BR",
-              "issuing_bank": "Nubank"
-            },
-            "decline_reason": "issuer_unavailable",
-            "observed_at": "2026-08-30T00:57:25.383030+00:00",
-            "duration_minutes": 5.0,
-            "cost_per_hour_usd": 16691.7,
-            "resolution_note": null
-          },
-          "method": "knn_cosine_v1"
-        },
-        "explanation": {
-          "mode": "deterministic",
-          "incident_id": "59983f9d-2256-4ac9-80c5-606d94d549b0",
-          "executive_summary": "Incidente en banco emisor=Nubank, pa\u00eds=BR, merchant=PagoModa, provider=stripe: costo estimado de la incidencia de USD 107.13 en la ventana analizada.",
-          "operational_explanation": "La conversi\u00f3n observada fue 69.2%, frente a 95.6% esperada (26.3 puntos porcentuales menos) en banco emisor=Nubank, pa\u00eds=BR, merchant=PagoModa, provider=stripe. El motivo de rechazo con mayor exceso fue do_not_honor (100% de los rechazos adicionales). Este patr\u00f3n ya se hab\u00eda observado (67% de similitud) el 2026-08-30.",
-          "recommended_action": "Contactar a stripe y evaluar el enrutamiento temporal de pagos afectados hacia otro provider.",
-          "confidence": "high",
-          "evidence_sufficient": true,
-          "window_started_at": "2026-08-30T04:28:52.009700+00:00",
-          "window_ended_at": "2026-08-30T04:33:52.009700+00:00",
-          "profiles": {
-            "technical": "La conversi\u00f3n observada fue 69.2%, frente a 95.6% esperada (26.3 puntos porcentuales menos) en banco emisor=Nubank, pa\u00eds=BR, merchant=PagoModa, provider=stripe. El motivo de rechazo con mayor exceso fue do_not_honor (100% de los rechazos adicionales). Este patr\u00f3n ya se hab\u00eda observado (67% de similitud) el 2026-08-30.",
-            "financial": "El costo estimado de la incidencia es USD 107.13 en esta ventana; la proyecci\u00f3n por hora est\u00e1 en las m\u00e9tricas del incidente.",
-            "simple": "Hay un problema en banco emisor=Nubank, pa\u00eds=BR, merchant=PagoModa, provider=stripe: est\u00e1n aprob\u00e1ndose menos pagos de lo normal. El equipo debe revisar la acci\u00f3n recomendada."
-          }
-        }
-      },
-      "incident_started_at": "2026-08-30T04:32:39.423983+00:00",
-      "accumulated_duration_seconds": 72.6
-    }
-  ],
+  "incidents": [],
   "resolved": [
     {
       "incident_id": "memory-stripe-br-2026-08-26",
@@ -923,69 +234,69 @@
       ]
     },
     "live": {
-      "attempts": 1800,
-      "approved": 1640,
-      "conversion_pct": 91.11,
-      "average_ticket_usd": 40.25,
+      "attempts": 7065,
+      "approved": 3760,
+      "conversion_pct": 53.22,
+      "average_ticket_usd": 40.63,
       "by_country": [
         {
           "name": "MX",
-          "attempts": 699,
-          "conversion_pct": 94.28
-        },
-        {
-          "name": "BR",
-          "attempts": 613,
-          "conversion_pct": 88.25
+          "attempts": 3598,
+          "conversion_pct": 47.33
         },
         {
           "name": "CO",
-          "attempts": 488,
-          "conversion_pct": 90.16
+          "attempts": 2254,
+          "conversion_pct": 49.6
+        },
+        {
+          "name": "BR",
+          "attempts": 1213,
+          "conversion_pct": 77.41
         }
       ],
       "by_provider": [
         {
           "name": "stripe",
-          "attempts": 715,
-          "conversion_pct": 88.11
+          "attempts": 4960,
+          "conversion_pct": 37.38
         },
         {
           "name": "adyen",
-          "attempts": 656,
-          "conversion_pct": 93.75
+          "attempts": 1219,
+          "conversion_pct": 90.89
         },
         {
           "name": "dlocal",
-          "attempts": 429,
-          "conversion_pct": 92.07
+          "attempts": 886,
+          "conversion_pct": 90.07
         }
       ],
       "by_payment_method": [
         {
           "name": "card",
-          "attempts": 1055,
-          "conversion_pct": 91.56
+          "attempts": 5631,
+          "conversion_pct": 45.57
         },
         {
           "name": "wallet",
-          "attempts": 319,
-          "conversion_pct": 92.48
+          "attempts": 609,
+          "conversion_pct": 85.22
         },
         {
           "name": "pix",
-          "attempts": 183,
-          "conversion_pct": 89.07
+          "attempts": 350,
+          "conversion_pct": 79.43
         },
         {
           "name": "cash_in_store",
-          "attempts": 138,
-          "conversion_pct": 89.13
+          "attempts": 263,
+          "conversion_pct": 79.85
         },
         {
           "name": "pse",
-          "attempts": 105,
-          "conversion_pct": 88.57
+          "attempts": 212,
+          "conversion_pct": 88.21
         }
       ]
     }

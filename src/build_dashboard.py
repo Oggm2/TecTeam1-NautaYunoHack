@@ -164,6 +164,7 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident], m
             "gross_lost_amount_per_hour_usd": diagnosis.get("root_metrics", {}).get("gross_lost_amount_per_hour_usd", 0.0),
             "urgency": incident.urgency,
             "urgency_basis": incident.urgency_basis,
+            "priority_factors": incident.priority_factors,
             "readings": incident.readings,
             "severity": severity,
             "status": status,
@@ -251,7 +252,9 @@ def build_chart(events: list[dict[str, Any]], alerts: list[dict[str, Any]], hist
         })
     return {
         "period_seconds": 60, "window_seconds": args.window_seconds,
-        "sustain_evaluations": args.persistence, "points": points,
+        "sustain_evaluations": args.persistence,
+        "stream_started_at": points[0]["t"] if points else None,
+        "points": points,
     }
 
 
@@ -320,6 +323,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--priorities-out", default="data/priorities.json")
     parser.add_argument("--alerts-out", default="data/alerts.jsonl")
     parser.add_argument("--memory", default="data/incident_memory.json")
+    parser.add_argument("--runtime-config", default="data/runtime_config.json", help="Runtime priority settings shared with the live dashboard.")
     parser.add_argument("--output", default="frontend/dashboard_data.json")
     return parser.parse_args()
 
@@ -343,7 +347,11 @@ def main() -> None:
         for diagnosis in diagnoses:
             sink.write(json.dumps({k: v for k, v in diagnosis.items() if k != "explanation"}, separators=(",", ":")) + "\n")
 
-    prioritized = prioritizer.prioritize(diagnoses)
+    try:
+        priority_config = json.loads(Path(args.runtime_config).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        priority_config = {}
+    prioritized = prioritizer.prioritize(diagnoses, priority_config)
     Path(args.priorities_out).write_text(json.dumps(prioritizer.to_json(prioritized), indent=2), encoding="utf-8")
 
     entries = build_incident_entries(prioritized, memory)

@@ -394,12 +394,13 @@
   /* ---------- Trial by Fire overlay ---------- */
   .overlay {
     position: fixed; inset: 0; z-index: 100; display: none;
-    align-items: center; justify-content: center; padding: 24px;
+    align-items: center; justify-content: center; padding: 24px; overflow-y: auto;
     background: rgba(4,5,8,.72); backdrop-filter: blur(6px);
   }
   .overlay.open { display: flex; animation: fade .2s ease both; }
   .tbf {
     width: 100%; max-width: 560px; background: linear-gradient(180deg, #14161f, #0e1017);
+    max-height: calc(100vh - 48px); overflow-y: auto; box-sizing: border-box;
     border: 1px solid #3a2320; border-radius: 20px; padding: 28px; box-shadow: 0 30px 80px rgba(0,0,0,.6);
   }
   .tbf .th { display: flex; align-items: center; gap: 10px; }
@@ -592,7 +593,7 @@
             <div class="chart-head">
               <div class="section-h" style="margin:0">
                 <h2>Conversion vs expected</h2>
-                <span class="hint">last 30 minutes · 1-min periods</span>
+                <span class="hint" id="chart-range">current run · 1-min periods</span>
               </div>
               <div class="legend">
                 <span><i class="swatch" style="background:#8892a4;opacity:.55"></i> Expected range</span>
@@ -799,6 +800,24 @@
         </form>
         <p id="controls-status" style="color:var(--ink-soft);font-size:12.5px;margin:18px 0 0">Loading current controls…</p>
       </div>
+      <div class="section-h" style="margin-top:28px"><h2>Prioritization strategy</h2><span class="hint">Changes the order of detected incidents, not when they are detected.</span></div>
+      <div class="card pad" style="max-width:760px">
+        <form id="priority-form" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+          <label style="grid-column:1/-1">Strategy preset
+            <select name="priority_preset" style="width:100%;margin-top:6px"><option value="financial">Financial impact</option><option value="balanced">Balanced</option><option value="strategic_accounts">Strategic accounts</option><option value="conversion_protection">Conversion protection</option><option value="custom">Custom</option></select>
+          </label>
+          <label>Financial impact <output id="weight-financial-value">50%</output><input name="weight_financial" type="range" min="0" max="100" step="1" style="width:100%;margin-top:6px"></label>
+          <label>Urgency <output id="weight-urgency-value">25%</output><input name="weight_urgency" type="range" min="0" max="100" step="1" style="width:100%;margin-top:6px"></label>
+          <label>Conversion drop <output id="weight-conversion-value">15%</output><input name="weight_conversion_drop" type="range" min="0" max="100" step="1" style="width:100%;margin-top:6px"></label>
+          <label>Strategic merchant <output id="weight-merchant-value">10%</output><input name="weight_merchant" type="range" min="0" max="100" step="1" style="width:100%;margin-top:6px"></label>
+          <div style="grid-column:1/-1;color:var(--ink-faint);font-size:12px">Weights must add up to 100%. A merchant multiplier of 1.0 means normal priority; 1.5 means 50% more importance for that merchant.</div>
+          <label>PagoModa multiplier<input name="merchant_PagoModa" type="number" min="0.5" max="3" step="0.1" style="width:100%;margin-top:6px"></label>
+          <label>TravelNow multiplier<input name="merchant_TravelNow" type="number" min="0.5" max="3" step="0.1" style="width:100%;margin-top:6px"></label>
+          <label>TechStore multiplier<input name="merchant_TechStore" type="number" min="0.5" max="3" step="0.1" style="width:100%;margin-top:6px"></label>
+          <div style="display:flex;align-items:end"><button class="btn primary" type="submit">Apply prioritization</button></div>
+        </form>
+        <p id="priority-status" style="color:var(--ink-soft);font-size:12.5px;margin:18px 0 0">Loading current priority strategy…</p>
+      </div>
     </section>
     <section class="view" id="view-analytics">
       <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Analítica: contexto de la operación.</strong> Compara el historial usado como línea base contra el stream que está llegando ahora. Sirve para entender el volumen, la conversión y la mezcla de tráfico, sin confundirlo con un diagnóstico de causa raíz.<div class="guide-steps">Compara primero el resumen; después revisa país, provider y método para encontrar cambios en la distribución.</div></div></aside>
@@ -818,26 +837,30 @@
   <div class="tbf">
     <div class="th">
       <span class="fire">🔥</span>
-      <h3>Trial by Fire</h3>
+      <h3>Live Trial by Fire</h3>
       <span class="x" id="tbf-close">✕</span>
     </div>
-    <aside class="view-guide" role="note" style="margin:0 0 16px"><span class="guide-icon">i</span><div><strong>Prueba de fuego.</strong> Usa esta simulación para mostrar cómo el sistema separa señal de ruido y encuentra una combinación de dimensiones sin una regla predefinida.<div class="guide-steps">El resultado es una recomendación para el humano; la plataforma nunca ejecuta cambios automáticamente.</div></div></aside>
-    <div class="detected">
-      <div class="l">⚠ Anomaly detected</div>
-      <div class="m">A significant conversion drop just appeared. The system was <b>not told</b> what to look for — it is now investigating every dimension.</div>
-    </div>
+    <aside class="view-guide" role="note" style="margin:0 0 16px"><span class="guide-icon">i</span><div><strong>Prueba de fuego real.</strong> Elige una combinación no ensayada. El stream generará tráfico afectado desde este momento; el detector y diagnóstico no reciben la causa raíz.<div class="guide-steps">La inyección aumenta el volumen simulado del segmento para que haya evidencia estadística suficiente.</div></div></aside>
+    <form id="trial-form" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <label style="grid-column:1/-1;font-size:12px">Trial name<input name="name" value="Judge live trial" maxlength="100" style="width:100%;margin-top:4px"></label>
+      <label style="font-size:12px">Country<select name="country" id="trial-country" style="width:100%;margin-top:4px"><option value="MX">Mexico</option><option value="CO">Colombia</option><option value="BR">Brazil</option></select></label>
+      <label style="font-size:12px">Provider<select name="provider" style="width:100%;margin-top:4px"><option value="stripe">Stripe</option><option value="adyen">Adyen</option><option value="dlocal">dLocal</option></select></label>
+      <label style="font-size:12px">Merchant<select name="merchant" style="width:100%;margin-top:4px"><option value="PagoModa">PagoModa</option><option value="TravelNow">TravelNow</option><option value="TechStore">TechStore</option></select></label>
+      <label style="font-size:12px">Payment method<select name="payment_method" id="trial-method" style="width:100%;margin-top:4px"></select></label>
+      <label style="font-size:12px">Issuing bank<select name="issuing_bank" id="trial-bank" style="width:100%;margin-top:4px"></select></label>
+      <label style="font-size:12px">Decline reason<select name="decline_reason" style="width:100%;margin-top:4px"><option value="issuer_unavailable">Issuer unavailable</option><option value="do_not_honor">Do not honor</option><option value="provider_error">Provider error</option><option value="insufficient_funds">Insufficient funds</option></select></label>
+      <label style="font-size:12px">Approval rate<input name="approval_rate" type="number" min="0" max="1" step="0.05" value="0.25" style="width:100%;margin-top:4px"></label>
+      <label style="font-size:12px">Affected traffic share<input name="traffic_share" type="number" min="0.05" max="0.9" step="0.05" value="0.35" style="width:100%;margin-top:4px"></label>
+      <label style="font-size:12px">Duration (seconds)<input name="duration_seconds" type="number" min="30" max="900" step="30" value="300" style="width:100%;margin-top:4px"></label>
+      <div style="grid-column:1/-1;display:flex;gap:10px;align-items:center;margin-top:6px"><button class="btn primary" type="submit">Inject live incident</button><span id="trial-status" style="font-size:12px;color:var(--ink-faint)"></span></div>
+    </form>
     <div class="steps" id="tbf-steps"></div>
     <div class="result" id="tbf-result">
-      <div class="rl">✓ Root cause identified</div>
-      <div class="rsig">Adyen × Colombia × Card × Bancolombia</div>
-      <div class="rgrid">
-        <div class="rg"><div class="k">Confidence</div><div class="v" style="color:var(--ok)">94%</div></div>
-        <div class="rg"><div class="k">Incidence cost</div><div class="v" style="color:var(--money)">$5,240/hr</div></div>
-        <div class="rg"><div class="k">Decline code</div><div class="v mono">51</div></div>
-      </div>
-      <div class="narr">"The system wasn't told what to look for. It investigated the dimensions and found the strongest explanation — an issuing bank over-declining card payments for one provider in one country."</div>
+      <div class="rl">✓ Injection accepted</div>
+      <div class="rsig" id="tbf-result-signature">Live stream is now affected</div>
+      <div class="narr">The backend added this failure to the transaction stream. Wait for enough live evidence; the detector will discover and diagnose it independently.</div>
       <div class="actions">
-        <button class="btn primary" id="tbf-open-explorer">Open in Root Cause Explorer</button>
+        <button class="btn primary" id="tbf-open-explorer">Watch Command Center</button>
         <button class="btn ghost" id="tbf-dismiss">Close</button>
       </div>
     </div>
@@ -1211,13 +1234,13 @@
     const sev={ok:0, breach:1, incident:2};
 
     let expected, actual, threshold, states, timeLabels;
-    if (chartData && chartData.points && chartData.points.length >= 2) {
-      const pts = chartData.points;
+    if (chartData && chartData.points && chartData.points.length) {
+      const pts = chartData.points.length === 1 ? [{...chartData.points[0],t:chartData.stream_started_at||chartData.points[0].t,state:"ok"},chartData.points[0]] : chartData.points;
       expected = pts.map(p=>p.expected_pct);
       actual = pts.map(p=>p.observed_pct);
       threshold = pts.map(p=>p.threshold_pct);
       states = pts.map(p=>p.state);
-      timeLabels = pts.map(p=>new Date(p.t).toISOString().slice(11,16));
+      timeLabels = pts.map(p=>new Date(p.t).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));
     } else {
       // Synthetic fallback so the chart still renders something meaningful without real data.
       const N=30, BAND=2.5, SUSTAIN=3;
@@ -1230,9 +1253,12 @@
       let run=0, fi=-1;
       for(let i=0;i<N;i++){ run = breach[i]?run+1:0; if(run>=SUSTAIN && fi<0) fi=i; }
       states = actual.map((a,i)=> (fi>=0 && i>=fi) ? "incident" : (breach[i] ? "breach" : "ok"));
-      timeLabels = actual.map((_,i)=> "14:"+String(2+i).padStart(2,"0"));
+      const start = new Date(); start.setMinutes(start.getMinutes()-N+1,0,0);
+      timeLabels = actual.map((_,i)=>{ const time=new Date(start.getTime()+i*60000); return time.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); });
     }
     const N = actual.length;
+    const startedAt = chartData && chartData.stream_started_at ? new Date(chartData.stream_started_at) : null;
+    $("#chart-range").textContent = startedAt ? `live since ${startedAt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} · 1-min periods` : "waiting for live stream · 1-min periods";
     const SUSTAIN = chartData ? (chartData.sustain_evaluations||3) : 3;
     let fireIndex = states.indexOf("incident");
     const state = i => states[i];
@@ -1596,19 +1622,39 @@
   $("#help-got-it").addEventListener("click", ()=> $("#help-overlay").classList.remove("open"));
   $("#help-overlay").addEventListener("click", event=>{ if(event.target===$("#help-overlay")) $("#help-overlay").classList.remove("open"); });
 
+  const PRIORITY_PRESETS={financial:{financial:80,urgency:10,conversion_drop:5,merchant:5},balanced:{financial:50,urgency:25,conversion_drop:15,merchant:10},strategic_accounts:{financial:35,urgency:15,conversion_drop:10,merchant:40},conversion_protection:{financial:35,urgency:20,conversion_drop:35,merchant:10}};
+  const priorityWeightNames={financial:"weight_financial",urgency:"weight_urgency",conversion_drop:"weight_conversion_drop",merchant:"weight_merchant"};
+  let runtimeConfig=null;
+  function updateWeightLabels(){ Object.entries(priorityWeightNames).forEach(([key,name])=>$("#weight-"+(key==="conversion_drop"?"conversion":key)+"-value").textContent=$("#priority-form [name='"+name+"']").value+"%"); }
+  function setPriorityWeights(weights){ Object.entries(priorityWeightNames).forEach(([key,name])=>$("#priority-form [name='"+name+"']").value=weights[key]); updateWeightLabels(); }
+  function runtimePayload(){
+    const payload={}; new FormData($("#controls-form")).forEach((value,key)=>payload[key]=Number(value));
+    payload.priority_preset=$("#priority-form [name='priority_preset']").value;
+    payload.priority_weights=Object.fromEntries(Object.entries(priorityWeightNames).map(([key,name])=>[key,Number($("#priority-form [name='"+name+"']").value)]));
+    payload.merchant_multipliers={PagoModa:Number($("#priority-form [name='merchant_PagoModa']").value),TravelNow:Number($("#priority-form [name='merchant_TravelNow']").value),TechStore:Number($("#priority-form [name='merchant_TechStore']").value)};
+    return payload;
+  }
+  async function saveRuntimeConfig(status, success){
+    const payload=runtimePayload(), total=Object.values(payload.priority_weights).reduce((sum,value)=>sum+value,0);
+    if(total!==100){ status.textContent="Priority weights must add up to 100%."; return; }
+    try { const response=await fetch("/api/config", {method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); const result=await response.json(); if(!response.ok) throw new Error(result.error); runtimeConfig=result; status.textContent="Saved. The live engine will apply this on its next refresh."; toast(success); }
+    catch(error) { status.textContent="Could not save: "+(error.message||"make sure control_server.py is running."); }
+  }
   async function loadControls(){
     try {
-      const controls = await (await fetch("/api/config", {cache:"no-store"})).json();
-      Object.entries(controls).forEach(([key,value])=>{ const input=$("#controls-form [name='"+key+"']"); if(input) input.value=value; });
+      runtimeConfig=await (await fetch("/api/config", {cache:"no-store"})).json();
+      Object.entries(runtimeConfig).forEach(([key,value])=>{ const input=$("#controls-form [name='"+key+"']"); if(input) input.value=value; });
+      $("#priority-form [name='priority_preset']").value=runtimeConfig.priority_preset;
+      setPriorityWeights(runtimeConfig.priority_weights);
+      Object.entries(runtimeConfig.merchant_multipliers).forEach(([merchant,value])=>$("#priority-form [name='merchant_"+merchant+"']").value=value);
       $("#controls-status").textContent="Loaded from the live engine configuration.";
-    } catch { $("#controls-status").textContent="Controls require src/control_server.py (not a basic static file server)."; }
+      $("#priority-status").textContent="Loaded from the live engine configuration.";
+    } catch { const note="Controls require src/control_server.py (not a basic static file server)."; $("#controls-status").textContent=note; $("#priority-status").textContent=note; }
   }
-  $("#controls-form").addEventListener("submit", async event=>{
-    event.preventDefault(); const form=new FormData(event.target); const payload={};
-    form.forEach((value,key)=> payload[key]=Number(value));
-    try { const response=await fetch("/api/config", {method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); if(!response.ok) throw new Error(); $("#controls-status").textContent="Saved. The engine will apply these controls on its next refresh."; toast("Detection controls applied."); }
-    catch { $("#controls-status").textContent="Could not save controls. Make sure control_server.py is running."; }
-  });
+  $("#controls-form").addEventListener("submit", event=>{ event.preventDefault(); saveRuntimeConfig($("#controls-status"),"Detection controls applied."); });
+  $("#priority-form").addEventListener("submit", event=>{ event.preventDefault(); saveRuntimeConfig($("#priority-status"),"Prioritization strategy applied."); });
+  $("#priority-form [name='priority_preset']").addEventListener("change",event=>{ const preset=PRIORITY_PRESETS[event.target.value]; if(preset) setPriorityWeights(preset); });
+  Object.values(priorityWeightNames).forEach(name=>$("#priority-form [name='"+name+"']").addEventListener("input",()=>{ $("#priority-form [name='priority_preset']").value="custom"; updateWeightLabels(); }));
 
   // open incident -> explorer
   function openIncident(key){ currentInc = key==="uncertainty"?"uncertainty":key; renderExplorer(); go("explorer"); }
@@ -1657,24 +1703,28 @@
   function openTrial(){
     const ov=$("#overlay"); ov.classList.add("open");
     $("#tbf-result").classList.remove("show");
-    const stepsEl=$("#tbf-steps");
-    stepsEl.innerHTML = STEPS.map((s,i)=>`<div class="tstep" data-i="${i}"><span class="sp"></span><span class="lab">${s}</span></div>`).join("");
-    if(tbfRunning) return;
-    tbfRunning=true;
-    const steps=$$("#tbf-steps .tstep");
-    let i=0;
-    function run(){
-      if(i>0){ const prev=steps[i-1]; prev.classList.remove("run"); prev.classList.add("done"); prev.querySelector(".sp").innerHTML='<svg class="tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>'; }
-      if(i>=steps.length){ $("#tbf-result").classList.add("show"); tbfRunning=false; return; }
-      const cur=steps[i]; cur.classList.add("run"); cur.querySelector(".sp").innerHTML='<span class="ring"></span>';
-      i++; setTimeout(run, 620);
-    }
-    setTimeout(run, 450);
+    $("#tbf-steps").innerHTML='<div class="tstep run"><span class="sp"><span class="ring"></span></span><span class="lab">Ready for a live, judge-defined injection</span></div>';
+    $("#trial-status").textContent="";
+    populateTrialOptions();
   }
   $("#open-trial").addEventListener("click", openTrial);
   $("#tbf-close").addEventListener("click", ()=> $("#overlay").classList.remove("open"));
   $("#tbf-dismiss").addEventListener("click", ()=> $("#overlay").classList.remove("open"));
   $("#overlay").addEventListener("click", e=>{ if(e.target===$("#overlay")) $("#overlay").classList.remove("open"); });
+  const TRIAL_OPTIONS={MX:{methods:["card","wallet","cash_in_store"],banks:["BBVA","Banorte","Santander","Citibanamex"]},CO:{methods:["card","pse","wallet","cash_in_store"],banks:["Bancolombia","Davivienda","Banco de Bogota","Nequi"]},BR:{methods:["card","wallet","pix","cash_in_store"],banks:["Itau","Bradesco","Nubank","Banco do Brasil"]}};
+  function populateTrialOptions(){ const options=TRIAL_OPTIONS[$("#trial-country").value]; $("#trial-method").innerHTML=options.methods.map(value=>`<option value="${value}">${value}</option>`).join(""); $("#trial-bank").innerHTML=options.banks.map(value=>`<option value="${value}">${value}</option>`).join(""); }
+  $("#trial-country").addEventListener("change",populateTrialOptions);
+  $("#trial-form").addEventListener("submit",async event=>{
+    event.preventDefault(); const form=new FormData(event.target), submit=$("#trial-form button"), status=$("#trial-status");
+    const filters=Object.fromEntries(["merchant","provider","country","payment_method","issuing_bank"].map(key=>[key,String(form.get(key))]));
+    const payload={name:String(form.get("name")),filters,decline_reason:String(form.get("decline_reason")),approval_rate:Number(form.get("approval_rate")),traffic_share:Number(form.get("traffic_share")),duration_seconds:Number(form.get("duration_seconds"))};
+    submit.disabled=true; status.textContent="Injecting into the live stream…";
+    try { const response=await fetch("/api/trial-injections",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); const result=await response.json(); if(!response.ok) throw new Error(result.error||"Injection failed"); $("#tbf-result-signature").textContent=Object.values(result.filters).join(" × "); $("#tbf-result").classList.add("show"); $("#tbf-steps").innerHTML='<div class="tstep done"><span class="sp">✓</span><span class="lab">Live injection created; the detector is now collecting evidence.</span></div>'; status.textContent=`Active for ${result.duration_seconds}s at ${(result.approval_rate*100).toFixed(0)}% approval.`; toast("Live trial injection accepted."); }
+    catch(error) { status.textContent="Could not inject: "+error.message; }
+    finally { submit.disabled=false; }
+  });
+  // Capture phase prevents the old illustrative front-end trial handler from running.
+  $("#tbf-open-explorer").addEventListener("click",event=>{ event.stopImmediatePropagation(); $("#overlay").classList.remove("open"); go("command"); toast("Watching the real live injection in Command Center."); },true);
   $("#tbf-open-explorer").addEventListener("click", ()=>{
     // inject the trial incident live
     if(!INCIDENTS.trial){

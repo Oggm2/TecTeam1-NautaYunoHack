@@ -5,5 +5,17 @@
   "min_attempts": 30,
   "min_history_attempts": 200,
   "min_drop_pp": 5.0,
-  "z_threshold": 3.0
+  "z_threshold": 3.0,
+  "priority_preset": "balanced",
+  "priority_weights": {
+    "financial": 50,
+    "urgency": 25,
+    "conversion_drop": 15,
+    "merchant": 10
+  },
+  "merchant_multipliers": {
+    "PagoModa": 1.0,
+    "TravelNow": 1.0,
+    "TechStore": 1.0
+  }
 }
