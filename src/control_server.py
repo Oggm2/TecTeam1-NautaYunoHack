@@ -7,12 +7,15 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from chat_service import ChatService
+
 ALLOWED = {"window_seconds", "evaluation_seconds", "persistence", "min_attempts", "min_history_attempts", "min_drop_pp", "z_threshold"}
 
 
 class Handler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, directory: str, config_path: Path, **kwargs):
+    def __init__(self, *args, directory: str, config_path: Path, chat_service: ChatService, **kwargs):
         self.config_path = config_path
+        self.chat_service = chat_service
         super().__init__(*args, directory=directory, **kwargs)
 
     def _json(self, status: int, payload: object) -> None:
@@ -44,13 +47,36 @@ class Handler(SimpleHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError):
             self._json(HTTPStatus.BAD_REQUEST, {"error": "invalid configuration"})
 
+    def do_POST(self) -> None:
+        if self.path != "/api/chat":
+            self._json(HTTPStatus.NOT_FOUND, {"error": "not found"})
+            return
+        try:
+            payload = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
+            question = payload.get("question", "")
+            audience = payload.get("audience", "technical")
+            history = payload.get("history", [])
+            if not isinstance(question, str) or not question.strip() or len(question) > 2000:
+                raise ValueError("question must be non-empty and at most 2000 characters")
+            if not isinstance(history, list) or not isinstance(audience, str):
+                raise ValueError("invalid chat payload")
+            self._json(HTTPStatus.OK, self.chat_service.ask(question.strip(), audience, history))
+        except ValueError as error:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+        except RuntimeError as error:
+            self._json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error)})
+        except Exception:
+            self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "The chat service could not complete this request."})
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8001)
     parser.add_argument("--frontend", default="frontend")
     parser.add_argument("--config", default="data/runtime_config.json")
+    parser.add_argument("--chat-model", default="gpt-5")
     args = parser.parse_args()
-    handler = lambda *a, **kw: Handler(*a, directory=args.frontend, config_path=Path(args.config), **kw)
+    chat_service = ChatService(model=args.chat_model)
+    handler = lambda *a, **kw: Handler(*a, directory=args.frontend, config_path=Path(args.config), chat_service=chat_service, **kw)
     print(f"Dashboard controls available at http://localhost:{args.port}")
     ThreadingHTTPServer(("", args.port), handler).serve_forever()

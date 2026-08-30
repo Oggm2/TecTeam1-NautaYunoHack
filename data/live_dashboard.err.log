@@ -1,9 +1,103 @@
 live dashboard running at 15.0/s, refreshing every 10.0s — Ctrl+C to stop
-[2026-08-30T01:34:08.170373+00:00] refreshed dashboard — 1 tx retained, 0 incident(s)
-[2026-08-30T01:34:18.234193+00:00] refreshed dashboard — 152 tx retained, 0 incident(s)
-[2026-08-30T01:34:28.234479+00:00] refreshed dashboard — 302 tx retained, 0 incident(s)
-[2026-08-30T01:34:38.301183+00:00] refreshed dashboard — 453 tx retained, 0 incident(s)
-[2026-08-30T01:34:48.367329+00:00] refreshed dashboard — 604 tx retained, 0 incident(s)
-[2026-08-30T01:34:58.367689+00:00] refreshed dashboard — 754 tx retained, 0 incident(s)
-[2026-08-30T01:35:08.434275+00:00] new incident: {'provider': 'stripe', 'country': 'BR'}
-[2026-08-30T01:35:08.434275+00:00] refreshed dashboard — 905 tx retained, 1 incident(s)
+[2026-08-30T02:36:07.709635+00:00] refreshed dashboard — 1 tx retained, 0 incident(s)
+[2026-08-30T02:36:17.764295+00:00] refreshed dashboard — 152 tx retained, 0 incident(s)
+[2026-08-30T02:36:27.764441+00:00] refreshed dashboard — 302 tx retained, 0 incident(s)
+[2026-08-30T02:36:37.830539+00:00] refreshed dashboard — 453 tx retained, 0 incident(s)
+[2026-08-30T02:36:47.830753+00:00] refreshed dashboard — 603 tx retained, 0 incident(s)
+[2026-08-30T02:36:57.897456+00:00] new incident: {'issuing_bank': 'Itau', 'country': 'BR', 'provider': 'stripe', 'payment_method': 'card'}
+[2026-08-30T02:36:57.897456+00:00] refreshed dashboard — 754 tx retained, 1 incident(s)
+[2026-08-30T02:37:08.215211+00:00] new incident: {'issuing_bank': 'Nubank', 'country': 'BR', 'payment_method': 'card'}
+[2026-08-30T02:37:08.215211+00:00] new incident: {'payment_method': 'card', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T02:37:08.215211+00:00] new incident: {'provider': 'stripe', 'country': 'BR', 'payment_method': 'card'}
+[2026-08-30T02:37:08.215211+00:00] new incident: {'payment_method': 'pix', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T02:37:08.215211+00:00] new incident: {'merchant': 'PagoModa', 'country': 'BR', 'provider': 'stripe', 'payment_method': 'card'}
+[2026-08-30T02:37:08.215211+00:00] refreshed dashboard — 755 tx retained, 2 incident(s)
+[2026-08-30T02:37:54.464156+00:00] new incident: {'merchant': 'TechStore', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T02:37:54.464156+00:00] refreshed dashboard — 756 tx retained, 1 incident(s)
+[2026-08-30T02:38:04.497719+00:00] refreshed dashboard — 1753 tx retained, 1 incident(s)
+[2026-08-30T02:38:14.564067+00:00] refreshed dashboard — 1904 tx retained, 1 incident(s)
+[2026-08-30T02:38:24.631105+00:00] new incident: {'issuing_bank': 'Banco do Brasil', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T02:38:24.631105+00:00] new incident: {'issuing_bank': 'Bradesco', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T02:38:24.631105+00:00] new incident: {'provider': 'adyen', 'country': 'MX', 'merchant': 'PagoModa', 'issuing_bank': 'Banorte'}
+[2026-08-30T02:38:24.631105+00:00] new incident: {'merchant': 'PagoModa', 'country': 'MX', 'issuing_bank': 'Banorte', 'payment_method': 'card'}
+[2026-08-30T02:38:24.631105+00:00] new incident: {'issuing_bank': 'Banorte', 'country': 'MX', 'merchant': 'PagoModa', 'payment_method': 'card'}
+[2026-08-30T02:38:24.631105+00:00] new incident: {'merchant': 'TravelNow', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T02:38:24.631105+00:00] new incident: {'payment_method': 'wallet', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T02:38:24.631105+00:00] refreshed dashboard — 2055 tx retained, 2 incident(s)
+[2026-08-30T02:39:34.072273+00:00] new incident: {'provider': 'dlocal', 'country': 'MX', 'issuing_bank': 'Banorte', 'payment_method': 'card'}
+[2026-08-30T02:39:34.072273+00:00] refreshed dashboard — 2056 tx retained, 2 incident(s)
+[2026-08-30T02:39:44.097246+00:00] refreshed dashboard — 3247 tx retained, 2 incident(s)
+[2026-08-30T02:39:54.164328+00:00] refreshed dashboard — 3398 tx retained, 2 incident(s)
+[2026-08-30T02:40:04.230637+00:00] new incident: {'payment_method': 'wallet', 'country': 'MX', 'merchant': 'PagoModa', 'issuing_bank': 'Banorte'}
+[2026-08-30T02:40:04.230637+00:00] refreshed dashboard — 3549 tx retained, 2 incident(s)
+[2026-08-30T02:40:14.230789+00:00] refreshed dashboard — 3699 tx retained, 2 incident(s)
+[2026-08-30T02:40:24.230927+00:00] new incident: {'provider': 'dlocal', 'country': 'MX', 'issuing_bank': 'Banorte', 'merchant': 'PagoModa', 'payment_method': 'card'}
+[2026-08-30T02:40:24.230927+00:00] refreshed dashboard — 3849 tx retained, 2 incident(s)
+[2026-08-30T02:40:34.230821+00:00] refreshed dashboard — 3999 tx retained, 2 incident(s)
+[2026-08-30T02:40:44.297394+00:00] new incident: {'payment_method': 'cash_in_store', 'country': 'MX', 'issuing_bank': 'Banorte'}
+[2026-08-30T02:40:44.297394+00:00] new incident: {'payment_method': 'cash_in_store', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T02:40:44.297394+00:00] refreshed dashboard — 4150 tx retained, 2 incident(s)
+[2026-08-30T02:41:00.068892+00:00] refreshed dashboard — 4151 tx retained, 2 incident(s)
+[2026-08-30T02:41:10.097423+00:00] new incident: {'payment_method': 'card', 'country': 'MX', 'issuing_bank': 'Banorte', 'merchant': 'PagoModa'}
+[2026-08-30T02:41:10.097423+00:00] refreshed dashboard — 4537 tx retained, 2 incident(s)
+[2026-08-30T02:41:20.097394+00:00] refreshed dashboard — 4687 tx retained, 2 incident(s)
+[2026-08-30T02:41:30.164137+00:00] refreshed dashboard — 4838 tx retained, 2 incident(s)
+[2026-08-30T02:41:40.164687+00:00] refreshed dashboard — 4988 tx retained, 2 incident(s)
+[2026-08-30T02:41:50.168651+00:00] refreshed dashboard — 5138 tx retained, 2 incident(s)
+[2026-08-30T02:42:00.230945+00:00] refreshed dashboard — 5289 tx retained, 2 incident(s)
+[2026-08-30T02:42:10.297507+00:00] refreshed dashboard — 5440 tx retained, 2 incident(s)
+[2026-08-30T02:42:20.297699+00:00] refreshed dashboard — 5590 tx retained, 2 incident(s)
+[2026-08-30T02:42:30.363859+00:00] refreshed dashboard — 5741 tx retained, 2 incident(s)
+[2026-08-30T02:42:40.364275+00:00] refreshed dashboard — 5891 tx retained, 2 incident(s)
+[2026-08-30T02:42:50.431222+00:00] refreshed dashboard — 6042 tx retained, 2 incident(s)
+[2026-08-30T02:43:00.497199+00:00] refreshed dashboard — 6193 tx retained, 2 incident(s)
+[2026-08-30T02:43:10.497403+00:00] refreshed dashboard — 6343 tx retained, 2 incident(s)
+[2026-08-30T02:43:20.564032+00:00] refreshed dashboard — 6494 tx retained, 2 incident(s)
+[2026-08-30T02:43:30.630989+00:00] refreshed dashboard — 6645 tx retained, 2 incident(s)
+[2026-08-30T02:43:40.697519+00:00] refreshed dashboard — 6796 tx retained, 2 incident(s)
+[2026-08-30T02:43:50.763967+00:00] refreshed dashboard — 6947 tx retained, 2 incident(s)
+[2026-08-30T02:44:00.830767+00:00] refreshed dashboard — 7098 tx retained, 2 incident(s)
+[2026-08-30T02:44:10.897403+00:00] refreshed dashboard — 7249 tx retained, 2 incident(s)
+[2026-08-30T02:44:20.897371+00:00] refreshed dashboard — 7399 tx retained, 2 incident(s)
+[2026-08-30T02:44:30.897646+00:00] refreshed dashboard — 7549 tx retained, 2 incident(s)
+[2026-08-30T02:44:40.964128+00:00] refreshed dashboard — 7700 tx retained, 2 incident(s)
+[2026-08-30T02:44:50.964308+00:00] refreshed dashboard — 7850 tx retained, 2 incident(s)
+[2026-08-30T02:45:01.030446+00:00] refreshed dashboard — 8001 tx retained, 2 incident(s)
+[2026-08-30T02:45:11.030605+00:00] refreshed dashboard — 8151 tx retained, 2 incident(s)
+[2026-08-30T02:45:21.030947+00:00] new incident: {'payment_method': 'wallet', 'country': 'MX', 'issuing_bank': 'Banorte', 'merchant': 'PagoModa'}
+[2026-08-30T02:45:21.030947+00:00] refreshed dashboard — 8301 tx retained, 2 incident(s)
+[2026-08-30T02:45:32.881604+00:00] refreshed dashboard — 8302 tx retained, 2 incident(s)
+[2026-08-30T02:45:42.897140+00:00] refreshed dashboard — 8629 tx retained, 2 incident(s)
+[2026-08-30T02:45:52.897247+00:00] refreshed dashboard — 8779 tx retained, 2 incident(s)
+[2026-08-30T02:46:02.897329+00:00] refreshed dashboard — 8929 tx retained, 2 incident(s)
+[2026-08-30T02:46:12.897361+00:00] refreshed dashboard — 9079 tx retained, 2 incident(s)
+[2026-08-30T02:46:22.964064+00:00] new incident: {'payment_method': 'card', 'country': 'MX', 'issuing_bank': 'Banorte', 'merchant': 'PagoModa'}
+[2026-08-30T02:46:22.964064+00:00] refreshed dashboard — 9230 tx retained, 2 incident(s)
+[2026-08-30T02:46:32.963963+00:00] refreshed dashboard — 9380 tx retained, 2 incident(s)
+[2026-08-30T02:46:42.964006+00:00] refreshed dashboard — 9530 tx retained, 2 incident(s)
+[2026-08-30T02:46:52.964324+00:00] refreshed dashboard — 9680 tx retained, 2 incident(s)
+[2026-08-30T02:47:02.964054+00:00] refreshed dashboard — 9830 tx retained, 2 incident(s)
+[2026-08-30T02:47:13.030657+00:00] refreshed dashboard — 9981 tx retained, 2 incident(s)
+[2026-08-30T02:47:23.097353+00:00] refreshed dashboard — 10132 tx retained, 2 incident(s)
+[2026-08-30T02:47:33.097763+00:00] refreshed dashboard — 10282 tx retained, 2 incident(s)
+[2026-08-30T02:47:43.164044+00:00] new incident: {'payment_method': 'wallet', 'country': 'MX', 'merchant': 'PagoModa', 'issuing_bank': 'Banorte'}
+[2026-08-30T02:47:43.164044+00:00] refreshed dashboard — 10433 tx retained, 2 incident(s)
+[2026-08-30T02:47:53.164213+00:00] new incident: {'provider': 'adyen', 'country': 'MX', 'merchant': 'PagoModa', 'issuing_bank': 'Banorte', 'payment_method': 'card'}
+[2026-08-30T02:47:53.164213+00:00] refreshed dashboard — 10583 tx retained, 2 incident(s)
+[2026-08-30T02:48:03.231117+00:00] refreshed dashboard — 10734 tx retained, 2 incident(s)
+[2026-08-30T02:48:13.297497+00:00] refreshed dashboard — 10885 tx retained, 2 incident(s)
+[2026-08-30T02:48:23.297508+00:00] new incident: {'payment_method': 'wallet', 'country': 'MX', 'merchant': 'PagoModa', 'issuing_bank': 'Banorte'}
+[2026-08-30T02:48:23.297508+00:00] refreshed dashboard — 11035 tx retained, 2 incident(s)
+[2026-08-30T02:48:33.297410+00:00] refreshed dashboard — 11185 tx retained, 2 incident(s)
+[2026-08-30T02:48:43.364154+00:00] new incident: {'payment_method': 'card', 'country': 'MX', 'merchant': 'PagoModa', 'issuing_bank': 'Banorte'}
+[2026-08-30T02:48:43.364154+00:00] refreshed dashboard — 11336 tx retained, 2 incident(s)
+[2026-08-30T02:48:53.430517+00:00] refreshed dashboard — 11487 tx retained, 2 incident(s)
+[2026-08-30T02:49:03.430932+00:00] refreshed dashboard — 11637 tx retained, 2 incident(s)
+[2026-08-30T02:49:13.497556+00:00] refreshed dashboard — 11788 tx retained, 2 incident(s)
+[2026-08-30T02:49:23.563894+00:00] refreshed dashboard — 11939 tx retained, 2 incident(s)
+[2026-08-30T02:49:33.564115+00:00] refreshed dashboard — 12089 tx retained, 2 incident(s)
+[2026-08-30T02:49:43.564059+00:00] refreshed dashboard — 12239 tx retained, 2 incident(s)
+[2026-08-30T02:49:53.630890+00:00] refreshed dashboard — 12390 tx retained, 2 incident(s)
+[2026-08-30T02:50:03.630735+00:00] refreshed dashboard — 12540 tx retained, 2 incident(s)
+[2026-08-30T02:50:13.697785+00:00] refreshed dashboard — 12691 tx retained, 2 incident(s)
+[2026-08-30T02:50:23.766350+00:00] refreshed dashboard — 12842 tx retained, 2 incident(s)
