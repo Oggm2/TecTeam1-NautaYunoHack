@@ -169,7 +169,11 @@ def prioritize(diagnoses: list[dict[str, Any]], priority_config: dict[str, Any] 
             "merchant": merchant or None, "merchant_multiplier": merchant_multiplier,
             "score_multiplier": round(score_multiplier, 3),
         }
-        signature = " ∧ ".join(f"{k}={v}" for k, v in sorted(latest.get("root_cause_segment", {}).items()))
+        # Alert ids stay stable while the drill-down may refine its segment on
+        # later evaluations. Use them for cost tracking so refinement does not
+        # reset accumulated impact mid-incident.
+        stable_alert_ids = sorted(str(reading.get("alert_id")) for reading in group if reading.get("alert_id"))
+        signature = "alerts:" + "|".join(stable_alert_ids) if stable_alert_ids else " ∧ ".join(f"{k}={v}" for k, v in sorted(latest.get("root_cause_segment", {}).items()))
         incidents.append(PrioritizedIncident(
             incident_key=signature or latest.get("incident_id", "unknown"),
             latest_diagnosis=latest,

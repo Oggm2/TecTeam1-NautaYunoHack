@@ -65,6 +65,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--memory", default="data/incident_memory.json")
     parser.add_argument("--output", default="frontend/dashboard_data.json")
     parser.add_argument("--transactions-out", default="data/live_transactions.jsonl")
+    parser.add_argument("--cost-tracker", default="data/active_incident_costs.json", help="Persist active incident cost accumulation across process restarts.")
     parser.add_argument("--seed", type=int)
     parser.add_argument("--use-openai", action="store_true", help="Use OpenAI only to redact confirmed diagnoses.")
     parser.add_argument("--model", default="gpt-5", help="OpenAI model used with --use-openai.")
@@ -124,7 +125,12 @@ def main() -> None:
 
     retained: list[dict[str, Any]] = []
     active_alerts: dict[str, dict[str, Any]] = {}
-    loss_tracker: dict[str, dict[str, Any]] = {}
+    tracker_path = Path(args.cost_tracker)
+    try:
+        loaded_tracker = json.loads(tracker_path.read_text(encoding="utf-8"))
+        loss_tracker: dict[str, dict[str, Any]] = loaded_tracker if isinstance(loaded_tracker, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        loss_tracker = {}
     seen_alert_ids: set[str] = set()
 
     output_path = Path(args.output)
@@ -135,6 +141,8 @@ def main() -> None:
 
     emitted = 0
     last_refresh = time.monotonic() - args.refresh_seconds
+    last_evaluation = time.monotonic() - detector_args.evaluation_seconds
+    active_diagnoses: list[dict[str, Any]] = []
     print(f"live dashboard running at {args.events_per_second}/s, refreshing every {args.refresh_seconds}s — Ctrl+C to stop", file=sys.stderr)
     try:
         while True:
@@ -166,37 +174,40 @@ def main() -> None:
                 engine = detector.DetectionEngine(detector_store, detector_args, recovery_estimator)
                 for retained_event in retained:
                     engine.add(retained_event)
+                last_evaluation = time.monotonic() - detector_args.evaluation_seconds
                 print(f"[{now.isoformat()}] applied runtime detection controls", file=sys.stderr)
 
-            alerts = engine.evaluate(now)
-            new_alerts = [alert for alert in alerts if alert["alert_id"] not in seen_alert_ids]
-            for alert in new_alerts:
-                seen_alert_ids.add(alert["alert_id"])
-                active_alerts[alert["alert_signature"]] = alert
+            if time.monotonic() - last_evaluation >= detector_args.evaluation_seconds:
+                last_evaluation = time.monotonic()
+                alerts = engine.evaluate(now)
+                new_alerts = [alert for alert in alerts if alert["alert_id"] not in seen_alert_ids]
+                for alert in new_alerts:
+                    seen_alert_ids.add(alert["alert_id"])
+                    active_alerts[alert["alert_signature"]] = alert
 
-            # Replace each alert's evidence with the newest rolling window.
-            # A diagnosis is therefore a live estimate, not a first-alert
-            # snapshot that remains frozen for the rest of the incident.
-            active_alerts = {
-                signature: {**alert, "evidence": engine.active_evidence[signature]}
-                for signature, alert in active_alerts.items()
-                if signature in engine.active_evidence
-            }
-            active_diagnoses = bd.diagnose_alerts(
-                list(active_alerts.values()), retained, history_events, args, memory,
-            ) if active_alerts else []
-            if args.use_openai:
-                for diagnosis in active_diagnoses:
-                    diagnosis["explanation"] = explainer.openai_explanation(diagnosis, args.model)
-            if new_alerts:
-                new_alert_ids = {alert["alert_id"] for alert in new_alerts}
-                for diagnosis in active_diagnoses:
-                    if diagnosis.get("alert_id") in new_alert_ids:
-                        print(f"[{now.isoformat()}] new incident: {diagnosis.get('root_cause_segment')}", file=sys.stderr)
+                # Replace each alert's evidence with the newest rolling window.
+                active_alerts = {
+                    signature: {**alert, "evidence": engine.active_evidence[signature]}
+                    for signature, alert in active_alerts.items()
+                    if signature in engine.active_evidence
+                }
+                active_diagnoses = bd.diagnose_alerts(
+                    list(active_alerts.values()), retained, history_events, args, memory,
+                ) if active_alerts else []
+                if args.use_openai:
+                    for diagnosis in active_diagnoses:
+                        diagnosis["explanation"] = explainer.openai_explanation(diagnosis, args.model)
+                if new_alerts:
+                    new_alert_ids = {alert["alert_id"] for alert in new_alerts}
+                    for diagnosis in active_diagnoses:
+                        if diagnosis.get("alert_id") in new_alert_ids:
+                            print(f"[{now.isoformat()}] new incident: {diagnosis.get('root_cause_segment')}", file=sys.stderr)
 
             prioritized = prioritizer.prioritize(active_diagnoses, priority_config) if active_diagnoses else []
             entries = bd.build_incident_entries(prioritized, memory)
             bd.update_accumulated_unrecovered_gmv(entries, loss_tracker, now)
+            tracker_path.parent.mkdir(parents=True, exist_ok=True)
+            write_atomic(tracker_path, json.dumps(loss_tracker, indent=2))
             chart = bd.build_chart(retained, list(active_alerts.values()), history_events, args)
             # Keep the dashboard's timeline tied to this process, even during
             # the first minute when there is only one aggregate data point.

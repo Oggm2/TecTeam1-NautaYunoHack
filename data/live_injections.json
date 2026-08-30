@@ -62,5 +62,85 @@
     "duration_seconds": 300,
     "decline_reason": "issuer_unavailable",
     "activated_at": "2026-08-30T05:13:21.874569+00:00"
+  },
+  {
+    "id": "1db7ac65-eb4b-4428-8961-2e731eb3b07e",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "dlocal",
+      "country": "BR",
+      "payment_method": "card",
+      "issuing_bank": "Itau"
+    },
+    "approval_rate": 0.25,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T05:36:37.325357+00:00"
+  },
+  {
+    "id": "1bca4b2c-ce39-43d5-af9a-ef938395be24",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "dlocal",
+      "country": "BR",
+      "payment_method": "wallet",
+      "issuing_bank": "Bradesco"
+    },
+    "approval_rate": 0.25,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T05:42:08.880994+00:00"
+  },
+  {
+    "id": "acd43f8b-36d0-437b-82e7-adc7d788bd5e",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "adyen",
+      "country": "CO",
+      "payment_method": "card",
+      "issuing_bank": "Bancolombia"
+    },
+    "approval_rate": 0.2,
+    "traffic_share": 0.45,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T05:45:20.848726+00:00"
+  },
+  {
+    "id": "cf8fe718-90ee-4d36-94a8-d5659de18b1d",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "adyen",
+      "country": "CO",
+      "payment_method": "card",
+      "issuing_bank": "Bancolombia"
+    },
+    "approval_rate": 0.2,
+    "traffic_share": 0.55,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T05:53:53.067517+00:00"
+  },
+  {
+    "id": "0980d21b-72e8-472b-a42f-4cf14e142af4",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.25,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T06:03:39.937185+00:00"
   }
 ]

@@ -198,33 +198,38 @@ def update_accumulated_unrecovered_gmv(
         previous = tracker.get(key)
         if previous is None:
             previous = {
-                "started_at": observed_at,
-                "last_observed_at": observed_at,
+                "started_at": observed_at.isoformat(),
+                "last_observed_at": observed_at.isoformat(),
                 "last_rate_per_hour_usd": rate,
                 "accumulated_usd": 0.0,
             }
             tracker[key] = previous
         else:
-            elapsed_seconds = max(0.0, (observed_at - previous["last_observed_at"]).total_seconds())
+            last_observed_at = parse_timestamp(previous.get("last_observed_at")) or observed_at
+            elapsed_seconds = max(0.0, (observed_at - last_observed_at).total_seconds())
             previous["accumulated_usd"] += (previous["last_rate_per_hour_usd"] + rate) * 0.5 * elapsed_seconds / 3600
-            previous["last_observed_at"] = observed_at
+            previous["last_observed_at"] = observed_at.isoformat()
             previous["last_rate_per_hour_usd"] = rate
 
         entry["current_expected_unrecovered_gmv_per_hour_usd"] = round(rate, 2)
         entry["accumulated_expected_unrecovered_gmv_usd"] = round(previous["accumulated_usd"], 2)
-        entry["incident_started_at"] = previous["started_at"].isoformat()
-        entry["accumulated_duration_seconds"] = round((observed_at - previous["started_at"]).total_seconds(), 1)
+        started_at = parse_timestamp(previous.get("started_at")) or observed_at
+        entry["incident_started_at"] = started_at.isoformat()
+        entry["accumulated_duration_seconds"] = round((observed_at - started_at).total_seconds(), 1)
+        entry["duration_minutes"] = round(entry["accumulated_duration_seconds"] / 60, 1)
 
 
 def build_chart(events: list[dict[str, Any]], alerts: list[dict[str, Any]], history_events: list[dict[str, Any]], args: argparse.Namespace) -> dict[str, Any]:
     buckets, totals = build_overall_hourly(history_events)
     per_minute: dict[datetime, list[int]] = defaultdict(lambda: [0, 0])
+    completed_events: list[tuple[datetime, dict[str, Any]]] = []
     for event in events:
         if event.get("status") not in CONVERSION_STATUSES:
             continue
         completed_at = parse_timestamp(event.get("completed_at"))
         if not completed_at:
             continue
+        completed_events.append((completed_at, event))
         minute = completed_at.replace(second=0, microsecond=0)
         bucket = per_minute[minute]
         bucket[0] += 1
@@ -250,10 +255,24 @@ def build_chart(events: list[dict[str, Any]], alerts: list[dict[str, Any]], hist
             "t": minute.isoformat(), "observed_pct": round(observed * 100, 2),
             "expected_pct": round(expected * 100, 2), "threshold_pct": round(threshold * 100, 2), "state": state,
         })
+    latest_at = max((timestamp for timestamp, _ in completed_events), default=None)
+    current_window: dict[str, Any] | None = None
+    if latest_at:
+        window_start = latest_at - timedelta(seconds=args.window_seconds)
+        window_events = [event for timestamp, event in completed_events if timestamp >= window_start]
+        attempts = len(window_events)
+        approved = sum(event["status"] == "approved" for event in window_events)
+        expected = expected_conversion_at(buckets, totals, latest_at)
+        current_window = {
+            "started_at": window_start.isoformat(), "ended_at": latest_at.isoformat(), "attempts": attempts,
+            "approved": approved, "observed_pct": round(100 * approved / attempts, 2) if attempts else None,
+            "expected_pct": round(100 * expected, 2),
+        }
     return {
         "period_seconds": 60, "window_seconds": args.window_seconds,
         "sustain_evaluations": args.persistence,
         "stream_started_at": points[0]["t"] if points else None,
+        "current_window": current_window,
         "points": points,
     }
 
@@ -261,11 +280,13 @@ def build_chart(events: list[dict[str, Any]], alerts: list[dict[str, Any]], hist
 def build_kpis(
     entries: list[dict[str, Any]], chart: dict[str, Any], transactions_window: int, recovery_horizon_hours: float,
 ) -> dict[str, Any]:
-    last_point = chart["points"][-1] if chart["points"] else None
+    current_window = chart.get("current_window") or {}
     active = [e for e in entries if e["status"] == "active"]
     return {
-        "current_conversion_pct": last_point["observed_pct"] if last_point else None,
-        "expected_conversion_pct": last_point["expected_pct"] if last_point else None,
+        "current_conversion_pct": current_window.get("observed_pct"),
+        "expected_conversion_pct": current_window.get("expected_pct"),
+        "conversion_window_seconds": chart.get("window_seconds"),
+        "conversion_window_attempts": current_window.get("attempts", 0),
         "transactions_window": transactions_window,
         "active_incidents": len(active),
         "critical_count": sum(e["severity"] == "crit" for e in entries),

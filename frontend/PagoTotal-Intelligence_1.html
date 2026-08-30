@@ -527,7 +527,7 @@
     <div class="sys-mini">
       <div class="row"><span class="dot" style="background:var(--ok)"></span> Stream ingest · <span style="color:var(--ok);font-weight:700">online</span></div>
       <div class="row"><span class="dot" style="background:var(--ok)"></span> Detection engine</div>
-      <div class="row"><span class="dot" style="background:var(--warn)"></span> 2 active investigations</div>
+      <div class="row"><span class="dot" style="background:var(--warn)"></span> <span id="sidebar-investigations">0 active investigations</span></div>
     </div>
     <div class="nav-item" data-view="controls" style="font-size:12.5px">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 7"/></svg>
@@ -569,7 +569,7 @@
             <div class="kpi state-crit" id="kpi-conv-card">
               <div class="k">Current conversion</div>
               <div class="v tnum" id="kpi-conv">74.2%</div>
-              <div class="m" id="kpi-conv-expected">expected 91.0%</div>
+              <div class="m" id="kpi-conv-expected">expected 91.0% · rolling window</div>
             </div>
             <div class="kpi">
               <div class="k">Transactions</div>
@@ -638,9 +638,9 @@
             <div class="section-h" style="margin:0 0 6px"><h2>System status</h2></div>
             <div class="srow"><span class="lab">Ingest pipeline</span><span class="status-dot" style="color:var(--ok)"><span class="d" style="background:var(--ok)"></span>Online</span></div>
             <div class="srow"><span class="lab">Detection engine</span><span class="status-dot" style="color:var(--ok)"><span class="d" style="background:var(--ok)"></span>Nominal</span></div>
-            <div class="srow"><span class="lab">Diagnosis engine</span><span class="status-dot" style="color:var(--warn)"><span class="d" style="background:var(--warn)"></span>2 running</span></div>
-            <div class="srow"><span class="lab">Providers monitored</span><span class="mono">4</span></div>
-            <div class="srow"><span class="lab">Dimensions tracked</span><span class="mono">6</span></div>
+            <div class="srow"><span class="lab">Diagnosis engine</span><span class="status-dot" id="sys-diagnosis" style="color:var(--ok)"><span class="d" style="background:var(--ok)"></span>Idle</span></div>
+            <div class="srow"><span class="lab">Providers monitored</span><span class="mono" id="sys-providers">—</span></div>
+            <div class="srow"><span class="lab">Dimensions tracked</span><span class="mono" id="sys-dimensions">6</span></div>
           </div>
         </div>
       </div>
@@ -1181,7 +1181,7 @@
         <div class="inc-metrics">
           <div class="im"><div class="k">Conversion</div><div class="v"><span class="conv-mini"><span class="from tnum">${inc.convFrom}%</span> <span class="to tnum">${inc.convTo}%</span></span></div></div>
           <div class="im"><div class="k">Incidence cost</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">current ${money(inc.currentRate||inc.money)}/hr</div></div>
-          <div class="im"><div class="k">Affected</div><div class="v tnum">${inc.affected.toLocaleString()} tx/hr</div></div>
+          <div class="im"><div class="k">Affected</div><div class="v tnum">${inc.affected.toLocaleString()} tx in window</div></div>
           <div class="im"><div class="k">Confidence</div><div class="v tnum">${inc.confidence}%</div></div>
         </div>
       </div>
@@ -1213,7 +1213,8 @@
     $("#mar-gross").textContent = `Current incidence cost: $${Math.round(currentCostRate).toLocaleString("en-US")} / hour · gross $${Math.round(grossLost).toLocaleString("en-US")} / hour`;
     if (data && data.kpis && data.kpis.current_conversion_pct!=null) {
       $("#kpi-conv").textContent = data.kpis.current_conversion_pct.toFixed(1)+"%";
-      $("#kpi-conv-expected").textContent = "expected "+data.kpis.expected_conversion_pct.toFixed(1)+"%";
+      const seconds=data.kpis.conversion_window_seconds||300, attempts=data.kpis.conversion_window_attempts||0;
+      $("#kpi-conv-expected").textContent = `expected ${data.kpis.expected_conversion_pct.toFixed(1)}% · rolling ${Math.round(seconds/60)}m · ${attempts.toLocaleString()} tx`;
     }
     $("#kpi-conv-card").classList.toggle("state-crit", active.some(i=>i.severity==="crit"));
     if (data && data.kpis) $("#kpi-tx-note").textContent = `last ${Math.round((data.kpis.transactions_window||0)).toLocaleString("en-US")} transactions`;
@@ -1225,6 +1226,11 @@
     else { healthEl.style.color="var(--ok)"; healthEl.innerHTML='<span style="width:9px;height:9px;border-radius:50%;background:var(--ok);display:inline-block"></span> Nominal'; }
     const segmentsAffected = new Set(active.flatMap(i=>[i.provider,i.country].filter(Boolean))).size;
     $("#kpi-health-note").textContent = active.length ? `${segmentsAffected} segment(s) affected` : "no incidents in this window";
+    $("#sidebar-investigations").textContent=`${active.length} active investigation${active.length===1?'':'s'}`;
+    const diagnosis=$("#sys-diagnosis"), diagnosisColor=active.length?"var(--warn)":"var(--ok)";
+    diagnosis.style.color=diagnosisColor; diagnosis.innerHTML=`<span class="d" style="background:${diagnosisColor}"></span>${active.length?active.length+" running":"Idle"}`;
+    const providers=(data&&data.analytics&&data.analytics.live&&data.analytics.live.by_provider||[]).length;
+    $("#sys-providers").textContent=providers||"—";
   }
 
   /* ------------------------------------------------ CHART ------------------------------------------------ */
@@ -1415,7 +1421,7 @@
         <span class="colhide mono" style="color:var(--ink-soft)">${inc.method}</span>
         <span class="tnum celldrop">${inc.convFrom}→${inc.convTo}%</span>
         <span class="cellmoney tnum">${inc.money?money(inc.money):'—'}<small style="display:block;color:var(--ink-faint);font-weight:500">${inc.money?`${money(inc.currentRate||inc.money)}/hr`:''}</small></span>
-        <span class="colhide mono">${inc.affected?inc.affected.toLocaleString()+'/hr':'—'}</span>
+        <span class="colhide mono">${inc.affected?inc.affected.toLocaleString()+' tx':'—'}</span>
         <span class="tnum">${inc.confidence}%</span>
       </div>`;
     }).join("");

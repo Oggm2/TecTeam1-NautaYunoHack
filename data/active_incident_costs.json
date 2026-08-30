@@ -1,0 +1,8 @@
+{
+  "alerts:631410a6-f11f-4ed2-bf15-879ac64fce4c|8754da05-d3a2-434b-a316-e23060819a30|93bd901f-c83c-493b-b240-3b77286c6e70": {
+    "started_at": "2026-08-30T06:03:03.945315+00:00",
+    "last_observed_at": "2026-08-30T06:03:03.945315+00:00",
+    "last_rate_per_hour_usd": 19583.11,
+    "accumulated_usd": 0.0
+  }
+}
