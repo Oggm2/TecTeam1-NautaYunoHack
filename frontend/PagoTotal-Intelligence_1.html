@@ -128,6 +128,12 @@
   .section-h h2 { font-size: 12.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-soft); margin: 0; }
   .section-h .hint { font-size: 12px; color: var(--ink-faint); }
 
+  /* Contextual help shared by every workspace view */
+  .view-guide { display:flex; gap:12px; align-items:flex-start; margin:0 0 20px; padding:13px 15px; background:#101a2a; border:1px solid #233b5b; border-radius:12px; color:var(--ink-soft); font-size:13px; }
+  .view-guide .guide-icon { width:24px; height:24px; flex:0 0 24px; display:grid; place-items:center; border-radius:50%; background:#1d3b61; color:#9bc5ff; font-weight:800; }
+  .view-guide strong { color:var(--ink); }
+  .view-guide .guide-steps { color:var(--ink-faint); margin-top:3px; font-size:12px; }
+
   /* ---------- Cards ---------- */
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
   .pad { padding: 20px; }
@@ -421,6 +427,15 @@
   .tbf .result .rg .v { font-size: 18px; font-weight: 800; margin-top: 3px; }
   .tbf .result .narr { font-size: 12.5px; color: var(--ink-soft); margin-top: 14px; font-style: italic; border-top: 1px solid var(--line); padding-top: 12px; }
   .tbf .result .actions { margin-top: 16px; display: flex; gap: 10px; }
+  .help-modal { width:100%; max-width:600px; background:linear-gradient(180deg,#141925,#0e1017); border:1px solid #2f5487; border-radius:20px; padding:28px; box-shadow:0 30px 80px rgba(0,0,0,.6); }
+  .help-modal .th { display:flex; align-items:flex-start; gap:10px; }
+  .help-modal .th .x { margin-left:auto; cursor:pointer; color:var(--ink-faint); font-size:20px; line-height:1; padding:4px; }
+  .help-modal h3 { margin:0; font-size:20px; }
+  .help-modal .help-kicker { color:var(--info); font-size:11px; font-weight:800; letter-spacing:1.3px; text-transform:uppercase; margin-bottom:8px; }
+  .help-modal .help-intro { color:var(--ink-soft); margin:10px 0 18px; font-size:14px; line-height:1.55; }
+  .help-modal .help-list { margin:0; padding:0; list-style:none; display:grid; gap:10px; }
+  .help-modal .help-list li { padding:11px 12px; border:1px solid var(--line); background:var(--bg-2); border-radius:10px; color:var(--ink-soft); font-size:13px; }
+  .help-modal .help-list b { color:var(--ink); }
 
   /* ---------- Toast ---------- */
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); z-index: 200;
@@ -439,6 +454,10 @@
   }
   @media (max-width: 900px) {
     .app { grid-template-columns: 64px 1fr; }
+    .topbar { flex-wrap:wrap; gap:8px; padding:12px 16px; }
+    .topbar .spacer { display:none; }
+    .topbar .clock { margin-left:auto; }
+    #help-current-view { order:3; }
     .brand .name, .brand .sub, .nav-item span.t, .nav-label, .trial-btn span.t, .sys-mini { display: none; }
     .nav-item { justify-content: center; }
     .kpis { grid-template-columns: repeat(2,1fr); }
@@ -507,12 +526,14 @@
       <span class="live-pill"><span class="beat"></span> LIVE</span>
       <span class="crumb" id="crumb">Command Center</span>
       <span class="spacer"></span>
+      <button class="btn ghost" id="help-current-view" aria-haspopup="dialog">? Cómo usar esta vista</button>
       <div id="audience-switch" style="display:flex;gap:5px"><button class="btn ghost audience-btn" data-audience="technical">Technical</button><button class="btn ghost audience-btn" data-audience="financial">Financial</button><button class="btn ghost audience-btn" data-audience="simple">Simple</button></div>
       <span class="clock mono" id="clock">14:32:07</span>
     </div>
 
     <!-- ============ VIEW: COMMAND CENTER ============ -->
     <section class="view active" id="view-command">
+      <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Centro de comando: panorama operativo.</strong> Aquí se ve si la conversión está dentro de lo esperado y cuánto dinero está en riesgo. Empieza por las tarjetas de incidentes activos y abre el explorador para revisar la evidencia.<div class="guide-steps">Lectura rápida: conversión actual → línea esperada → incidentes priorizados por costo/hora.</div></div></aside>
       <div class="cmd-grid">
         <div class="cmd-main">
           <!-- HERO -->
@@ -612,6 +633,7 @@
 
     <!-- ============ VIEW: INCIDENTS ============ -->
     <section class="view" id="view-incidents">
+      <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Incidentes: cola de trabajo priorizada.</strong> Cada fila representa un problema separado por su firma de dimensiones. Ordena la respuesta empezando por mayor impacto económico y confianza; usa los filtros solo para explorar, no para diagnosticar.<div class="guide-steps">Revisa: severidad → segmento afectado → caída de conversión → dinero/hora → confianza.</div></div></aside>
       <div class="tabs">
         <div class="tab active" data-status="active">Active <span class="count" id="c-active">2</span></div>
         <div class="tab" data-status="investigating">Investigating <span class="count" id="c-inv">1</span></div>
@@ -632,6 +654,7 @@
 
     <!-- ============ VIEW: ROOT CAUSE EXPLORER ============ -->
     <section class="view" id="view-explorer">
+      <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Explorador de causa raíz: prueba antes de actuar.</strong> El árbol muestra cómo la caída se concentra —o no— en merchant, provider, método, país y banco. La columna derecha reúne métricas y termina con una recomendación que requiere aprobación humana.<div class="guide-steps">Busca ramas rojas, compara con ramas sanas y valida el nivel de confianza antes de escalar o enrutar tráfico.</div></div></aside>
       <div class="rc-switch" id="rc-switch"></div>
       <div class="rc-grid">
         <div>
@@ -700,6 +723,7 @@
 
     <!-- ============ VIEW: MEMORY ============ -->
     <section class="view" id="view-memory">
+      <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Memoria de incidentes: detecta recurrencias.</strong> Esta vista compara la firma del incidente actual con casos ya resueltos. Una similitud alta es evidencia útil para recuperar contexto y una acción previa, pero no reemplaza revisar el diagnóstico actual.<div class="guide-steps">Compara la firma, el motivo de rechazo y el resultado de la resolución anterior.</div></div></aside>
       <div class="section-h"><h2>Recurrence check</h2><span class="hint">every new incident is matched against operational history</span></div>
       <div class="card pad" id="memory-current" style="margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
@@ -746,6 +770,7 @@
       </div>
     </section>
     <section class="view" id="view-controls">
+      <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Configuración: sensibilidad del detector.</strong> Estos parámetros determinan cuánto volumen y cuánta persistencia exige una alerta. Valores más estrictos reducen ruido, pero también pueden retrasar la detección; ajústalos con cuidado y conserva una ventana suficiente para comparar contra la línea base.<div class="guide-steps">Para demo: 60 s, 10 s y 2 evaluaciones. Para operación: 300 s, 60 s y 3 evaluaciones.</div></div></aside>
       <div class="section-h"><h2>Detection controls</h2><span class="hint">Changes apply to the live engine on its next refresh.</span></div>
       <div class="card pad" style="max-width:760px">
         <form id="controls-form" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
@@ -772,6 +797,7 @@
       <h3>Trial by Fire</h3>
       <span class="x" id="tbf-close">✕</span>
     </div>
+    <aside class="view-guide" role="note" style="margin:0 0 16px"><span class="guide-icon">i</span><div><strong>Prueba de fuego.</strong> Usa esta simulación para mostrar cómo el sistema separa señal de ruido y encuentra una combinación de dimensiones sin una regla predefinida.<div class="guide-steps">El resultado es una recomendación para el humano; la plataforma nunca ejecuta cambios automáticamente.</div></div></aside>
     <div class="detected">
       <div class="l">⚠ Anomaly detected</div>
       <div class="m">A significant conversion drop just appeared. The system was <b>not told</b> what to look for — it is now investigating every dimension.</div>
@@ -791,6 +817,16 @@
         <button class="btn ghost" id="tbf-dismiss">Close</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===================== CONTEXTUAL HELP ===================== -->
+<div class="overlay" id="help-overlay" role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div class="help-modal">
+    <div class="th"><div><div class="help-kicker">Guía rápida</div><h3 id="help-title">Cómo usar esta vista</h3></div><span class="x" id="help-close" aria-label="Cerrar ayuda">✕</span></div>
+    <p class="help-intro" id="help-intro"></p>
+    <ul class="help-list" id="help-list"></ul>
+    <div class="actions"><button class="btn primary" id="help-got-it">Entendido</button></div>
   </div>
 </div>
 
@@ -1435,6 +1471,21 @@
 
   /* ------------------------------------------------ NAVIGATION ------------------------------------------------ */
   const VIEW_TITLES = {command:"Command Center", incidents:"Incidents", explorer:"Root Cause Explorer", memory:"Incident Memory", controls:"Detection Controls"};
+  const VIEW_HELP = {
+    command: {title:"Cómo usar Command Center", intro:"Es el resumen para saber si la operación está sana y decidir dónde mirar primero.", steps:[["1. Mira la conversión","Compárala contra el valor esperado; una diferencia sostenida puede indicar un incidente."],["2. Revisa el dinero en riesgo","La cifra principal estima el impacto por hora de los incidentes activos."],["3. Abre un incidente","Usa las tarjetas para pasar al detalle de causa raíz antes de tomar una acción."]]},
+    incidents: {title:"Cómo usar Incidents", intro:"Esta es la cola de trabajo: cada registro es un problema separado y ya analizado por el sistema.", steps:[["1. Empieza por prioridad","Da preferencia a mayor costo por hora y severidad."],["2. Lee el segmento","Merchant, provider, país, método y banco indican dónde se concentra la caída."],["3. Confirma la confianza","Una confianza baja significa que hay que reunir más evidencia antes de atribuir una causa."]]},
+    explorer: {title:"Cómo usar Root Cause Explorer", intro:"Aquí puedes comprobar por qué el sistema propone una causa y una acción concreta.", steps:[["1. Sigue las ramas rojas","Muestran los segmentos donde la pérdida se concentra frente a los que permanecen normales."],["2. Contrasta la evidencia","Revisa conversión esperada, observada, volumen y motivo de rechazo."],["3. Decide con control humano","La recomendación orienta la respuesta; nunca cambia el enrutamiento automáticamente."]]},
+    memory: {title:"Cómo usar Incident Memory", intro:"La memoria evita que el equipo investigue desde cero un problema que ya ocurrió.", steps:[["1. Compara la firma","Busca coincidencias de provider, país, método, merchant o banco emisor."],["2. Valida la similitud","Una coincidencia alta aporta contexto, pero se debe confirmar con la evidencia actual."],["3. Recupera la lección","Consulta qué acción resolvió el caso anterior y cuánto tardó en recuperarse."]]},
+    controls: {title:"Cómo usar Detection Controls", intro:"Estos parámetros cambian qué tan sensible es el detector ante una caída de conversión.", steps:[["Ventana y evaluación","Definen cuánto histórico reciente analiza y con qué frecuencia."],["Persistencia y volumen","Evitan alertas por una muestra pequeña o un minuto de ruido."],["Umbrales estadísticos","Más estrictos reducen falsos positivos, pero pueden detectar más tarde."]]}
+  };
+  let currentView = "command";
+  function openHelp(){
+    const help = VIEW_HELP[currentView];
+    $("#help-title").textContent = help.title;
+    $("#help-intro").textContent = help.intro;
+    $("#help-list").innerHTML = help.steps.map(([title, text])=>`<li><b>${title}.</b> ${text}</li>`).join("");
+    $("#help-overlay").classList.add("open");
+  }
   function go(view){
     $$(".view").forEach(v=>v.classList.remove("active"));
     $("#view-"+view).classList.add("active");
@@ -1442,9 +1493,14 @@
     const navMatch = $$('.nav-item').find(n=>n.dataset.view===view);
     if(navMatch) navMatch.classList.add("active");
     $("#crumb").textContent = VIEW_TITLES[view];
+    currentView = view;
     window.scrollTo({top:0, behavior:"smooth"});
   }
   $$(".nav-item").forEach(n=> n.addEventListener("click", ()=> go(n.dataset.view)));
+  $("#help-current-view").addEventListener("click", openHelp);
+  $("#help-close").addEventListener("click", ()=> $("#help-overlay").classList.remove("open"));
+  $("#help-got-it").addEventListener("click", ()=> $("#help-overlay").classList.remove("open"));
+  $("#help-overlay").addEventListener("click", event=>{ if(event.target===$("#help-overlay")) $("#help-overlay").classList.remove("open"); });
 
   async function loadControls(){
     try {
