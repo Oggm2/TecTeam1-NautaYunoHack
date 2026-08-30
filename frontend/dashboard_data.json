@@ -1,246 +1,59 @@
 {
-  "generated_at": "2026-08-30T06:03:03.945315+00:00",
+  "generated_at": "2026-08-30T06:26:11.179575+00:00",
   "kpis": {
-    "current_conversion_pct": 88.64,
+    "current_conversion_pct": 89.37,
     "expected_conversion_pct": 94.01,
     "conversion_window_seconds": 300,
-    "conversion_window_attempts": 1805,
-    "transactions_window": 1806,
-    "active_incidents": 1,
+    "conversion_window_attempts": 1656,
+    "transactions_window": 1659,
+    "active_incidents": 0,
     "critical_count": 0,
-    "high_count": 1,
+    "high_count": 0,
     "investigating_count": 0,
-    "accumulated_incidence_cost_usd": 0.0,
-    "current_incidence_cost_per_hour_usd": 19583.11,
-    "expected_unrecovered_gmv_per_hour_usd": 19583.11,
-    "gross_lost_gmv_per_hour_usd": 37463.35,
+    "accumulated_incidence_cost_usd": 0,
+    "current_incidence_cost_per_hour_usd": 0,
+    "expected_unrecovered_gmv_per_hour_usd": 0,
+    "gross_lost_gmv_per_hour_usd": 0,
     "recovery_horizon_hours": 24.0
   },
   "chart": {
     "period_seconds": 60,
     "window_seconds": 300,
     "sustain_evaluations": 3,
-    "stream_started_at": "2026-08-30T06:01:03.614234+00:00",
+    "stream_started_at": "2026-08-30T06:24:20.647979+00:00",
     "current_window": {
-      "started_at": "2026-08-30T05:58:05.376000+00:00",
-      "ended_at": "2026-08-30T06:03:05.376000+00:00",
-      "attempts": 1805,
-      "approved": 1600,
-      "observed_pct": 88.64,
+      "started_at": "2026-08-30T06:21:13.211000+00:00",
+      "ended_at": "2026-08-30T06:26:13.211000+00:00",
+      "attempts": 1656,
+      "approved": 1480,
+      "observed_pct": 89.37,
       "expected_pct": 94.01
     },
     "points": [
       {
-        "t": "2026-08-30T06:01:00+00:00",
-        "observed_pct": 92.03,
+        "t": "2026-08-30T06:24:00+00:00",
+        "observed_pct": 94.46,
         "expected_pct": 94.01,
-        "threshold_pct": 91.54,
-        "state": "incident"
+        "threshold_pct": 91.05,
+        "state": "ok"
       },
       {
-        "t": "2026-08-30T06:02:00+00:00",
-        "observed_pct": 85.57,
+        "t": "2026-08-30T06:25:00+00:00",
+        "observed_pct": 86.15,
         "expected_pct": 94.01,
         "threshold_pct": 91.64,
-        "state": "incident"
+        "state": "breach"
       },
       {
-        "t": "2026-08-30T06:03:00+00:00",
-        "observed_pct": 88.16,
+        "t": "2026-08-30T06:26:00+00:00",
+        "observed_pct": 89.07,
         "expected_pct": 94.01,
-        "threshold_pct": 85.85,
-        "state": "incident"
+        "threshold_pct": 88.75,
+        "state": "ok"
       }
     ]
   },
-  "incidents": [
-    {
-      "incident_id": "0fc04d47-4ef4-4e62-a66f-a189101f878f",
-      "alert_id": "93bd901f-c83c-493b-b240-3b77286c6e70",
-      "incident_key": "alerts:631410a6-f11f-4ed2-bf15-879ac64fce4c|8754da05-d3a2-434b-a316-e23060819a30|93bd901f-c83c-493b-b240-3b77286c6e70",
-      "priority_rank": 1,
-      "priority_score": 22520.58,
-      "cost_per_hour_usd": 19583.11,
-      "current_expected_unrecovered_gmv_per_hour_usd": 19583.11,
-      "accumulated_expected_unrecovered_gmv_usd": 0.0,
-      "gross_lost_amount_per_hour_usd": 37463.35,
-      "urgency": 0.0,
-      "urgency_basis": "growth_rate_usd_per_min",
-      "priority_factors": {
-        "preset": "balanced",
-        "weights_pct": {
-          "financial": 50.0,
-          "urgency": 25.0,
-          "conversion_drop": 15.0,
-          "merchant": 10.0
-        },
-        "urgency_signal": 0.0,
-        "conversion_drop_signal": 1.0,
-        "merchant": null,
-        "merchant_multiplier": 1.0,
-        "score_multiplier": 1.15
-      },
-      "readings": 3,
-      "severity": "high",
-      "status": "active",
-      "confidence_pct": 70,
-      "root_cause_segment": {
-        "provider": "stripe",
-        "country": "BR"
-      },
-      "root_cause_label": "stripe \u00d7 BR",
-      "duration_minutes": 0.0,
-      "recurrence": null,
-      "diagnosis": {
-        "incident_id": "0fc04d47-4ef4-4e62-a66f-a189101f878f",
-        "alert_id": "93bd901f-c83c-493b-b240-3b77286c6e70",
-        "diagnosed_at": "2026-08-30T06:03:26.506815+00:00",
-        "evidence_sufficient": true,
-        "confidence": "medium",
-        "root_cause_segment": {
-          "provider": "stripe",
-          "country": "BR"
-        },
-        "incident_window": {
-          "started_at": "2026-08-30T05:58:03.945315+00:00",
-          "ended_at": "2026-08-30T06:03:03.945315+00:00"
-        },
-        "root_metrics": {
-          "attempts": 237,
-          "approved": 151,
-          "observed_conversion": 0.6371,
-          "expected_conversion": 0.9518,
-          "conversion_drop_pp": 31.4653,
-          "z_score": -22.6121,
-          "lost_approvals": 74.57,
-          "gross_lost_amount_usd": 3121.95,
-          "gross_lost_amount_per_hour_usd": 37463.35,
-          "expected_recovered_amount_usd": 1490.02,
-          "expected_unrecovered_amount_usd": 1631.93,
-          "expected_unrecovered_amount_per_hour_usd": 19583.11,
-          "expected_recovery_rate": 0.4773,
-          "recovery_model_source": "default_by_payment_method",
-          "recovery_model_sample_size": 0
-        },
-        "drill_down_path": [],
-        "payment_method_impact": [
-          {
-            "value": "card",
-            "segment": {
-              "provider": "stripe",
-              "country": "BR",
-              "payment_method": "card"
-            },
-            "baseline_attempts": 13249,
-            "baseline_source": "all_time_segment",
-            "attempts": 104,
-            "approved": 70,
-            "observed_conversion": 0.6730769230769231,
-            "expected_conversion": 0.9510225643347672,
-            "conversion_drop_pp": 27.794564125784404,
-            "z_score": -13.133579443034948,
-            "lost_approvals": 28.91,
-            "gross_lost_amount_usd": 1285.18,
-            "gross_lost_amount_per_hour_usd": 15422.22,
-            "expected_recovered_amount_usd": 616.89,
-            "expected_unrecovered_amount_usd": 668.3,
-            "expected_unrecovered_amount_per_hour_usd": 8019.55,
-            "expected_recovery_rate": 0.48,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "dimension": "payment_method",
-            "is_anomalous": true,
-            "impact_share_of_lost_approvals": 0.3877,
-            "is_selected": false
-          },
-          {
-            "value": "pix",
-            "segment": {
-              "provider": "stripe",
-              "country": "BR",
-              "payment_method": "pix"
-            },
-            "baseline_attempts": 8405,
-            "baseline_source": "all_time_segment",
-            "attempts": 80,
-            "approved": 53,
-            "observed_conversion": 0.6625,
-            "expected_conversion": 0.9609848935410967,
-            "conversion_drop_pp": 29.848489354109674,
-            "z_score": -13.787726856263234,
-            "lost_approvals": 23.88,
-            "gross_lost_amount_usd": 890.22,
-            "gross_lost_amount_per_hour_usd": 10682.63,
-            "expected_recovered_amount_usd": 445.11,
-            "expected_unrecovered_amount_usd": 445.11,
-            "expected_unrecovered_amount_per_hour_usd": 5341.31,
-            "expected_recovery_rate": 0.5,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "dimension": "payment_method",
-            "is_anomalous": true,
-            "impact_share_of_lost_approvals": 0.3202,
-            "is_selected": false
-          },
-          {
-            "value": "wallet",
-            "segment": {
-              "provider": "stripe",
-              "country": "BR",
-              "payment_method": "wallet"
-            },
-            "baseline_attempts": 5160,
-            "baseline_source": "all_time_segment",
-            "attempts": 39,
-            "approved": 19,
-            "observed_conversion": 0.48717948717948717,
-            "expected_conversion": 0.956412243316544,
-            "conversion_drop_pp": 46.92327561370568,
-            "z_score": -14.352111600071945,
-            "lost_approvals": 18.3,
-            "gross_lost_amount_usd": 765.22,
-            "gross_lost_amount_per_hour_usd": 9182.61,
-            "expected_recovered_amount_usd": 420.87,
-            "expected_unrecovered_amount_usd": 344.35,
-            "expected_unrecovered_amount_per_hour_usd": 4132.18,
-            "expected_recovery_rate": 0.55,
-            "recovery_model_source": "default_by_payment_method",
-            "recovery_model_sample_size": 0,
-            "dimension": "payment_method",
-            "is_anomalous": true,
-            "impact_share_of_lost_approvals": 0.2454,
-            "is_selected": false
-          }
-        ],
-        "dominant_decline": {
-          "decline_reason": "do_not_honor",
-          "excess_declines": 84.8,
-          "share_of_excess_declines": 1.0
-        },
-        "recommended_action": "Contactar a stripe y evaluar el enrutamiento temporal de pagos afectados hacia otro provider.",
-        "reason": "La ca\u00edda est\u00e1 confirmada, pero no hay un subsegmento que concentre suficiente p\u00e9rdida para atribuir una causa m\u00e1s espec\u00edfica.",
-        "recurrence": null,
-        "explanation": {
-          "mode": "deterministic",
-          "incident_id": "0fc04d47-4ef4-4e62-a66f-a189101f878f",
-          "executive_summary": "Incidente en provider=stripe, pa\u00eds=BR: costo estimado de la incidencia de USD 1,631.93 en la ventana analizada.",
-          "operational_explanation": "La conversi\u00f3n observada fue 63.7%, frente a 95.2% esperada (31.5 puntos porcentuales menos) en provider=stripe, pa\u00eds=BR. El motivo de rechazo con mayor exceso fue do_not_honor (100% de los rechazos adicionales).",
-          "recommended_action": "Contactar a stripe y evaluar el enrutamiento temporal de pagos afectados hacia otro provider.",
-          "confidence": "medium",
-          "evidence_sufficient": true,
-          "window_started_at": "2026-08-30T05:58:03.945315+00:00",
-          "window_ended_at": "2026-08-30T06:03:03.945315+00:00",
-          "profiles": {
-            "technical": "La conversi\u00f3n observada fue 63.7%, frente a 95.2% esperada (31.5 puntos porcentuales menos) en provider=stripe, pa\u00eds=BR. El motivo de rechazo con mayor exceso fue do_not_honor (100% de los rechazos adicionales).",
-            "financial": "El costo estimado de la incidencia es USD 1,631.93 en esta ventana; la proyecci\u00f3n por hora est\u00e1 en las m\u00e9tricas del incidente.",
-            "simple": "Hay un problema en provider=stripe, pa\u00eds=BR: est\u00e1n aprob\u00e1ndose menos pagos de lo normal. El equipo debe revisar la acci\u00f3n recomendada."
-          }
-        }
-      },
-      "incident_started_at": "2026-08-30T06:03:03.945315+00:00",
-      "accumulated_duration_seconds": 0.0
-    }
-  ],
+  "incidents": [],
   "resolved": [
     {
       "incident_id": "memory-stripe-br-2026-08-26",
@@ -403,69 +216,69 @@
       ]
     },
     "live": {
-      "attempts": 1805,
-      "approved": 1600,
-      "conversion_pct": 88.64,
-      "average_ticket_usd": 41.07,
+      "attempts": 1656,
+      "approved": 1480,
+      "conversion_pct": 89.37,
+      "average_ticket_usd": 40.75,
       "by_country": [
         {
           "name": "MX",
-          "attempts": 759,
-          "conversion_pct": 90.91
+          "attempts": 662,
+          "conversion_pct": 92.15
         },
         {
           "name": "BR",
-          "attempts": 614,
-          "conversion_pct": 83.06
+          "attempts": 558,
+          "conversion_pct": 83.87
         },
         {
           "name": "CO",
-          "attempts": 432,
-          "conversion_pct": 92.59
+          "attempts": 436,
+          "conversion_pct": 92.2
         }
       ],
       "by_provider": [
         {
           "name": "stripe",
-          "attempts": 730,
-          "conversion_pct": 81.51
+          "attempts": 628,
+          "conversion_pct": 83.44
         },
         {
           "name": "adyen",
-          "attempts": 620,
-          "conversion_pct": 94.19
+          "attempts": 604,
+          "conversion_pct": 92.88
         },
         {
           "name": "dlocal",
-          "attempts": 455,
-          "conversion_pct": 92.53
+          "attempts": 424,
+          "conversion_pct": 93.16
         }
       ],
       "by_payment_method": [
         {
           "name": "card",
-          "attempts": 1032,
-          "conversion_pct": 90.41
+          "attempts": 1029,
+          "conversion_pct": 91.16
         },
         {
           "name": "wallet",
-          "attempts": 325,
-          "conversion_pct": 88.31
+          "attempts": 270,
+          "conversion_pct": 90.74
         },
         {
           "name": "pix",
-          "attempts": 191,
-          "conversion_pct": 83.25
+          "attempts": 158,
+          "conversion_pct": 77.85
         },
         {
           "name": "cash_in_store",
-          "attempts": 141,
-          "conversion_pct": 83.69
+          "attempts": 111,
+          "conversion_pct": 87.39
         },
         {
           "name": "pse",
-          "attempts": 116,
-          "conversion_pct": 88.79
+          "attempts": 88,
+          "conversion_pct": 87.5
         }
       ]
     }

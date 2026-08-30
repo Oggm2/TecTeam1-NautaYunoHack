@@ -456,6 +456,92 @@
 
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 
+  /* ---------- Audience workspaces ---------- */
+  .audience-sidecard { display:none; }
+  .audience-mode-label { font-size:10px; font-weight:800; letter-spacing:1.35px; text-transform:uppercase; color:var(--ink-faint); }
+  .audience-mode-label b { color:var(--ink); }
+  .audience-summary { font-size:14px; color:var(--ink-soft); line-height:1.55; }
+  .audience-focus { margin-top:14px; display:grid; gap:8px; }
+  .audience-focus .focus-row { display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:12px; color:var(--ink-soft); }
+  .audience-focus .focus-row b { color:var(--ink); text-align:right; }
+
+  /* Technical: keep the complete operational evidence and make the density intentional. */
+  body[data-audience="technical"] .topbar { border-bottom-color:#243653; }
+  body[data-audience="technical"] .audience-btn.active { color:#dbeafe; border-color:#386aa7; background:#172b47; }
+  body[data-audience="technical"] .cmd-main { gap:18px; }
+  body[data-audience="technical"] .hero { border-color:#293b58; }
+
+  /* Financial: put economic exposure and ranked work ahead of stream implementation details. */
+  body[data-audience="financial"] { --info:#e8bb59; --money:#f8d98c; --money-glow:#f5ce7b3b; }
+  body[data-audience="financial"] .topbar { background:color-mix(in srgb, #110f0a 88%, transparent); border-bottom-color:#49391d; }
+  body[data-audience="financial"] .audience-btn.active { color:#fff1c8; border-color:#806126; background:#2a2110; }
+  body[data-audience="financial"] .hero { background:radial-gradient(100% 130% at 90% -10%,#46351a 0%,transparent 58%),linear-gradient(180deg,#1a1710,#11100d); border-color:#5d4822; padding:30px 32px; }
+  body[data-audience="financial"] .hero .big { font-size:clamp(58px,8vw,90px); }
+  body[data-audience="financial"] .cmd-grid { grid-template-columns:minmax(0,1fr) 300px; }
+  body[data-audience="financial"] .cmd-side .stream,
+  body[data-audience="financial"] .cmd-side .sys-card { display:none; }
+  body[data-audience="financial"] .audience-sidecard { display:block; border-color:#5d4822; background:linear-gradient(180deg,#18150e,#11100d); }
+  body[data-audience="financial"] .kpis { grid-template-columns:1.4fr 1fr 1fr; }
+  body[data-audience="financial"] .kpis .kpi:nth-child(2) { display:none; }
+  body[data-audience="financial"] .inc { border-left:3px solid var(--money); }
+  body[data-audience="financial"] .inc .rail { width:36px; background:linear-gradient(180deg,#f5ce7b,#b98728)!important; color:#231a08!important; }
+  body[data-audience="financial"] .view-guide { border-color:#5d4822; background:#1d180d; }
+  body[data-audience="financial"] [data-view="controls"] { display:none; }
+
+  /* Simple: reduce operational jargon and expose only a short decision path. */
+  body[data-audience="simple"] { --info:#8eb7ff; --surface:#121824; --surface-2:#172132; }
+  body[data-audience="simple"] .topbar { background:color-mix(in srgb,#0c1420 90%,transparent); border-bottom-color:#29415f; }
+  body[data-audience="simple"] .audience-btn.active { color:#e1eeff; border-color:#477bb8; background:#1b3454; }
+  body[data-audience="simple"] .view { max-width:1020px; padding-top:22px; }
+  body[data-audience="simple"] .hero { background:radial-gradient(120% 120% at 90% -10%,#183556 0%,transparent 60%),linear-gradient(180deg,#101b2a,#0e141f); border-color:#294b70; padding:26px; }
+  body[data-audience="simple"] .hero .big { font-size:clamp(46px,8vw,68px); }
+  body[data-audience="simple"] .hero .trend,
+  body[data-audience="simple"] #rule-strip,
+  body[data-audience="simple"] .legend,
+  body[data-audience="simple"] .view-guide,
+  body[data-audience="simple"] .cmd-side .stream,
+  body[data-audience="simple"] .cmd-side .sys-card,
+  body[data-audience="simple"] #filters,
+  body[data-audience="simple"] [data-view="controls"],
+  body[data-audience="simple"] [data-view="analytics"] { display:none; }
+  body[data-audience="simple"] .cmd-grid { grid-template-columns:1fr; }
+  body[data-audience="simple"] .cmd-side { display:block; }
+  body[data-audience="simple"] .audience-sidecard { display:block; background:linear-gradient(180deg,#111d2c,#0e141f); border-color:#294b70; }
+  body[data-audience="simple"] .kpis { grid-template-columns:1fr 1fr; }
+  body[data-audience="simple"] .kpis .kpi:nth-child(2),
+  body[data-audience="simple"] .kpis .kpi:nth-child(4) { display:none; }
+  body[data-audience="simple"] .inc { grid-template-columns:8px 1fr; border-color:#29415f; }
+  body[data-audience="simple"] .inc .rail { width:8px; font-size:0; }
+  body[data-audience="simple"] .inc .prio { display:none; }
+  body[data-audience="simple"] .inc .sig { font-size:17px!important; }
+  body[data-audience="simple"] .inc-metrics { grid-template-columns:1fr 1fr; }
+  body[data-audience="simple"] #view-explorer .tree,
+  body[data-audience="simple"] #view-explorer .node-detail,
+  body[data-audience="simple"] #view-explorer .conf-card { display:none; }
+  body[data-audience="simple"] #view-explorer .rc-grid { grid-template-columns:1fr; }
+  body[data-audience="simple"] #view-explorer .evi { position:static; }
+  body[data-audience="simple"] #view-explorer .rc-grid > div:first-child > .card:first-child { padding:0; border:0; background:transparent; box-shadow:none; }
+  body[data-audience="simple"] #view-explorer .rc-grid > div:first-child > .card:first-child .section-h { display:none; }
+  .simple-root-summary { display:none; }
+  body[data-audience="simple"] .simple-root-summary { display:block; padding:20px; border:1px solid #294b70; border-radius:16px; background:linear-gradient(135deg,#142840,#101b2a); box-shadow:var(--shadow); }
+  .simple-root-summary .eyebrow { color:#9fc3ff; text-transform:uppercase; letter-spacing:1.2px; font-size:11px; font-weight:800; }
+  .simple-root-summary h3 { margin:6px 0 8px; font-size:22px; line-height:1.2; }
+  .simple-root-summary p { margin:0; color:var(--ink-soft); font-size:14px; }
+  body[data-audience="simple"] .grow-head span:nth-child(1),
+  body[data-audience="simple"] .grow span:nth-child(1),
+  body[data-audience="simple"] .grow-head span:nth-child(3),
+  body[data-audience="simple"] .grow span:nth-child(3),
+  body[data-audience="simple"] .grow-head span:nth-child(4),
+  body[data-audience="simple"] .grow span:nth-child(4),
+  body[data-audience="simple"] .grow-head span:nth-child(5),
+  body[data-audience="simple"] .grow span:nth-child(5),
+  body[data-audience="simple"] .grow-head span:nth-child(7),
+  body[data-audience="simple"] .grow span:nth-child(7),
+  body[data-audience="simple"] .grow-head span:nth-child(8),
+  body[data-audience="simple"] .grow span:nth-child(8) { display:none; }
+  body[data-audience="simple"] .grow-head,
+  body[data-audience="simple"] .grow { grid-template-columns:1fr 120px; }
+
   /* ---------- Responsive ---------- */
   @media (max-width: 1180px) {
     .cmd-grid { grid-template-columns: 1fr; }
@@ -553,7 +639,7 @@
         <div class="cmd-main">
           <!-- HERO -->
           <div class="hero">
-            <div class="lbl">Accumulated Incidence Cost</div>
+            <div class="lbl" id="hero-label">Accumulated Incidence Cost</div>
             <div class="big"><span class="cur">$</span><span id="mar-value" class="tnum">22,640</span></div>
             <div class="unit" id="mar-unit">accrued across 2 active incidents</div>
             <div class="unit" id="mar-gross">Current incidence cost: $— / hour</div>
@@ -567,22 +653,22 @@
           <!-- KPIs -->
           <div class="kpis">
             <div class="kpi state-crit" id="kpi-conv-card">
-              <div class="k">Current conversion</div>
+              <div class="k" id="kpi-conv-label">Current conversion</div>
               <div class="v tnum" id="kpi-conv">74.2%</div>
               <div class="m" id="kpi-conv-expected">expected 91.0% · rolling window</div>
             </div>
             <div class="kpi">
-              <div class="k">Transactions</div>
+              <div class="k" id="kpi-tx-label">Transactions</div>
               <div class="v tnum" id="kpi-tx">12,482</div>
               <div class="m" id="kpi-tx-note">last 60 min</div>
             </div>
             <div class="kpi">
-              <div class="k">Active incidents</div>
+              <div class="k" id="kpi-active-label">Active incidents</div>
               <div class="v tnum" id="kpi-active">2</div>
               <div class="m" id="kpi-active-breakdown">1 critical · 1 high</div>
             </div>
             <div class="kpi">
-              <div class="k">System health</div>
+              <div class="k" id="kpi-health-label">System health</div>
               <div class="health-chip" id="kpi-health" style="color:var(--warn)"><span style="width:9px;height:9px;border-radius:50%;background:var(--warn);display:inline-block"></span> Degraded</div>
               <div class="m" id="kpi-health-note">2 of 5 regions affected</div>
             </div>
@@ -592,7 +678,7 @@
           <div class="card pad">
             <div class="chart-head">
               <div class="section-h" style="margin:0">
-                <h2>Conversion vs expected</h2>
+                <h2 id="chart-title">Conversion vs expected</h2>
                 <span class="hint" id="chart-range">current run · 1-min periods</span>
               </div>
               <div class="legend">
@@ -617,8 +703,8 @@
           <!-- ACTIVE INCIDENTS -->
           <div>
             <div class="section-h">
-              <h2>Active incidents</h2>
-              <span class="hint">Prioritized by incidence cost</span>
+              <h2 id="incident-list-title">Active incidents</h2>
+              <span class="hint" id="incident-list-hint">Prioritized by incidence cost</span>
             </div>
             <div class="inc-list" id="cmd-incidents"></div>
           </div>
@@ -626,6 +712,7 @@
 
         <!-- SIDE: LIVE STREAM + STATUS -->
         <div class="cmd-side">
+          <div class="card pad audience-sidecard" id="audience-sidecard"></div>
           <div class="card stream">
             <div class="sh">
               <h3>Live transaction stream</h3>
@@ -1170,6 +1257,17 @@
   /* ------------------------------------------------ RENDER: COMMAND INCIDENTS ------------------------------------------------ */
   function incCard(inc){
     const drop = (inc.convFrom - inc.convTo).toFixed(1);
+    const metrics = audienceMode === "simple"
+      ? `<div class="im"><div class="k">What changed</div><div class="v drop tnum">${drop} pp lower</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">Payments in this group fail more often than normal.</div></div>
+         <div class="im"><div class="k">Estimated impact</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">${inc.affected.toLocaleString()} payments affected in the current window</div></div>`
+      : audienceMode === "financial"
+      ? `<div class="im"><div class="k">Accumulated cost</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">${money(inc.currentRate||inc.money)}/hr while active</div></div>
+         <div class="im"><div class="k">Conversion loss</div><div class="v drop tnum">−${drop} pp</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">${inc.convFrom}% expected → ${inc.convTo}% observed</div></div>
+         <div class="im"><div class="k">Exposure</div><div class="v tnum">${inc.affected.toLocaleString()} tx</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">in the current analysis window</div></div>`
+      : `<div class="im"><div class="k">Conversion</div><div class="v"><span class="conv-mini"><span class="from tnum">${inc.convFrom}%</span> <span class="to tnum">${inc.convTo}%</span></span></div></div>
+         <div class="im"><div class="k">Incidence cost</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">current ${money(inc.currentRate||inc.money)}/hr</div></div>
+         <div class="im"><div class="k">Affected</div><div class="v tnum">${inc.affected.toLocaleString()} tx in window</div></div>
+         <div class="im"><div class="k">Confidence</div><div class="v tnum">${inc.confidence}%</div></div>`;
     return `<div class="inc sev-${inc.severity}" data-open="${inc.key}">
       <div class="rail">${inc.priority}</div>
       <div class="body">
@@ -1178,12 +1276,7 @@
           <span class="sig" style="margin:0;font-size:15px">${inc.rootCause||'Root cause pending'}</span>
           <span class="prio">PRIORITY #${inc.priority}</span>
         </div>
-        <div class="inc-metrics">
-          <div class="im"><div class="k">Conversion</div><div class="v"><span class="conv-mini"><span class="from tnum">${inc.convFrom}%</span> <span class="to tnum">${inc.convTo}%</span></span></div></div>
-          <div class="im"><div class="k">Incidence cost</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">current ${money(inc.currentRate||inc.money)}/hr</div></div>
-          <div class="im"><div class="k">Affected</div><div class="v tnum">${inc.affected.toLocaleString()} tx in window</div></div>
-          <div class="im"><div class="k">Confidence</div><div class="v tnum">${inc.confidence}%</div></div>
-        </div>
+        <div class="inc-metrics">${metrics}</div>
       </div>
     </div>`;
   }
@@ -1238,6 +1331,7 @@
     const W=720, H=252, padL=40, padR=14, padT=30, padB=34;
     const COL={ok:"#34D399", breach:"#F2B23D", incident:"#FF5B57"};
     const sev={ok:0, breach:1, incident:2};
+    const showDetectionDetail = audienceMode === "technical";
 
     let expected, actual, threshold, states, timeLabels;
     if (chartData && chartData.points && chartData.points.length) {
@@ -1295,7 +1389,7 @@
 
     // region shading: 3-min build-up (amber) and incident (red)
     let regions="";
-    if(fireIndex>=0){
+    if(showDetectionDetail && fireIndex>=0){
       const bx = x(fireIndex-SUSTAIN+1);
       regions += `<rect x="${bx}" y="${padT}" width="${x(fireIndex)-bx}" height="${H-padT-padB}" fill="#f2b23d14"/>`;
       regions += `<rect x="${x(fireIndex)}" y="${padT}" width="${(W-padR)-x(fireIndex)}" height="${H-padT-padB}" fill="#ff5b570f"/>`;
@@ -1313,7 +1407,7 @@
 
     // breach counter badges over the sustained run
     let badges="";
-    if(fireIndex>=0){
+    if(showDetectionDetail && fireIndex>=0){
       for(let k=0;k<SUSTAIN && fireIndex-SUSTAIN+1+k>=0;k++){ const i=fireIndex-SUSTAIN+1+k; badges += `<text x="${x(i)}" y="${y(actual[i])-11}" fill="${k===SUSTAIN-1?'var(--crit)':'var(--warn)'}" font-size="11" font-weight="800" text-anchor="middle" font-family="IBM Plex Mono">${k+1}</text>`; }
     }
     // isolated-noise callout (synthetic demo only — real data speaks for itself via state colors)
@@ -1329,8 +1423,8 @@
       const labelX = nearLeftEdge ? fx+8 : fx-6;
       const anchor = nearLeftEdge ? "start" : "end";
       fire = `<line x1="${fx}" y1="${padT}" x2="${fx}" y2="${H-padB}" stroke="var(--crit)" stroke-width="1.4" stroke-dasharray="4 4"/>
-        <text x="${labelX}" y="${padT-14}" fill="var(--crit)" font-size="11" font-weight="800" text-anchor="${anchor}" font-family="IBM Plex Mono">⚠ INCIDENT FIRED · ${tLab(fireIndex)}</text>
-        <text x="${labelX}" y="${padT-2}" fill="var(--ink-faint)" font-size="10" text-anchor="${anchor}" font-family="IBM Plex Mono">${SUSTAIN} / ${SUSTAIN} breached periods</text>
+        <text x="${labelX}" y="${padT-14}" fill="var(--crit)" font-size="11" font-weight="800" text-anchor="${anchor}" font-family="IBM Plex Mono">${showDetectionDetail?`⚠ INCIDENT FIRED · ${tLab(fireIndex)}`:`⚠ Payments started failing more · ${tLab(fireIndex)}`}</text>
+        ${showDetectionDetail?`<text x="${labelX}" y="${padT-2}" fill="var(--ink-faint)" font-size="10" text-anchor="${anchor}" font-family="IBM Plex Mono">${SUSTAIN} / ${SUSTAIN} breached periods</text>`:""}
         <circle cx="${x(N-1)}" cy="${y(actual[N-1])}" r="4.5" fill="var(--crit)"/><circle cx="${x(N-1)}" cy="${y(actual[N-1])}" r="4.5" fill="none" stroke="var(--crit)" stroke-opacity="0.4"><animate attributeName="r" values="4.5;9;4.5" dur="1.8s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values="0.5;0;0.5" dur="1.8s" repeatCount="indefinite"/></circle>`;
     }
 
@@ -1340,8 +1434,7 @@
       ${grid}
       ${regions}
       <path d="${bandTop} ${bandBot} Z" fill="#8892a41f" stroke="none"/>
-      <path d="${path(threshold)}" fill="none" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="2 4" opacity="0.75"/>
-      <text x="${W-padR}" y="${thY-5}" fill="var(--warn)" font-size="10" text-anchor="end" font-family="IBM Plex Mono" opacity="0.9">detection threshold</text>
+      ${showDetectionDetail?`<path d="${path(threshold)}" fill="none" stroke="var(--warn)" stroke-width="1.2" stroke-dasharray="2 4" opacity="0.75"/><text x="${W-padR}" y="${thY-5}" fill="var(--warn)" font-size="10" text-anchor="end" font-family="IBM Plex Mono" opacity="0.9">detection threshold</text>`:""}
       <path d="${path(expected)}" fill="none" stroke="var(--ink-faint)" stroke-width="1.6" stroke-dasharray="5 4"/>
       ${segs}
       ${dots}
@@ -1532,6 +1625,12 @@
   }
   function renderTree(){
     const inc = INCIDENTS[currentInc];
+    let simpleSummary = $("#simple-root-summary");
+    if(audienceMode === "simple"){
+      if(!simpleSummary){ simpleSummary=document.createElement("div"); simpleSummary.id="simple-root-summary"; simpleSummary.className="simple-root-summary"; $("#tree").insertAdjacentElement("beforebegin",simpleSummary); }
+      const drop=(inc.convFrom-inc.convTo).toFixed(1);
+      simpleSummary.innerHTML=`<div class="eyebrow">What we found</div><h3>${inc.rootCause||"We need more evidence"}</h3><p>${inc.rootCause?`This group is approving ${drop} percentage points fewer payments than expected. The recommended next step is shown alongside this summary.`:"We can see a meaningful decline, but the data is not yet sufficient to name one specific cause."}</p>`;
+    } else if(simpleSummary) simpleSummary.remove();
     let html="";
     inc.tree.forEach((lvl, li)=>{
       html += `<div class="tlevel"><div class="dimlab">${lvl.dim}</div><div class="nodes">`;
@@ -1618,7 +1717,7 @@
     $$(".nav-item").forEach(n=>n.classList.remove("active"));
     const navMatch = $$('.nav-item').find(n=>n.dataset.view===view);
     if(navMatch) navMatch.classList.add("active");
-    $("#crumb").textContent = VIEW_TITLES[view];
+    $("#crumb").textContent = viewTitle(view);
     currentView = view;
     window.scrollTo({top:0, behavior:"smooth"});
   }
@@ -1781,20 +1880,69 @@
 
   /* ------------------------------------------------ INIT ------------------------------------------------ */
   let marBase = 22640;
+  let latestDashboardData = null;
   let audienceMode=localStorage.getItem("audienceMode")||"technical";
+  const AUDIENCE_COPY={
+    technical:{
+      name:"Technical", briefTitle:"Technical view", hero:"Accumulated Incidence Cost", conversion:"Current conversion", transactions:"Transactions", active:"Active incidents", health:"System health", chart:"Conversion vs expected", incidents:"Active incidents", incidentHint:"Prioritized by incidence cost", chartLegend:`<span><i class="swatch" style="background:#8892a4;opacity:.55"></i> Expected range</span><span><i class="swatch" style="background:var(--ok)"></i> Healthy</span><span><i class="swatch" style="background:var(--warn)"></i> Breach</span><span><i class="swatch" style="background:var(--crit)"></i> Incident</span>`
+    },
+    financial:{
+      name:"Financial", briefTitle:"Financial exposure", hero:"Revenue at risk · accumulated", conversion:"Conversion driving loss", transactions:"Payment volume", active:"Prioritized exposures", health:"Portfolio health", chart:"Conversion and revenue exposure", incidents:"Ranked financial exposure", incidentHint:"Largest estimated loss first", chartLegend:`<span><i class="swatch" style="background:#8892a4;opacity:.55"></i> Expected conversion</span><span><i class="swatch" style="background:var(--crit)"></i> Conversion affecting revenue</span>`
+    },
+    simple:{
+      name:"Simple", briefTitle:"What needs attention", hero:"Estimated money at risk", conversion:"Payments approved", transactions:"Payments watched", active:"Problems to review", health:"Overall status", chart:"Are payments working as expected?", incidents:"What needs attention now", incidentHint:"Start with the first card", chartLegend:""
+    }
+  };
+  function viewTitle(view){
+    const base=VIEW_TITLES[view];
+    if(audienceMode==="simple" && view==="incidents") return "What needs attention";
+    if(audienceMode==="financial" && view==="incidents") return "Financial exposure";
+    return base;
+  }
+  function renderAudienceSidecard(){
+    const active=rcOrder.map(key=>INCIDENTS[key]).filter(inc=>inc&&inc.status==="active").sort((a,b)=>a.priority-b.priority);
+    const target=$("#audience-sidecard");
+    if(audienceMode==="technical"){ target.innerHTML=""; return; }
+    const top=active[0];
+    if(audienceMode==="financial"){
+      const totalRate=active.reduce((sum,inc)=>sum+(inc.currentRate||inc.money||0),0);
+      target.innerHTML=`<div class="audience-mode-label">Financial focus</div><div class="section-h" style="margin:7px 0 4px"><h2>Where money is at risk</h2></div><div class="audience-summary">Use this view to decide what should be escalated first. Values are recovery-adjusted estimates, not booked losses.</div><div class="audience-focus"><div class="focus-row"><span>Current risk rate</span><b class="tnum" style="color:var(--money)">${money(totalRate)}/hr</b></div><div class="focus-row"><span>Highest exposure</span><b>${top?top.rootCause:"No active exposure"}</b></div><div class="focus-row"><span>Recommended owner</span><b>${top?"Payments operations":"—"}</b></div></div>`;
+      return;
+    }
+    target.innerHTML=`<div class="audience-mode-label">Simple view</div><div class="section-h" style="margin:7px 0 4px"><h2>What to do now</h2></div><div class="audience-summary">${top?"The system found a payment problem and placed the most important one first.":"Everything looks normal right now. We are watching payments continuously."}</div><div class="audience-focus"><div class="focus-row"><span>Most important issue</span><b>${top?top.rootCause:"None"}</b></div><div class="focus-row"><span>Suggested next step</span><b>${top?"Open the first card":"Keep monitoring"}</b></div><div class="focus-row"><span>How sure are we?</span><b>${top?top.confidence+"% confidence":"—"}</b></div></div>`;
+  }
   function applyAudience(){
     document.body.dataset.audience=audienceMode;
     $$(".audience-btn").forEach(b=>b.classList.toggle("active",b.dataset.audience===audienceMode));
     const top=INCIDENTS[rcOrder[0]];
     const p=top&&top.profiles||{};
-    const labels={technical:["Technical view",p.technical||"Inspect conversion, baseline and diagnostic evidence."],financial:["Financial view",p.financial||"Focus on revenue at risk and priority."],simple:["Simple view",p.simple||"We explain what happened and what people should do next."]};
-    $("#audience-brief").innerHTML=`<div class="section-h"><h2>${labels[audienceMode][0]}</h2></div><div style="color:var(--ink-soft);font-size:14px">${labels[audienceMode][1]}</div>`;
-    $("#mar-unit").textContent=audienceMode==='financial'?"accumulated across active incidents":audienceMode==='simple'?"estimated cost accrued while payments are failing":"accumulated across active incidents";
+    const copy=AUDIENCE_COPY[audienceMode];
+    const profileText=audienceMode==="technical"?(p.technical||"Inspect conversion, baseline and diagnostic evidence."):audienceMode==="financial"?(p.financial||"Focus on revenue at risk and the order in which to respond."):(p.simple||"We explain what happened, who it affects and what people should do next.");
+    $("#audience-brief").innerHTML=`<div class="audience-mode-label"><b>${copy.name}</b> workspace</div><div class="section-h" style="margin:7px 0 5px"><h2>${copy.briefTitle}</h2></div><div class="audience-summary">${profileText}</div>`;
+    $("#hero-label").textContent=copy.hero;
+    $("#kpi-conv-label").textContent=copy.conversion;
+    $("#kpi-tx-label").textContent=copy.transactions;
+    $("#kpi-active-label").textContent=copy.active;
+    $("#kpi-health-label").textContent=copy.health;
+    $("#chart-title").textContent=copy.chart;
+    $("#incident-list-title").textContent=copy.incidents;
+    $("#incident-list-hint").textContent=copy.incidentHint;
+    $(".legend").innerHTML=copy.chartLegend;
+    const active=rcOrder.map(key=>INCIDENTS[key]).filter(inc=>inc&&inc.status==="active").length;
+    $("#mar-unit").textContent=audienceMode==='financial'?`estimated exposure across ${active} active issue${active===1?'':'s'}`:audienceMode==='simple'?"an estimate that grows while payment problems continue":`accrued across ${active} active incident${active===1?'':'s'}`;
+    $("#crumb").textContent=viewTitle(currentView);
+    document.title=`PagoTotal · ${copy.name} workspace`;
+    renderCommandIncidents();
+    const activeTab=$(".tab.active");
+    renderIncidentsTable(activeTab?activeTab.dataset.status:"active");
+    buildChart(latestDashboardData&&latestDashboardData.chart);
+    renderAudienceSidecard();
     if(currentInc) renderExplorer();
   }
   $$(".audience-btn").forEach(b=>b.addEventListener("click",()=>{audienceMode=b.dataset.audience;localStorage.setItem("audienceMode",audienceMode);applyAudience();}));
 
   function renderAll(data){
+    if(data) latestDashboardData=data;
     // Keep the current explorer selection if that incident is still around; otherwise fall back to the top one.
     currentInc = (currentInc && INCIDENTS[currentInc]) ? currentInc : (rcOrder[0] || null);
     const activeTab = $(".tab.active");
