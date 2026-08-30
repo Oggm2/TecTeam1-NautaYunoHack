@@ -1032,6 +1032,17 @@
         sel: !!row.is_selected,
       }))});
     });
+    const methodImpact = diagnosis.payment_method_impact || [];
+    if (methodImpact.length) {
+      levels.push({dim:"Payment method impact", nodes: methodImpact.map(row=>({
+        label: displayValue("payment_method", row.value),
+        status: row.is_anomalous ? "anomaly" : "normal",
+        conv: (row.observed_conversion*100).toFixed(1)+"%", baseline:(row.expected_conversion*100).toFixed(1)+"%",
+        volume: row.attempts.toLocaleString()+" tx", change: signedPP(row.conversion_drop_pp),
+        impact: `${(row.impact_share_of_lost_approvals*100).toFixed(0)}% of incident loss`,
+        sel: !!row.is_selected,
+      }))});
+    }
     return levels;
   }
 
@@ -1477,6 +1488,7 @@
       {k:"Conversion", v:n.conv}, {k:"Baseline", v:n.baseline}, {k:"Volume", v:n.volume},
       {k:"Change", v:n.change}, {k:"Status", v:n.status==="anomaly"?"Anomaly":"Normal"}, {k:"Dimension value", v:n.label}
     ];
+    if(n.impact) cells.splice(4,0,{k:"Incident impact",v:n.impact});
     $("#nd-grid").innerHTML = cells.map(c=>`<div class="nd"><div class="k">${c.k}</div><div class="v" style="${c.k==='Change'&&(c.v+'').includes('−')?'color:var(--crit)':c.k==='Change'?'color:var(--ok)':''}">${c.v}</div></div>`).join("");
   }
   function renderTree(){
@@ -1489,6 +1501,7 @@
           <div class="nlab">${n.label}</div>
           <div class="nstat">${n.status==='anomaly'?'● Anomaly':'● Normal'}</div>
           <div class="nconv">${n.conv!=='—'?n.conv+' vs '+n.baseline:'decline share '+n.volume.replace('share ','')}</div>
+          ${n.impact?`<div style="font-size:10.5px;color:var(--money);font-weight:700;margin-top:4px">${n.impact}</div>`:""}
         </div>`;
       });
       html += `</div>`;

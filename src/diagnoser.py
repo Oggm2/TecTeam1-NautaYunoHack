@@ -131,6 +131,28 @@ def candidate_breakdown(
     return rows
 
 
+def payment_method_impact(
+    events: list[dict[str, Any]], parent_segment: dict[str, str], parent_metrics: dict[str, Any],
+    store: BaselineStore, at: datetime, args: argparse.Namespace, window_seconds: float | None,
+    recovery_estimator: RecoveryEstimator,
+) -> list[dict[str, Any]]:
+    """Compare every payment method in the alert scope, even if it is not the root cause.
+
+    The drill-down path only retains the selected branch. This companion view
+    makes the payment-method split visible in every root-cause explorer.
+    """
+    rows = candidate_breakdown(
+        events, parent_segment, "payment_method", store, at, args, window_seconds, recovery_estimator,
+    )
+    parent_loss = float(parent_metrics.get("lost_approvals") or 0.0)
+    for row in rows:
+        row["dimension"] = "payment_method"
+        row["is_anomalous"] = row["conversion_drop_pp"] >= args.min_drop_pp and row["z_score"] <= -args.z_threshold
+        row["impact_share_of_lost_approvals"] = round(row["lost_approvals"] / parent_loss, 4) if parent_loss else 0.0
+        row["is_selected"] = parent_segment.get("payment_method") == row["value"]
+    return sorted(rows, key=lambda row: row["lost_approvals"], reverse=True)
+
+
 def dominant_decline_reason(
     current_events: list[dict[str, Any]], history: list[dict[str, Any]], segment: dict[str, str], min_attempts: int,
 ) -> dict[str, Any] | None:
@@ -194,9 +216,11 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
             "evidence_sufficient": False, "confidence": "low",
             "reason": "No hay suficiente volumen actual o histórico para diagnosticar el incidente.",
             "root_cause_segment": initial_segment,
+            "payment_method_impact": [],
         }
 
     parent_metrics = loss_metrics(current, parent_baseline, window_seconds, recovery_estimator)
+    initial_metrics = parent_metrics
     path: list[dict[str, Any]] = []
     root_segment = initial_segment.copy()
     root_events = current
@@ -229,6 +253,9 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
         remaining.remove(best["dimension"])
 
     decline = dominant_decline_reason(root_events, history, root_segment, args.min_history_attempts)
+    method_impact = payment_method_impact(
+        current, initial_segment, initial_metrics, store, ended_at, args, window_seconds, recovery_estimator,
+    )
     sufficient = bool(path) or parent_metrics["conversion_drop_pp"] >= args.min_drop_pp
     confidence = "high" if path and path[-1]["contribution_to_parent_loss"] >= 0.8 else "medium" if sufficient else "low"
     result = {
@@ -236,7 +263,7 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
         "evidence_sufficient": sufficient, "confidence": confidence,
         "root_cause_segment": root_segment, "incident_window": {"started_at": evidence.get("window_started_at"), "ended_at": evidence.get("window_ended_at")},
         "root_metrics": {key: round(value, 4) if isinstance(value, float) else value for key, value in parent_metrics.items()},
-        "drill_down_path": path, "dominant_decline": decline,
+        "drill_down_path": path, "payment_method_impact": method_impact, "dominant_decline": decline,
         "recommended_action": recommendation(root_segment, decline),
     }
     if not path:
