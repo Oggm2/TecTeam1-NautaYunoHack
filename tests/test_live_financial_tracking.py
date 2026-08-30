@@ -1,4 +1,4 @@
-"""Tests for live rolling-rate and accumulated-loss tracking."""
+"""Tests for the rolling-window incidence-cost estimate."""
 
 from __future__ import annotations
 
@@ -13,19 +13,23 @@ import build_dashboard
 
 
 class LiveFinancialTrackingTests(unittest.TestCase):
-    def test_accumulated_loss_integrates_between_live_rates(self) -> None:
-        tracker: dict[str, dict[str, object]] = {}
+    def test_window_cost_uses_the_diagnosis_window_not_elapsed_runtime(self) -> None:
         started_at = datetime(2026, 8, 30, 12, tzinfo=UTC)
-        first = [{"incident_key": "provider=stripe ∧ country=BR", "cost_per_hour_usd": 7200.0}]
-        build_dashboard.update_accumulated_unrecovered_gmv(first, tracker, started_at)
-        self.assertEqual(first[0]["accumulated_expected_unrecovered_gmv_usd"], 0.0)
+        diagnosis = {
+            "incident_id": "incident-1", "alert_id": "alert-1", "root_cause_segment": {"provider": "stripe"},
+            "incident_window": {"started_at": started_at.isoformat(), "ended_at": (started_at + timedelta(minutes=5)).isoformat()},
+            "evidence_sufficient": True, "confidence": "high", "root_metrics": {},
+        }
+        prioritized = [build_dashboard.prioritizer.PrioritizedIncident(
+            incident_key="alerts:alert-1", latest_diagnosis=diagnosis, readings=1,
+            cost_per_hour_usd=3600.0, urgency=0.0, urgency_basis="test", priority_score=3600.0, priority_factors={},
+        )]
 
-        later = [{"incident_key": "provider=stripe ∧ country=BR", "cost_per_hour_usd": 3600.0}]
-        build_dashboard.update_accumulated_unrecovered_gmv(later, tracker, started_at + timedelta(minutes=10))
+        entry = build_dashboard.build_incident_entries(prioritized, [])[0]
 
-        # Trapezoid: average(7200, 3600) USD/hour × 1/6 hour = USD 900.
-        self.assertEqual(later[0]["current_expected_unrecovered_gmv_per_hour_usd"], 3600.0)
-        self.assertEqual(later[0]["accumulated_expected_unrecovered_gmv_usd"], 900.0)
+        # USD 3,600/hour × 5 minutes = USD 300 for this rolling window.
+        self.assertEqual(entry["window_expected_unrecovered_gmv_usd"], 300.0)
+        self.assertEqual(entry["duration_minutes"], 5.0)
 
 
 if __name__ == "__main__":

@@ -1,221 +1,206 @@
-# TecTeam1-NautaYunoHack
+# PagoTotal Intelligence — Control Tower
 
-## Stream simulado de transacciones
+Sistema demostrable de monitoreo y diagnóstico para una plataforma de orquestación de pagos. Observa un stream simulado, detecta caídas relevantes de conversión, aísla su causa raíz y muestra evidencia, impacto económico y una recomendación para revisión humana.
 
-El generador emite eventos en formato JSON Lines con las dimensiones necesarias
-para diagnóstico, monto local (`amount`, `currency`) y monto comparable
-(`amount_usd`). Cada intento incluye `checkout_id`, `customer_id`,
-`attempt_number` y la relación con el intento fallido anterior, de modo que se
-puedan identificar reintentos exitosos. También modela el ciclo de vida: `created_at`,
-`provider_request_at`, `provider_response_at`, `completed_at` y
-`processing_time_ms`.
+Creado para el reto **La torre de control** de NextWave Hackathon. El sistema no modifica rutas de pago ni ejecuta remediaciones.
 
-```powershell
-py src/generator.py --events-per-second 5
-```
+## Qué hace
 
-Para una demostración reproducible con dos incidentes simultáneos:
+- Distingue caídas reales de conversión frente a ruido estadístico.
+- Diagnostica por merchant, provider, método, país, banco emisor y motivo de rechazo.
+- Explica desde cuándo ocurre, a quién afecta, cuánto cuesta y por qué lo cree.
+- Separa y prioriza incidencias simultáneas.
+- Reconoce recurrencias con memoria de incidentes.
+- Permite una inyección en vivo con **Trial by Fire**.
 
-```powershell
-py src/generator.py --events-per-second 10 --injections examples/injections.json
-```
+## Requisitos
 
-Las inyecciones se definen en JSON. Cada una admite `start_after_seconds`,
-`approval_rate`, `filters` (merchant, provider, payment_method, country,
-issuing_bank), `decline_reason` y opcionalmente `duration_seconds`.
+- Python **3.11+**
+- No hay dependencias obligatorias para el pipeline central.
+- OpenAI es opcional para el chatbot y para redactar explicaciones.
 
-## Histórico normal para construir el baseline
+## Demo rápida
 
-Genera 28 días de datos sin incidentes en `data/history.jsonl`:
+Abre dos terminales en la raíz del repositorio.
+
+**Terminal 1 — simulación, detección, diagnóstico y actualización de datos**
 
 ```powershell
+# Solo si data/history.jsonl no existe localmente:
 py src/generate_history.py --days 28 --events-per-minute 5
+
+py src/live_dashboard.py --history data/history.jsonl --injections examples/injections.json --events-per-second 15 --refresh-seconds 10
 ```
 
-El histórico no contiene eventos en `processing`; son resultados finales y se
-puede calcular la conversión base directamente. Usa `--seed` para reproducir
-exactamente el mismo dataset.
-
-## Motor de detección
-
-El detector construye una conversión esperada desde el histórico para cada
-segmento y compara una ventana móvil del stream. Evalúa `provider × country`,
-`merchant × country`, `issuing_bank × country` y `payment_method × country`.
-Sólo emite una alerta cuando hay volumen suficiente, una caída mínima, una
-desviación de al menos 3 sigmas y tres evaluaciones consecutivas anómalas.
-
-Primero crea el histórico y luego conecta ambos procesos:
+**Terminal 2 — dashboard, configuración y Trial by Fire**
 
 ```powershell
-py src/generate_history.py --days 28 --events-per-minute 5
-py src/generator.py --events-per-second 50 --injections examples/injections.json |
-  py src/detector.py --history data/history.jsonl --window-seconds 120 --evaluation-seconds 30
+py src/control_server.py --port 8001
 ```
 
-El detector escribe alertas JSON Lines en la consola. Para la configuración
-productiva recomendada usa sus valores por defecto: ventana de 5 minutos,
-evaluación cada minuto y tres evaluaciones persistentes.
+Abre [http://localhost:8001/PagoTotal-Intelligence_1.html](http://localhost:8001/PagoTotal-Intelligence_1.html).
 
-Agrega `--verbose` al detector para ver el número de transacciones analizadas en
-cada evaluación; estas líneas se muestran en la consola pero no se guardan como
-alertas.
+La inyección de ejemplo genera dos incidencias simultáneas. Detén cada proceso con `Ctrl+C`. En macOS/Linux usa `python3` en lugar de `py` si es necesario.
 
-## Motor de diagnóstico
-
-`diagnoser.py` recibe una alerta y las transacciones capturadas durante el
-stream. Calcula las aprobaciones perdidas contra el baseline y hace drill-down
-por merchant, provider, método y banco emisor. Sólo incorpora un subsegmento a
-la causa raíz si explica al menos 60% de la pérdida de su segmento padre, tiene
-volumen suficiente y también es estadísticamente anómalo. Si no ocurre, reporta
-evidencia insuficiente en vez de inventar una causa.
-
-Para ejecutarlo, guarda la salida del detector en `data/alerts.jsonl` y captura
-el stream en `data/live_transactions.jsonl`. En PowerShell puedes capturar ambos
-sin detener el pipeline:
-
-```powershell
-py src/generator.py --events-per-second 50 --injections examples/injections.json |
-  Tee-Object -FilePath data/live_transactions.jsonl -Encoding utf8 |
-  py src/detector.py --history data/history.jsonl --window-seconds 60 --evaluation-seconds 15 --persistence 2 --min-attempts 30 --min-history-attempts 50 |
-  Tee-Object -FilePath data/alerts.jsonl
-```
-
-Después de que se genere una alerta, detén el stream con `Ctrl+C` y ejecuta:
-
-```powershell
-py src/diagnoser.py --history data/history.jsonl --transactions data/live_transactions.jsonl --alert data/alerts.jsonl
-```
-
-El resultado es un JSON con la causa raíz, ruta de drill-down, impacto,
-código de rechazo dominante, nivel de confianza y acción recomendada.
-
-## GMV no recuperado esperado
-
-Además del GMV bruto perdido, el sistema estima el GMV que probablemente no se
-recupere tras un rechazo. Para cada fallo atribuible al incidente, suma el
-monto real de la transacción —no usa ticket promedio— y lo descuenta por la
-probabilidad de que el checkout se recupere en las siguientes 24 horas:
+## Arquitectura
 
 ```text
-GMV no recuperado esperado = Σ(monto × atribución al incidente × (1 − P(recuperación)))
+historical JSONL ──> baseline + recovery model ─────────────────────┐
+                                                                    │
+mock stream ─> detector ─> diagnoser ─> prioritizer ─> dashboard JSON
+                                                                    │
+Trial by Fire / settings ─> control server ─────────────────────────┘
+                                                                    │
+browser dashboard <─────────────────────────────────────────────────┘
 ```
 
-La primera versión de `recovery_estimator.py` aprende tasas históricas
-suavizadas, con fallbacks por método de pago, motivo de rechazo, país y hora.
-El entrenamiento usa un checkout fallido que luego logra un pago aprobado
-dentro del horizonte. La puntuación de cada rechazo es inmediata; las etiquetas
-se incorporan al histórico una vez que pasa el horizonte. Cambia el horizonte
-con `--recovery-horizon-hours` en `detector.py`, `diagnoser.py` o
-`build_dashboard.py`.
+| Componente | Archivo | Responsabilidad |
+| --- | --- | --- |
+| Generador | `src/generator.py` | Emite transacciones, montos, ciclo de vida, reintentos e inyecciones. |
+| Histórico | `src/generate_history.py` | Genera operación normal para el baseline. |
+| Detector | `src/detector.py` | Detecta deterioros persistentes de conversión. |
+| Diagnóstico | `src/diagnoser.py` | Hace drill-down y aísla el segmento responsable. |
+| Costo | `src/cost_estimator.py` | Estima pérdida atribuible y recuperación esperada. |
+| Prioridad | `src/prioritizer.py` | Ordena las incidencias por impacto y estrategia. |
+| Memoria | `src/incident_memory.py` | Busca casos similares por similitud coseno. |
+| Runtime | `src/live_dashboard.py` | Conecta el pipeline y escribe `frontend/dashboard_data.json`. |
+| API/UI | `src/control_server.py` + `frontend/` | Sirve el dashboard, controles, chatbot y Trial by Fire. |
 
-El dashboard prioriza por GMV no recuperado esperado por hora y conserva el
-GMV bruto perdido en menor tamaño para dar contexto antes del ajuste de
-recuperación.
+## Datos
 
-## Motor de explicación
+Cada línea de los archivos `.jsonl` representa una transacción. Incluye:
 
-`explainer.py` convierte el diagnóstico estructurado en dos mensajes: un resumen
-ejecutivo con el impacto económico y una explicación para operaciones con la
-evidencia y la acción sugerida. Sin argumentos extra utiliza plantillas
-deterministas, por lo que no inventa información ni necesita una API.
+```text
+transaction_id, checkout_id, customer_id, attempt_number
+created_at, provider_request_at, provider_response_at, completed_at
+merchant, provider, country, payment_method, issuing_bank
+status, decline_code, amount, currency, amount_usd, processing_time_ms
+```
+
+Los estados que cuentan para conversión son `approved`, `declined`, `failed` y `expired`. Las dimensiones de diagnóstico son:
+
+```text
+merchant × provider × payment_method × country × issuing_bank × decline_code
+```
+
+## Detección y diagnóstico
+
+El detector compara una ventana móvil del stream contra una conversión esperada calculada desde el histórico. Por defecto exige:
+
+| Regla | Valor |
+| --- | ---: |
+| Ventana | 300 s |
+| Evaluación | 30 s |
+| Persistencia | 3 evaluaciones |
+| Mínimo actual | 30 intentos |
+| Caída mínima | 5 pp |
+| Umbral estadístico | Z = 3.0 |
+
+El diagnóstico solo profundiza a un subsegmento si sigue siendo anómalo, tiene volumen suficiente y explica al menos 60% de las aprobaciones perdidas de su segmento padre. Si la evidencia no alcanza, reporta incertidumbre en vez de inventar una causa.
+
+Los parámetros se ajustan en **Settings**. Se guardan en `data/runtime_config.json` y se aplican en la siguiente actualización del proceso vivo.
+
+## Costo de incidencia
+
+Se usan importes reales, no ticket promedio:
+
+```text
+aprobaciones perdidas = max(0, intentos × conversión esperada − aprobaciones reales)
+
+GMV no recuperado esperado =
+Σ(monto × proporción atribuible × (1 − probabilidad de recuperación))
+```
+
+La probabilidad de recuperación se aprende de reintentos exitosos históricos por checkout, con fallbacks por método, motivo de rechazo, país y hora.
+
+El dashboard muestra la estimación de la **ventana de diagnóstico actual**:
+
+```text
+costo en ventana = costo estimado por hora × duración de la ventana / 60
+```
+
+Ejemplo: USD 3,600/h durante una ventana de 5 minutos produce USD 300. No es un acumulado desde que inició el incidente ni una conciliación contable final.
+
+Una incidencia puede mostrar costo cero si aún no hay evidencia suficiente, no existen aprobaciones perdidas atribuibles o el importe se redondea visualmente a cero.
+
+## Dashboard
+
+El selector superior adapta toda la interfaz:
+
+- **Technical:** stream, umbrales, evidencia estadística y árbol de causa raíz.
+- **Financial:** exposición económica, costo por hora y prioridad.
+- **Simple:** qué pasó, a quién afecta y qué debe revisarse.
+
+La estrategia de prioridad se configura en **Settings → Prioritization strategy**. Puede ponderar impacto económico, urgencia, caída de conversión e importancia de cada merchant; no cambia la detección.
+
+## Trial by Fire
+
+El botón **Trial by Fire** crea una incidencia nueva en vivo sin reiniciar el proceso. El juez puede seleccionar merchant, provider, país, método, banco emisor, motivo de rechazo, tasa de aprobación, proporción de tráfico y duración.
+
+La API guarda la inyección en `data/live_injections.json`. El generador la recarga y el detector/diagnóstico reaccionan solo a los eventos generados; no conocen la causa configurada en el formulario.
+
+Para una prueba limpia, inicia el runtime sin los casos predefinidos:
 
 ```powershell
-py src/explainer.py --diagnosis data/diagnosis.json
+Set-Content -Path data/empty_injections.json -Value "[]"
+py src/live_dashboard.py --history data/history.jsonl --injections data/empty_injections.json --events-per-second 15 --refresh-seconds 10
 ```
 
-Opcionalmente puede usar OpenAI únicamente como redactor de los hechos ya
-calculados. Configura `OPENAI_API_KEY`, instala el SDK oficial y elige el modelo
-que tengan disponible:
+Usa una proporción de tráfico de al menos 30%, una tasa de aprobación baja y una duración igual o mayor a la ventana para obtener evidencia suficiente.
 
-```powershell
-py -m pip install openai
-$env:OPENAI_API_KEY = "tu_api_key"
-py src/explainer.py --diagnosis data/diagnosis.json --use-openai --model gpt-5
-```
+## Memoria de incidentes
 
-La salida de IA se fuerza a un esquema JSON con resumen ejecutivo, explicación
-operativa, acción recomendada y nota de incertidumbre. No se usa la IA para
-detectar ni diagnosticar incidentes.
+Los diagnósticos suficientes se guardan en `data/incident_memory.json`. La memoria compara dimensiones, motivo de rechazo, hora y severidad mediante un vecino cercano por similitud coseno. Cuando encuentra una recurrencia, el dashboard muestra el caso previo y su resolución.
 
-## Memoria de incidentes con ML
-
-`incident_memory.py` compara cada diagnóstico nuevo contra `data/incident_memory.json`
-usando un modelo de **k-nearest-neighbors (k=1) por similitud coseno**, no
-comparación exacta de segmentos. Cada incidente se convierte en un vector de
-features: qué dimensiones están involucradas y sus valores (one-hot), el
-motivo de rechazo dominante, hora del día y día de la semana codificados
-cíclicamente (seno/coseno, para que las 23:00 y las 00:00 se traten como
-cercanas) y la severidad (log del costo/hora). Esto generaliza mejor que el
-solapamiento exacto: dos incidentes con el mismo patrón (misma dimensión
-afectada, hora similar, mismo motivo de rechazo) pueden coincidir aunque el
-merchant o banco exacto sea distinto. No requiere numpy/scikit-learn — con
-la cantidad de incidentes que maneja este proyecto, una búsqueda por fuerza
-bruta en Python puro es suficiente y evita una dependencia extra antes de
-una demo en vivo.
-
-Cuando hay coincidencia, esa recurrencia ahora se inyecta también en
-`explainer.py`: la explicación operativa menciona la fecha y % de similitud
-del incidente anterior, y su nota de resolución si existe — ya no es
-necesario ir a la vista de Incident Memory para enterarte de que "esto ya
-pasó antes".
-
-La memoria también **aprende entre corridas**: al final de `build_dashboard.py`,
-cada incidente con evidencia suficiente se guarda (o actualiza) en
-`data/incident_memory.json` vía `incident_memory.upsert()`. La próxima vez
-que corras el pipeline, esos incidentes ya son candidatos de recurrencia.
-`live_dashboard.py` **no** persiste automáticamente durante una corrida en
-vivo (evita que un incidente activo se compare consigo mismo unos segundos
-después); usa `build_dashboard.py` para cerrar el ciclo de aprendizaje.
-
-### Poblar la memoria con varios incidentes de una sola vez
-
-`generate_incident_batch.py` genera un lote de transacciones (sin esperar en
-tiempo real) con varios incidentes distintos inyectados en distintos puntos
-del rango, usando un archivo de escenarios con el mismo formato que
-`examples/injections.json` (ver `examples/incident_training_scenarios.json`
-para un ejemplo con 5 escenarios variados). Luego corre `build_dashboard.py`
-sobre ese lote una sola vez para diagnosticar todos los incidentes y
-sembrar `incident_memory.json` con ejemplos reales y variados, en vez de
-correr `live_dashboard.py` una vez por escenario:
+Para sembrar la memoria:
 
 ```powershell
 py src/generate_history.py --days 60 --events-per-minute 5
 py src/generate_incident_batch.py --scenarios examples/incident_training_scenarios.json --hours 1.75 --events-per-second 15
-py src/build_dashboard.py --transactions data/incident_training_batch.jsonl
+py src/build_dashboard.py --history data/history.jsonl --transactions data/incident_training_batch.jsonl
 ```
 
-## Dashboard en vivo
+## OpenAI y chatbot (opcional)
 
-`live_dashboard.py` conecta todo el pipeline en tiempo real: genera transacciones
-a ritmo real (`generator.create_event`), las alimenta al detector, diagnostica
-cada alerta apenas aparece, prioriza incidentes simultáneos, revisa recurrencia
-contra `data/incident_memory.json` y reescribe `frontend/dashboard_data.json`
-cada `--refresh-seconds`. El frontend hace polling (cada 8s) en vez de cargar
-una sola foto estática, así que el dashboard se actualiza solo mientras el
-script sigue corriendo.
+El proyecto funciona sin OpenAI. La API se usa únicamente para redactar diagnósticos ya calculados y responder el chatbot con agregados locales de histórico, stream, incidencias y memoria. No decide alertas, costos ni causas raíz.
 
-```bash
-python3 src/generate_history.py --days 28 --events-per-minute 5
-python3 src/live_dashboard.py --injections examples/injections.json
+```powershell
+py -m pip install -r requirements.txt
+$env:OPENAI_API_KEY = "tu_clave"
+py src/control_server.py --port 8001 --chat-model gpt-5
 ```
 
-Para usar OpenAI exclusivamente al redactar diagnósticos ya confirmados:
+La clave se lee de `OPENAI_API_KEY` en el entorno del servidor. **No se carga automáticamente un archivo `.env`**. Nunca subas una clave al repositorio ni al frontend.
 
-```bash
-python3 src/live_dashboard.py --injections examples/injections.json --use-openai --model gpt-5
+Para usar OpenAI al redactar explicaciones del stream:
+
+```powershell
+py src/live_dashboard.py --history data/history.jsonl --injections examples/injections.json --use-openai --model gpt-5
 ```
 
-En otra terminal:
+## Ejecución offline y pruebas
 
-```bash
-cd frontend && python3 -m http.server 8000
+Para reconstruir el dashboard a partir de un stream capturado:
+
+```powershell
+py src/build_dashboard.py --history data/history.jsonl --transactions data/live_transactions.jsonl
+py src/control_server.py --port 8001
 ```
 
-Abre `http://localhost:8000/PagoTotal-Intelligence_1.html` y déjalo corriendo —
-los incidentes aparecerán solos cuando el detector los encuentre (con los
-parámetros por defecto, ~5-8 minutos). `Ctrl+C` detiene `live_dashboard.py`;
-el frontend simplemente deja de recibir actualizaciones nuevas.
+Para ejecutar pruebas:
 
-Para un snapshot único a partir de un stream ya capturado (sin dejarlo
-corriendo), usa `build_dashboard.py` como se describe arriba — sigue siendo
-útil para reproducir un análisis puntual o para debugging.
+```powershell
+py -m unittest discover -s tests -v
+```
+
+## Estructura y límites
+
+```text
+src/         Pipeline y servidor local
+frontend/    Dashboard y snapshot de datos
+examples/    Escenarios e inyecciones reproducibles
+data/        Datos generados localmente
+tests/       Pruebas unitarias
+```
+
+Los JSONL históricos pueden ser grandes; genéralos localmente. Esta es una simulación, los costos son estimaciones operativas y toda recomendación requiere una decisión humana.
