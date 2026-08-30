@@ -345,7 +345,7 @@
   .conf-note.strong { color: var(--ok); }
   .conf-note.weak { color: var(--warn); }
 
-  /* Financial impact */
+  /* Incidence cost */
   .fin { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .fin .f { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
   .fin .f .v { font-size: 28px; font-weight: 800; letter-spacing: -.5px; }
@@ -552,10 +552,10 @@
         <div class="cmd-main">
           <!-- HERO -->
           <div class="hero">
-            <div class="lbl">Expected unrecovered GMV</div>
+            <div class="lbl">Accumulated Incidence Cost</div>
             <div class="big"><span class="cur">$</span><span id="mar-value" class="tnum">22,640</span></div>
-            <div class="unit" id="mar-unit">per hour · across 2 active incidents</div>
-            <div class="unit" id="mar-gross">Gross lost GMV: $— / hour before recovery adjustment</div>
+            <div class="unit" id="mar-unit">accrued across 2 active incidents</div>
+            <div class="unit" id="mar-gross">Current incidence cost: $— / hour</div>
             <div class="trend">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 7 6 6 4-4 8 8"/><path d="M21 17v-6h-6"/></svg>
               Discounts incident-attributable declines by their expected successful-retry probability
@@ -617,7 +617,7 @@
           <div>
             <div class="section-h">
               <h2>Active incidents</h2>
-              <span class="hint">Prioritized by financial impact</span>
+              <span class="hint">Prioritized by incidence cost</span>
             </div>
             <div class="inc-list" id="cmd-incidents"></div>
           </div>
@@ -656,7 +656,7 @@
       <div class="filters" id="filters"></div>
       <div class="card">
         <div class="grow-head">
-          <span>Severity</span><span>Merchant / Root cause</span><span class="colhide">Provider · Country</span><span class="colhide">Method</span><span>Conversion</span><span>Money / hr</span><span class="colhide">Affected</span><span>Confidence</span>
+          <span>Severity</span><span>Merchant / Root cause</span><span class="colhide">Provider · Country</span><span class="colhide">Method</span><span>Conversion</span><span>Incidence cost</span><span class="colhide">Affected</span><span>Confidence</span>
         </div>
         <div id="inc-rows"></div>
       </div>
@@ -688,7 +688,7 @@
 
           <!-- FINANCIAL -->
           <div class="card pad">
-            <div class="section-h" style="margin:0 0 14px"><h2>Financial impact</h2></div>
+            <div class="section-h" style="margin:0 0 14px"><h2>Incidence Cost</h2></div>
             <div class="fin" id="fin"></div>
             <div class="fin-note">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px;color:var(--ink-faint)"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
@@ -754,7 +754,7 @@
             <div class="date">August 17, 2026 · resolved in 41 min</div>
             <div style="margin-top:12px">
               <div class="row"><span>Conversion impact</span><span class="v" style="color:var(--crit)">−24 pp</span></div>
-              <div class="row"><span>Financial impact</span><span class="v" style="color:var(--money)">$11.8K / hr</span></div>
+              <div class="row"><span>Incidence cost</span><span class="v" style="color:var(--money)">$11.8K / hr</span></div>
               <div class="row"><span>Decline code</span><span class="v mono">05</span></div>
             </div>
           </div>
@@ -767,7 +767,7 @@
             <div class="date">Today · active for 18 min</div>
             <div style="margin-top:12px">
               <div class="row"><span>Conversion impact</span><span class="v" style="color:var(--crit)">−27 pp</span></div>
-              <div class="row"><span>Financial impact</span><span class="v" style="color:var(--money)">$14.2K / hr</span></div>
+              <div class="row"><span>Incidence cost</span><span class="v" style="color:var(--money)">$14.2K / hr</span></div>
               <div class="row"><span>Decline code</span><span class="v mono">05</span></div>
             </div>
           </div>
@@ -832,7 +832,7 @@
       <div class="rsig">Adyen × Colombia × Card × Bancolombia</div>
       <div class="rgrid">
         <div class="rg"><div class="k">Confidence</div><div class="v" style="color:var(--ok)">94%</div></div>
-        <div class="rg"><div class="k">Expected unrecovered GMV</div><div class="v" style="color:var(--money)">$5,240/hr</div></div>
+        <div class="rg"><div class="k">Incidence cost</div><div class="v" style="color:var(--money)">$5,240/hr</div></div>
         <div class="rg"><div class="k">Decline code</div><div class="v mono">51</div></div>
       </div>
       <div class="narr">"The system wasn't told what to look for. It investigated the dimensions and found the strongest explanation — an issuing bank over-declining card payments for one provider in one country."</div>
@@ -912,7 +912,7 @@
       financial:{revenue:"$11,050", gross:"$18,420", recovery:"40%", lost:"1,690", daily:"$265K"},
       recommendation:{
         action:"Escalate to the issuing-bank liaison and temporarily reroute Santander MX card traffic through a secondary acquirer.",
-        why:["94% diagnosis confidence","Highest financial impact of all active incidents","Isolated issuing-bank degradation (not provider-wide)","Decline code 05 spike points to authorization refusals"]
+        why:["94% diagnosis confidence","Highest incidence cost of all active incidents","Isolated issuing-bank degradation (not provider-wide)","Decline code 05 spike points to authorization refusals"]
       }
     },
 
@@ -954,7 +954,7 @@
       financial:{revenue:"$8,520", gross:"$14,200", recovery:"40%", lost:"1,247", daily:"$204K"},
       recommendation:{
         action:"Temporarily route affected Brazil PIX traffic through an alternative provider.",
-        why:["96% diagnosis confidence","Significant financial impact","Localized provider + country + method degradation","Similar incident found in memory (Aug 17)"]
+        why:["96% diagnosis confidence","Significant incidence cost","Localized provider + country + method degradation","Similar incident found in memory (Aug 17)"]
       }
     },
 
@@ -1075,7 +1075,7 @@
       cls: entry.confidence_pct>=80 ? "strong" : entry.confidence_pct>=60 ? "" : "weak",
       text: explanation.operational_explanation || (d.reason || "Evidence collected; see the drill-down for details."),
     };
-    const why = [`${entry.confidence_pct}% diagnosis confidence`, `Priority #${entry.priority_rank} by estimated financial impact`];
+    const why = [`${entry.confidence_pct}% diagnosis confidence`, `Priority #${entry.priority_rank} by estimated incidence cost`];
     if (entry.readings>1) why.push(`Confirmed independently across ${entry.readings} detector readings`);
     if (d.dominant_decline) why.push(`Decline code ${d.dominant_decline.decline_reason} spike (+${(d.dominant_decline.share_of_excess_declines*100).toFixed(0)}% of excess declines)`);
     if (!d.evidence_sufficient) why.push("Evidence not yet concentrated enough to name a single segment");
@@ -1084,7 +1084,8 @@
       merchant: disp.merchant, provider: disp.provider, country: disp.country, method: disp.method, bank: disp.bank,
       rootCause: disp.rootCause,
       convFrom: +(m.expected_conversion*100).toFixed(1), convTo: +(m.observed_conversion*100).toFixed(1),
-      money: d.evidence_sufficient ? Math.round(m.expected_unrecovered_amount_per_hour_usd||0) : 0,
+      money: d.evidence_sufficient ? Math.round(entry.accumulated_expected_unrecovered_gmv_usd||0) : 0,
+      currentRate: d.evidence_sufficient ? Math.round(entry.current_expected_unrecovered_gmv_per_hour_usd ?? m.expected_unrecovered_amount_per_hour_usd ?? 0) : 0,
       grossMoney: d.evidence_sufficient ? Math.round(m.gross_lost_amount_per_hour_usd||0) : 0,
       recoveryRate: d.evidence_sufficient ? Math.round((m.expected_recovery_rate||0)*100) : 0,
       affected: Math.round(m.attempts||0), confidence: entry.confidence_pct,
@@ -1092,7 +1093,8 @@
       duration: entry.duration_minutes!=null ? `${entry.duration_minutes} min` : "—",
       tree: buildTree(d), evidence: buildEvidence(d), confNote,
       financial: d.evidence_sufficient ? {
-        revenue: "$"+Math.round(m.expected_unrecovered_amount_per_hour_usd||0).toLocaleString("en-US"),
+        revenue: "$"+Math.round(entry.current_expected_unrecovered_gmv_per_hour_usd ?? m.expected_unrecovered_amount_per_hour_usd ?? 0).toLocaleString("en-US"),
+        accumulated: "$"+Math.round(entry.accumulated_expected_unrecovered_gmv_usd||0).toLocaleString("en-US"),
         gross: "$"+Math.round(m.gross_lost_amount_per_hour_usd||0).toLocaleString("en-US"),
         recovery: Math.round((m.expected_recovery_rate||0)*100)+"%",
         lost: Math.round((m.lost_approvals||0) * (entry.duration_minutes ? 60/entry.duration_minutes : 1)).toLocaleString("en-US"),
@@ -1155,7 +1157,7 @@
         </div>
         <div class="inc-metrics">
           <div class="im"><div class="k">Conversion</div><div class="v"><span class="conv-mini"><span class="from tnum">${inc.convFrom}%</span> <span class="to tnum">${inc.convTo}%</span></span></div></div>
-          <div class="im"><div class="k">Expected unrecovered</div><div class="v money tnum">${money(inc.money)}/hr</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">gross ${money(inc.grossMoney||inc.money)}/hr</div></div>
+          <div class="im"><div class="k">Incidence cost</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">current ${money(inc.currentRate||inc.money)}/hr</div></div>
           <div class="im"><div class="k">Affected</div><div class="v tnum">${inc.affected.toLocaleString()} tx/hr</div></div>
           <div class="im"><div class="k">Confidence</div><div class="v tnum">${inc.confidence}%</div></div>
         </div>
@@ -1172,15 +1174,20 @@
     const active = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active");
     const crit = active.filter(i=>i.severity==="crit").length;
     const high = active.filter(i=>i.severity==="high").length;
-    const moneyAtRisk = active.reduce((sum,i)=>sum+(i.money||0),0);
+    const accumulatedCost = data && data.kpis && data.kpis.accumulated_incidence_cost_usd != null
+      ? data.kpis.accumulated_incidence_cost_usd
+      : active.reduce((sum,i)=>sum+(i.money||0),0);
+    const currentCostRate = data && data.kpis && data.kpis.current_incidence_cost_per_hour_usd != null
+      ? data.kpis.current_incidence_cost_per_hour_usd
+      : active.reduce((sum,i)=>sum+(i.currentRate||i.money||0),0);
     const grossLost = data && data.kpis && data.kpis.gross_lost_gmv_per_hour_usd != null
       ? data.kpis.gross_lost_gmv_per_hour_usd
       : active.reduce((sum,i)=>sum+(i.grossMoney||i.money||0),0);
     $("#nav-inc-badge").textContent = rcOrder.length;
-    $("#mar-value").textContent = Math.round(moneyAtRisk).toLocaleString("en-US");
+    $("#mar-value").textContent = Math.round(accumulatedCost).toLocaleString("en-US");
     const horizon = data && data.kpis && data.kpis.recovery_horizon_hours ? ` · ${data.kpis.recovery_horizon_hours}h recovery horizon` : "";
-    $("#mar-unit").textContent = `per hour · across ${active.length} active incident${active.length===1?'':'s'}${horizon}`;
-    $("#mar-gross").textContent = `Gross lost GMV: $${Math.round(grossLost).toLocaleString("en-US")} / hour before recovery adjustment`;
+    $("#mar-unit").textContent = `accrued across ${active.length} active incident${active.length===1?'':'s'}${horizon}`;
+    $("#mar-gross").textContent = `Current incidence cost: $${Math.round(currentCostRate).toLocaleString("en-US")} / hour · gross $${Math.round(grossLost).toLocaleString("en-US")} / hour`;
     if (data && data.kpis && data.kpis.current_conversion_pct!=null) {
       $("#kpi-conv").textContent = data.kpis.current_conversion_pct.toFixed(1)+"%";
       $("#kpi-conv-expected").textContent = "expected "+data.kpis.expected_conversion_pct.toFixed(1)+"%";
@@ -1381,7 +1388,7 @@
         <span class="colhide" style="color:var(--ink-soft)">${inc.provider} · ${inc.country}</span>
         <span class="colhide mono" style="color:var(--ink-soft)">${inc.method}</span>
         <span class="tnum celldrop">${inc.convFrom}→${inc.convTo}%</span>
-        <span class="cellmoney tnum">${inc.money?money(inc.money):'—'}${inc.money?'/hr':''}</span>
+        <span class="cellmoney tnum">${inc.money?money(inc.money):'—'}<small style="display:block;color:var(--ink-faint);font-weight:500">${inc.money?`${money(inc.currentRate||inc.money)}/hr`:''}</small></span>
         <span class="colhide mono">${inc.affected?inc.affected.toLocaleString()+'/hr':'—'}</span>
         <span class="tnum">${inc.confidence}%</span>
       </div>`;
@@ -1426,8 +1433,8 @@
     target.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
       <div class="sim-badge">Similar incident found · ${similarity}% similarity</div>
       <div style="font-size:12.5px;color:var(--ink-soft)">Matched against resolved operational history</div></div>
-      <div class="mem-compare"><div class="mem-side"><div class="mlab">Previous resolved incident</div><div class="sig">${memorySignature(previous.root_cause_segment)}</div><div class="date">${new Date(previous.resolved_at).toLocaleDateString()} · resolved in ${previous.duration_minutes||"—"} min</div><div style="margin-top:12px"><div class="row"><span>Financial impact</span><span class="v" style="color:var(--money)">$${Math.round(previous.cost_per_hour_usd||0).toLocaleString()}/hr</span></div><div class="row"><span>Decline reason</span><span class="v mono">${previous.decline_reason||"—"}</span></div></div></div>
-      <div class="mem-arrow">→</div><div class="mem-side"><div class="mlab">Current incident</div><div class="sig" style="color:var(--crit)">${memorySignature(match.root_cause_segment)}</div><div class="date">Active now · confidence ${match.confidence_pct||"—"}%</div><div style="margin-top:12px"><div class="row"><span>Financial impact</span><span class="v" style="color:var(--money)">$${Math.round(currentCost).toLocaleString()}/hr</span></div><div class="row"><span>Decline reason</span><span class="v mono">${(current.dominant_decline||{}).decline_reason||"—"}</span></div></div></div></div>
+      <div class="mem-compare"><div class="mem-side"><div class="mlab">Previous resolved incident</div><div class="sig">${memorySignature(previous.root_cause_segment)}</div><div class="date">${new Date(previous.resolved_at).toLocaleDateString()} · resolved in ${previous.duration_minutes||"—"} min</div><div style="margin-top:12px"><div class="row"><span>Incidence cost</span><span class="v" style="color:var(--money)">$${Math.round(previous.cost_per_hour_usd||0).toLocaleString()}/hr</span></div><div class="row"><span>Decline reason</span><span class="v mono">${previous.decline_reason||"—"}</span></div></div></div>
+      <div class="mem-arrow">→</div><div class="mem-side"><div class="mlab">Current incident</div><div class="sig" style="color:var(--crit)">${memorySignature(match.root_cause_segment)}</div><div class="date">Active now · confidence ${match.confidence_pct||"—"}%</div><div style="margin-top:12px"><div class="row"><span>Incidence cost</span><span class="v" style="color:var(--money)">$${Math.round(currentCost).toLocaleString()}/hr</span></div><div class="row"><span>Decline reason</span><span class="v mono">${(current.dominant_decline||{}).decline_reason||"—"}</span></div></div></div></div>
       <div style="margin-top:18px;padding:14px 16px;background:var(--ok-dim);border:1px solid #1c5843;border-radius:12px;font-size:13.5px;color:#a7f3d0"><b>Previous resolution:</b> ${previous.resolution_note||"No resolution note available."}</div>`;
   }
 
@@ -1537,20 +1544,21 @@
     // financial
     if(inc.financial){
       $("#fin").innerHTML = `
-        <div class="f money"><div class="v tnum">${inc.financial.revenue}</div><div class="k">Expected unrecovered GMV / hour</div></div>
-        <div class="f secondary"><div class="v tnum">${inc.financial.gross||inc.financial.revenue}</div><div class="k">Gross lost GMV / hour</div></div>
+        <div class="f money"><div class="v tnum">${inc.financial.accumulated||"$0"}</div><div class="k">Accumulated Incidence Cost</div></div>
+        <div class="f money"><div class="v tnum">${inc.financial.revenue}</div><div class="k">Current Incidence Cost / hour</div></div>
+        <div class="f secondary"><div class="v tnum">${inc.financial.gross||inc.financial.revenue}</div><div class="k">Gross Incidence Cost / hour</div></div>
         <div class="f"><div class="v tnum">${inc.financial.recovery||"—"}</div><div class="k">Expected recovery within 24h</div></div>`;
-      $("#fin-note").textContent = "Gross loss is summed from actual declined payment amounts, then discounted by the estimated probability of a successful retry within 24 hours. Directional estimate, not exact accounting.";
+      $("#fin-note").textContent = "Accumulated Incidence Cost grows while an incident remains active. Current Incidence Cost per hour is recalculated from the latest rolling window. Both are directional estimates, not exact accounting.";
     } else {
-      $("#fin").innerHTML = `<div class="f" style="grid-column:1/-1;border-color:#5c4718"><div class="v" style="color:var(--warn);font-size:19px">Not quantified yet</div><div class="k">Financial impact is withheld until a root cause reaches sufficient confidence. The system does not attach a dollar figure to a guess.</div></div>`;
+      $("#fin").innerHTML = `<div class="f" style="grid-column:1/-1;border-color:#5c4718"><div class="v" style="color:var(--warn);font-size:19px">Not quantified yet</div><div class="k">Incidence cost is withheld until a root cause reaches sufficient confidence. The system does not attach a dollar figure to a guess.</div></div>`;
       $("#fin-note").textContent = "No confident root cause → no defensible cost estimate. Honesty over false precision.";
     }
     renderProfiles(inc);
   }
   function renderProfiles(inc){
     let panel=$("#profile-panel"); if(!panel){ panel=document.createElement("div"); panel.id="profile-panel"; panel.className="evi-card"; $("#rec-card").insertAdjacentElement("afterend",panel); }
-    const p=inc.profiles||{}, text={technical:p.technical||inc.confNote.text,financial:p.financial||`Expected unrecovered GMV: ${money(inc.money||0)} per hour.`,simple:p.simple||"Some payments are failing more often than normal."};
-    const k=audienceMode; panel.innerHTML=`<div class="eh"><div class="why">${k==='technical'?'Technical evidence':k==='financial'?'Financial impact':'What this means'}</div></div><div class="evi-body"><div style="font-size:13.5px;color:var(--ink-soft)">${text[k]}</div>${k==='technical'?`<div style="height:10px;margin-top:12px;background:linear-gradient(90deg,var(--crit) ${inc.convTo||0}%,var(--ok) ${inc.convTo||0}%);border-radius:6px"></div><small>Observed vs expected conversion</small>`:k==='financial'?`<div style="height:12px;width:78%;margin-top:12px;background:var(--money);border-radius:6px"></div><small>Expected unrecovered GMV per hour</small>`:`<div style="font-size:26px;margin-top:12px">🔎 → 💳 → 👥</div><small>Problem found, impact measured, human action recommended.</small>`}</div>`;
+    const p=inc.profiles||{}, text={technical:p.technical||inc.confNote.text,financial:p.financial||`Accumulated Incidence Cost: ${money(inc.money||0)}. Current Incidence Cost: ${money(inc.currentRate||0)} per hour.`,simple:p.simple||"Some payments are failing more often than normal."};
+    const k=audienceMode; panel.innerHTML=`<div class="eh"><div class="why">${k==='technical'?'Technical evidence':k==='financial'?'Incidence Cost':'What this means'}</div></div><div class="evi-body"><div style="font-size:13.5px;color:var(--ink-soft)">${text[k]}</div>${k==='technical'?`<div style="height:10px;margin-top:12px;background:linear-gradient(90deg,var(--crit) ${inc.convTo||0}%,var(--ok) ${inc.convTo||0}%);border-radius:6px"></div><small>Observed vs expected conversion</small>`:k==='financial'?`<div style="height:12px;width:78%;margin-top:12px;background:var(--money);border-radius:6px"></div><small>Accumulated Incidence Cost</small>`:`<div style="font-size:26px;margin-top:12px">🔎 → 💳 → 👥</div><small>Problem found, impact measured, human action recommended.</small>`}</div>`;
   }
   function renderExplorer(){ renderSwitch(); renderTree(); renderEvidence(); }
 
@@ -1725,7 +1733,7 @@
     const p=top&&top.profiles||{};
     const labels={technical:["Technical view",p.technical||"Inspect conversion, baseline and diagnostic evidence."],financial:["Financial view",p.financial||"Focus on revenue at risk and priority."],simple:["Simple view",p.simple||"We explain what happened and what people should do next."]};
     $("#audience-brief").innerHTML=`<div class="section-h"><h2>${labels[audienceMode][0]}</h2></div><div style="color:var(--ink-soft);font-size:14px">${labels[audienceMode][1]}</div>`;
-    $("#mar-unit").textContent=audienceMode==='financial'?"expected unrecovered GMV per hour":audienceMode==='simple'?"money at risk while payments are failing":"per hour · across active incidents";
+    $("#mar-unit").textContent=audienceMode==='financial'?"accumulated across active incidents":audienceMode==='simple'?"estimated cost accrued while payments are failing":"accumulated across active incidents";
     if(currentInc) renderExplorer();
   }
   $$(".audience-btn").forEach(b=>b.addEventListener("click",()=>{audienceMode=b.dataset.audience;localStorage.setItem("audienceMode",audienceMode);applyAudience();}));

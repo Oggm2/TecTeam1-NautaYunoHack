@@ -70,6 +70,10 @@ class DetectionEngine:
         self.seen_ids: set[str] = set()
         self.flags: dict[str, deque[bool]] = defaultdict(lambda: deque(maxlen=args.persistence))
         self.active: set[str] = set()
+        # Latest rolling-window evidence for every active alert. The live
+        # dashboard re-diagnoses this snapshot on each refresh so its rate
+        # measures the current state rather than the first alert window.
+        self.active_evidence: dict[str, dict[str, Any]] = {}
 
     def add(self, event: dict[str, Any]) -> None:
         transaction_id = event.get("transaction_id")
@@ -139,17 +143,22 @@ class DetectionEngine:
                 self.active.add(signature)
                 alerts.append({
                     "alert_id": str(uuid.uuid4()), "type": "conversion_drop",
+                    "alert_signature": signature,
                     "detected_at": now.isoformat(), "persistence_evaluations": self.args.persistence,
                     "confidence": "high" if evidence and evidence["z_score"] <= -4 else "medium",
                     "evidence": evidence,
                 })
+            if signature in self.active and evidence is not None:
+                self.active_evidence[signature] = evidence
             elif not anomalous:
                 self.active.discard(signature)
+                self.active_evidence.pop(signature, None)
 
         # Segments no longer present in the window lose their alert state.
         for signature in set(self.flags) - evaluated_signatures:
             self.flags[signature].append(False)
             self.active.discard(signature)
+            self.active_evidence.pop(signature, None)
         return alerts
 
 

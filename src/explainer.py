@@ -60,7 +60,7 @@ def deterministic_explanation(diagnosis: dict[str, Any], recurrence: dict[str, A
         executive = "Se confirmó una caída de conversión, pero la evidencia no permite atribuirla a una causa única."
         operational = diagnosis.get("reason", "La pérdida está distribuida entre varios segmentos.")
     else:
-        executive = f"Incidente en {target}: GMV no recuperado esperado de USD {cost:,.2f} en la ventana analizada."
+        executive = f"Incidente en {target}: costo estimado de la incidencia de USD {cost:,.2f} en la ventana analizada."
         operational = (
             f"La conversión observada fue {observed:.1%}, frente a {expected:.1%} esperada "
             f"({metrics.get('conversion_drop_pp', 0):.1f} puntos porcentuales menos) en {target}."
@@ -83,7 +83,7 @@ def deterministic_explanation(diagnosis: dict[str, Any], recurrence: dict[str, A
         "window_ended_at": window.get("ended_at"),
         "profiles": {
             "technical": operational,
-            "financial": f"El GMV no recuperado esperado es USD {cost:,.2f} en esta ventana; la proyección por hora está en las métricas del incidente.",
+            "financial": f"El costo estimado de la incidencia es USD {cost:,.2f} en esta ventana; la proyección por hora está en las métricas del incidente.",
             "simple": f"Hay un problema en {target}: están aprobándose menos pagos de lo normal. El equipo debe revisar la acción recomendada.",
         },
     }

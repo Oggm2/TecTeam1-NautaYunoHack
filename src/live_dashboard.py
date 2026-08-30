@@ -104,8 +104,8 @@ def main() -> None:
     loop_start = time.monotonic()
 
     retained: list[dict[str, Any]] = []
-    all_alerts: list[dict[str, Any]] = []
-    diagnoses: list[dict[str, Any]] = []
+    active_alerts: dict[str, dict[str, Any]] = {}
+    loss_tracker: dict[str, dict[str, Any]] = {}
     seen_alert_ids: set[str] = set()
 
     output_path = Path(args.output)
@@ -149,22 +149,35 @@ def main() -> None:
                 print(f"[{now.isoformat()}] applied runtime detection controls", file=sys.stderr)
 
             alerts = engine.evaluate(now)
-            all_alerts.extend(alerts)
             new_alerts = [alert for alert in alerts if alert["alert_id"] not in seen_alert_ids]
             for alert in new_alerts:
                 seen_alert_ids.add(alert["alert_id"])
-            if new_alerts:
-                new_diagnoses = bd.diagnose_alerts(new_alerts, retained, history_events, args, memory)
-                if args.use_openai:
-                    for diagnosis in new_diagnoses:
-                        diagnosis["explanation"] = explainer.openai_explanation(diagnosis, args.model)
-                diagnoses.extend(new_diagnoses)
-                for diagnosis in new_diagnoses:
-                    print(f"[{now.isoformat()}] new incident: {diagnosis.get('root_cause_segment')}", file=sys.stderr)
+                active_alerts[alert["alert_signature"]] = alert
 
-            prioritized = prioritizer.prioritize(diagnoses) if diagnoses else []
+            # Replace each alert's evidence with the newest rolling window.
+            # A diagnosis is therefore a live estimate, not a first-alert
+            # snapshot that remains frozen for the rest of the incident.
+            active_alerts = {
+                signature: {**alert, "evidence": engine.active_evidence[signature]}
+                for signature, alert in active_alerts.items()
+                if signature in engine.active_evidence
+            }
+            active_diagnoses = bd.diagnose_alerts(
+                list(active_alerts.values()), retained, history_events, args, memory,
+            ) if active_alerts else []
+            if args.use_openai:
+                for diagnosis in active_diagnoses:
+                    diagnosis["explanation"] = explainer.openai_explanation(diagnosis, args.model)
+            if new_alerts:
+                new_alert_ids = {alert["alert_id"] for alert in new_alerts}
+                for diagnosis in active_diagnoses:
+                    if diagnosis.get("alert_id") in new_alert_ids:
+                        print(f"[{now.isoformat()}] new incident: {diagnosis.get('root_cause_segment')}", file=sys.stderr)
+
+            prioritized = prioritizer.prioritize(active_diagnoses) if active_diagnoses else []
             entries = bd.build_incident_entries(prioritized, memory)
-            chart = bd.build_chart(retained, all_alerts, history_events, args)
+            bd.update_accumulated_unrecovered_gmv(entries, loss_tracker, now)
+            chart = bd.build_chart(retained, list(active_alerts.values()), history_events, args)
             kpis = bd.build_kpis(
                 entries, chart, transactions_window=len(retained), recovery_horizon_hours=args.recovery_horizon_hours,
             )
