@@ -1,13 +1,13 @@
-# El núcleo del pipeline (generator.py, detector.py, baseline.py, diagnoser.py,
+# The core pipeline (generator.py, detector.py, baseline.py, diagnoser.py,
 # cost_estimator.py, recovery_estimator.py, incident_memory.py, prioritizer.py,
-# build_dashboard.py, live_dashboard.py, control_server.py) usa solo la
-# librería estándar de Python. No necesitas nada de este archivo para correr
-# la detección, el diagnóstico ni el dashboard.
+# build_dashboard.py, live_dashboard.py, control_server.py) uses only the
+# Python standard library. This file is not required to run detection,
+# diagnosis, or the dashboard.
 #
-# Requiere Python 3.11+ (usa datetime.UTC y sintaxis `X | Y`).
+# Requires Python 3.11+ (uses datetime.UTC and `X | Y` syntax).
 #
-# openai es opcional y solo hace falta para las dos funciones que usan IA
-# como redactor (nunca para detectar ni diagnosticar):
-#   - explainer.py --use-openai        (explicación redactada por IA)
-#   - chat_service.py / control_server.py  (asistente conversacional del dashboard)
+# openai is optional and only required for the two AI copywriting features
+# (never for detection or diagnosis):
+#   - explainer.py --use-openai        (AI-written explanation)
+#   - chat_service.py / control_server.py  (dashboard conversational assistant)
 openai>=1.66.0

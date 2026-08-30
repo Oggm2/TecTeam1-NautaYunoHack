@@ -261,11 +261,39 @@ def build_kpis(
     }
 
 
-def build_dataset_stats(events: list[dict[str, Any]]) -> dict[str, Any]:
+PROCESSING_TIME_UPDATE_SECONDS = 180
+
+
+def build_dataset_stats(
+    events: list[dict[str, Any]], processing_window_seconds: int | None = None,
+) -> dict[str, Any]:
     """Compact historical/live aggregates for the dashboard analytics view."""
     terminal = [event for event in events if event.get("status") in CONVERSION_STATUSES]
     attempts = len(terminal)
     approved = sum(event.get("status") == "approved" for event in terminal)
+
+    processing_events = [event for event in terminal if event.get("processing_time_ms") is not None]
+    processing_updated_at: datetime | None = None
+    if processing_window_seconds and processing_events:
+        completed = [(parse_timestamp(event.get("completed_at")), event) for event in processing_events]
+        completed = [(timestamp, event) for timestamp, event in completed if timestamp]
+        if completed:
+            latest = max(timestamp for timestamp, _ in completed)
+            # A closed three-minute bucket is stable between updates.  This
+            # prevents the UI from changing every dashboard refresh while
+            # still providing a fresh operational latency signal.
+            elapsed_seconds = int(latest.timestamp())
+            bucket_end = datetime.fromtimestamp(
+                elapsed_seconds - (elapsed_seconds % processing_window_seconds), tz=UTC,
+            )
+            bucket_start = bucket_end - timedelta(seconds=processing_window_seconds)
+            processing_events = [
+                event for timestamp, event in completed
+                if bucket_start <= timestamp < bucket_end
+            ]
+            processing_updated_at = bucket_end
+
+    processing_values = [float(event["processing_time_ms"]) for event in processing_events]
 
     def grouped(field: str) -> list[dict[str, Any]]:
         buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -281,6 +309,10 @@ def build_dataset_stats(events: list[dict[str, Any]]) -> dict[str, Any]:
         "approved": approved,
         "conversion_pct": round(100 * approved / attempts, 2) if attempts else None,
         "average_ticket_usd": round(sum(float(event.get("amount_usd", 0)) for event in terminal) / attempts, 2) if attempts else 0,
+        "average_processing_time_ms": round(sum(processing_values) / len(processing_values), 1) if processing_values else None,
+        "processing_time_samples": len(processing_values),
+        "processing_time_window_seconds": processing_window_seconds,
+        "processing_time_updated_at": processing_updated_at.isoformat() if processing_updated_at else None,
         "by_country": grouped("country"), "by_provider": grouped("provider"), "by_payment_method": grouped("payment_method"),
     }
 
@@ -346,7 +378,10 @@ def main() -> None:
         "chart": chart,
         "incidents": entries,
         "resolved": memory,
-        "analytics": {"historical": build_dataset_stats(history_events), "live": build_dataset_stats(events)},
+        "analytics": {
+            "historical": build_dataset_stats(history_events),
+            "live": build_dataset_stats(events, processing_window_seconds=PROCESSING_TIME_UPDATE_SECONDS),
+        },
     }
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,7 @@
 """Turn a deterministic diagnosis into executive and operational explanations.
 
 Without flags, this module uses safe deterministic templates. With --use-openai
-it asks an LLM only to rewrite supplied facts into Spanish; it cannot diagnose
+it asks an LLM only to rewrite supplied facts in English; it cannot diagnose
 or choose remediation because those are already decided in diagnoser.py.
 """
 
@@ -25,8 +25,8 @@ def load_diagnosis(path: str) -> dict[str, Any]:
 
 def format_segment(segment: dict[str, str]) -> str:
     labels = {
-        "merchant": "merchant", "provider": "provider", "payment_method": "método",
-        "country": "país", "issuing_bank": "banco emisor",
+        "merchant": "merchant", "provider": "provider", "payment_method": "payment method",
+        "country": "country", "issuing_bank": "issuing bank",
     }
     return ", ".join(f"{labels.get(key, key)}={value}" for key, value in segment.items())
 
@@ -36,11 +36,11 @@ def format_recurrence_note(recurrence: dict[str, Any] | None) -> str:
         return ""
     previous = recurrence["previous_incident"]
     when = previous.get("resolved_at") or previous.get("observed_at")
-    when_label = when[:10] if when else "una ocasión anterior"
+    when_label = when[:10] if when else "a previous occasion"
     similarity_pct = round(recurrence["similarity"] * 100)
     note = previous.get("resolution_note")
-    tail = f"; en esa ocasión: {note}." if note else "."
-    return f" Este patrón ya se había observado ({similarity_pct}% de similitud) el {when_label}{tail}"
+    tail = f"; previous resolution: {note}." if note else "."
+    return f" This pattern was observed before ({similarity_pct}% similarity) on {when_label}{tail}"
 
 
 def deterministic_explanation(diagnosis: dict[str, Any], recurrence: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -57,18 +57,18 @@ def deterministic_explanation(diagnosis: dict[str, Any], recurrence: dict[str, A
     recurrence = recurrence if recurrence is not None else diagnosis.get("recurrence")
 
     if not enough:
-        executive = "Se confirmó una caída de conversión, pero la evidencia no permite atribuirla a una causa única."
-        operational = diagnosis.get("reason", "La pérdida está distribuida entre varios segmentos.")
+        executive = "A conversion drop was confirmed, but the evidence does not support attributing it to one root cause."
+        operational = diagnosis.get("reason", "The loss is distributed across multiple segments.")
     else:
-        executive = f"Incidente en {target}: costo estimado de la incidencia de USD {cost:,.2f} en la ventana analizada."
+        executive = f"Incident in {target}: estimated incidence cost is USD {cost:,.2f} in the analysis window."
         operational = (
-            f"La conversión observada fue {observed:.1%}, frente a {expected:.1%} esperada "
-            f"({metrics.get('conversion_drop_pp', 0):.1f} puntos porcentuales menos) en {target}."
+            f"Observed conversion was {observed:.1%} versus an expected {expected:.1%} "
+            f"({metrics.get('conversion_drop_pp', 0):.1f} percentage points lower) in {target}."
         )
         if decline:
             operational += (
-                f" El motivo de rechazo con mayor exceso fue {decline['decline_reason']} "
-                f"({decline['share_of_excess_declines']:.0%} de los rechazos adicionales)."
+                f" The decline reason with the largest excess was {decline['decline_reason']} "
+                f"({decline['share_of_excess_declines']:.0%} of excess declines)."
             )
         operational += format_recurrence_note(recurrence)
     return {
@@ -83,8 +83,8 @@ def deterministic_explanation(diagnosis: dict[str, Any], recurrence: dict[str, A
         "window_ended_at": window.get("ended_at"),
         "profiles": {
             "technical": operational,
-            "financial": f"El costo estimado de la incidencia es USD {cost:,.2f} en esta ventana; la proyección por hora está en las métricas del incidente.",
-            "simple": f"Hay un problema en {target}: están aprobándose menos pagos de lo normal. El equipo debe revisar la acción recomendada.",
+            "financial": f"Estimated incidence cost is USD {cost:,.2f} in this window; the hourly projection is available in the incident metrics.",
+            "simple": f"There is a problem in {target}: fewer payments are being approved than normal. The team should review the recommended action.",
         },
     }
 
@@ -108,17 +108,17 @@ EXPLANATION_SCHEMA = {
 
 
 def openai_explanation(diagnosis: dict[str, Any], model: str, recurrence: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Use OpenAI only as a factual Spanish copywriter over the diagnosis JSON."""
+    """Use OpenAI only as a factual English copywriter over the diagnosis JSON."""
     try:
         from openai import OpenAI
     except ImportError as error:
         raise RuntimeError("Install the OpenAI Python SDK first: py -m pip install openai") from error
-    instructions = """Eres redactor para operaciones de pagos. Redacta únicamente con los hechos
-del JSON recibido. No inventes dimensiones, causas, cifras, fechas ni acciones. No cambies la
-acción recomendada. Si evidence_sufficient es false, dilo claramente. Responde en español.
-En profiles devuelve: technical para un operador, financial para negocio y simple sin jerga para cualquier persona.
-Si el JSON incluye "recurrence", menciona brevemente en operational_explanation que este patrón ya
-ocurrió antes (con la fecha y similitud dadas) — solo si ese campo está presente."""
+    instructions = """You are a payment-operations copywriter. Write only from the facts in the
+received JSON. Do not invent dimensions, causes, figures, dates, or actions. Do not change the
+recommended action. If evidence_sufficient is false, state that clearly. Respond in English.
+For profiles return: technical for an operator, financial for business, and simple without jargon.
+If the JSON includes recurrence, briefly mention in operational_explanation that this pattern occurred
+before, with the supplied date and similarity, only when that field is present."""
     payload = dict(diagnosis)
     recurrence = recurrence if recurrence is not None else diagnosis.get("recurrence")
     if recurrence:

@@ -184,13 +184,13 @@ def dominant_decline_reason(
 
 def recommendation(segment: dict[str, str], decline: dict[str, Any] | None) -> str:
     if "provider" in segment:
-        return f"Contactar a {segment['provider']} y evaluar el enrutamiento temporal de pagos afectados hacia otro provider."
+        return f"Contact {segment['provider']} and evaluate temporarily routing affected payments to an alternative provider."
     if "issuing_bank" in segment:
-        detail = "; el código dominante indica indisponibilidad" if decline and decline["decline_reason"] == "issuer_unavailable" else ""
-        return f"Validar el estado de {segment['issuing_bank']} con el merchant afectado{detail}."
+        detail = "; the dominant decline code indicates unavailability" if decline and decline["decline_reason"] == "issuer_unavailable" else ""
+        return f"Validate the status of {segment['issuing_bank']} with the affected merchant{detail}."
     if "payment_method" in segment:
-        return f"Verificar la disponibilidad de {segment['payment_method']} y comunicar el impacto a los merchants afectados."
-    return "Investigar el incidente con el equipo de operaciones antes de ejecutar cambios de enrutamiento."
+        return f"Verify availability of {segment['payment_method']} and communicate the impact to affected merchants."
+    return "Investigate the incident with the operations team before making routing changes."
 
 
 def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list[dict[str, Any]], args: argparse.Namespace) -> dict[str, Any]:
@@ -214,7 +214,7 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
         return {
             "incident_id": str(uuid.uuid4()), "alert_id": alert.get("alert_id"),
             "evidence_sufficient": False, "confidence": "low",
-            "reason": "No hay suficiente volumen actual o histórico para diagnosticar el incidente.",
+            "reason": "There is not enough current or historical volume to diagnose this incident.",
             "root_cause_segment": initial_segment,
             "payment_method_impact": [],
         }
@@ -267,7 +267,7 @@ def diagnose(alert: dict[str, Any], current: list[dict[str, Any]], history: list
         "recommended_action": recommendation(root_segment, decline),
     }
     if not path:
-        result["reason"] = "La caída está confirmada, pero no hay un subsegmento que concentre suficiente pérdida para atribuir una causa más específica."
+        result["reason"] = "The drop is confirmed, but no subsegment concentrates enough loss to attribute a more specific cause."
     return result
 
 

@@ -31,6 +31,22 @@ class LiveFinancialTrackingTests(unittest.TestCase):
         self.assertEqual(entry["window_expected_unrecovered_gmv_usd"], 300.0)
         self.assertEqual(entry["duration_minutes"], 5.0)
 
+    def test_processing_time_uses_a_closed_three_minute_bucket(self) -> None:
+        base = datetime(2026, 8, 30, 12, 3, tzinfo=UTC)
+        events = [
+            {"status": "approved", "completed_at": (base - timedelta(minutes=2)).isoformat(), "processing_time_ms": 100},
+            {"status": "approved", "completed_at": (base - timedelta(minutes=1)).isoformat(), "processing_time_ms": 300},
+            # This event belongs to the new bucket and must not affect the
+            # stable value until the next three-minute update.
+            {"status": "approved", "completed_at": (base + timedelta(seconds=10)).isoformat(), "processing_time_ms": 900},
+        ]
+
+        stats = build_dashboard.build_dataset_stats(events, processing_window_seconds=180)
+
+        self.assertEqual(stats["average_processing_time_ms"], 200.0)
+        self.assertEqual(stats["processing_time_samples"], 2)
+        self.assertEqual(stats["processing_time_window_seconds"], 180)
+
 
 if __name__ == "__main__":
     unittest.main()

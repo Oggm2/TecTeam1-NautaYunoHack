@@ -21,14 +21,14 @@ FILTER_KEYS = ("merchant", "provider", "country", "payment_method", "issuing_ban
 MAX_HISTORY_MESSAGES = 6
 
 TOOLS: list[dict[str, Any]] = [
-    {"type": "function", "name": "get_overview", "description": "Obtiene el estado global actual, KPIs, conversión y analítica agregada.", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}},
-    {"type": "function", "name": "query_segment", "description": "Consulta conversiones y GMV agregados de un segmento. Úsala para comparar merchant, provider, país, método o banco contra el histórico.", "parameters": {"type": "object", "properties": {
-        "filters": {"type": "object", "description": "Dimensiones exactas a filtrar. Omite las que no apliquen.", "properties": {key: {"type": "string"} for key in FILTER_KEYS}, "additionalProperties": False},
-        "live_minutes": {"type": "integer", "description": "Ventana del stream vivo, entre 1 y 120 minutos. Omítela para todo el stream retenido."}
+    {"type": "function", "name": "get_overview", "description": "Gets the current global status, KPIs, conversion, and aggregated analytics.", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"type": "function", "name": "query_segment", "description": "Queries aggregated conversion and GMV for a segment. Use it to compare a merchant, provider, country, method, or bank against historical data.", "parameters": {"type": "object", "properties": {
+        "filters": {"type": "object", "description": "Exact dimensions to filter. Omit dimensions that do not apply.", "properties": {key: {"type": "string"} for key in FILTER_KEYS}, "additionalProperties": False},
+        "live_minutes": {"type": "integer", "description": "Live-stream window between 1 and 120 minutes. Omit it for the full retained stream."}
     }, "additionalProperties": False}},
-    {"type": "function", "name": "get_incidents", "description": "Lista los incidentes activos priorizados, con segmento, caída, costo, confianza y recomendación.", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}},
-    {"type": "function", "name": "get_incident_details", "description": "Obtiene la evidencia de un incidente concreto. Primero usa get_incidents para conocer su incident_id.", "parameters": {"type": "object", "properties": {"incident_id": {"type": "string"}}, "required": ["incident_id"], "additionalProperties": False}},
-    {"type": "function", "name": "search_incident_memory", "description": "Busca incidentes resueltos similares en la memoria. Puede filtrarse por dimensiones conocidas.", "parameters": {"type": "object", "properties": {
+    {"type": "function", "name": "get_incidents", "description": "Lists prioritized active incidents with segment, drop, cost, confidence, and recommendation.", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"type": "function", "name": "get_incident_details", "description": "Gets evidence for a specific incident. Use get_incidents first to obtain its incident_id.", "parameters": {"type": "object", "properties": {"incident_id": {"type": "string"}}, "required": ["incident_id"], "additionalProperties": False}},
+    {"type": "function", "name": "search_incident_memory", "description": "Searches incident memory for similar resolved incidents. It can be filtered by known dimensions.", "parameters": {"type": "object", "properties": {
         "filters": {"type": "object", "properties": {key: {"type": "string"} for key in FILTER_KEYS}, "additionalProperties": False}
     }, "additionalProperties": False}},
 ]
@@ -152,9 +152,9 @@ class ChatService:
         audience = audience if audience in {"technical", "financial", "simple"} else "technical"
         prior = [{"role": item["role"], "content": item["content"][:1200]} for item in (history or [])[-MAX_HISTORY_MESSAGES:] if item.get("role") in {"user", "assistant"} and isinstance(item.get("content"), str)]
         input_items: list[Any] = [*prior, {"role": "user", "content": question[:2000]}]
-        instructions = f"""Eres PagoTotal Intelligence, un asistente de operaciones de pagos. Responde en español para una audiencia {audience}.
-Usa obligatoriamente las herramientas de solo lectura antes de afirmar una métrica, incidente, comparación o recurrencia. Las herramientas devuelven hechos calculados localmente; no inventes datos ni causas. Distingue histórico, stream vivo y memoria. Si el volumen es insuficiente o la herramienta no aporta evidencia, dilo claramente. Nunca ejecutes cambios de enrutamiento ni sugieras que ya se ejecutaron.
-La respuesta final siempre debe ser completa: responde directamente la pregunta en la primera oración. Si no hay incidentes o coincidencias, dilo de forma explícita (por ejemplo: “No hay incidentes activos detectados todavía”). Nunca devuelvas solo un título, una lista vacía o la frase “Con la evidencia disponible”. Máximo dos herramientas por pregunta, salvo que una herramienta señale un error."""
+        instructions = f"""You are PagoTotal Intelligence, a payment-operations assistant. Respond in English for a {audience} audience.
+You must use the read-only tools before stating a metric, incident, comparison, or recurrence. The tools return facts calculated locally; do not invent data or causes. Distinguish historical data, the live stream, and memory. If volume is insufficient or a tool provides no evidence, say so clearly. Never execute routing changes or imply they have already been executed.
+Your final answer must always be complete: answer the question directly in the first sentence. If there are no incidents or matches, say so explicitly, for example: “No active incidents have been detected yet.” Never return only a heading, an empty list, or “Based on the available evidence.” Use at most two tools per question unless a tool reports an error."""
         client = OpenAI()
         used_sources: list[str] = []
         tool_results: list[tuple[str, dict[str, Any]]] = []
@@ -176,14 +176,14 @@ La respuesta final siempre debe ser completa: responde directamente la pregunta 
             for name, result in reversed(tool_results):
                 if name == "get_incidents":
                     active = [item for item in result.get("incidents", []) if item.get("status") == "active"]
-                    return "No hay incidentes activos detectados todavía." if not active else f"Hay {len(active)} incidente(s) activo(s) detectado(s)."
+                    return "No active incidents have been detected yet." if not active else f"There are {len(active)} active incident(s) detected."
                 if name == "search_incident_memory":
                     matches = result.get("matches", [])
-                    return "No encontré incidentes previos que coincidan con esa búsqueda." if not matches else f"Encontré {len(matches)} incidente(s) registrado(s) en la memoria para esa búsqueda."
+                    return "No previous incidents match that search." if not matches else f"Found {len(matches)} incident(s) recorded in memory for that search."
                 if name == "query_segment":
                     live, historical = result.get("live", {}), result.get("historical", {})
-                    return f"El segmento consultado tiene conversión viva de {live.get('conversion_pct') if live.get('conversion_pct') is not None else 'sin muestra suficiente'} frente a {historical.get('conversion_pct') if historical.get('conversion_pct') is not None else 'sin línea base suficiente'} en el histórico."
-            return "No pude obtener evidencia suficiente de las fuentes locales para responder esa pregunta."
+                    return f"The queried segment has live conversion of {live.get('conversion_pct') if live.get('conversion_pct') is not None else 'insufficient sample'} versus {historical.get('conversion_pct') if historical.get('conversion_pct') is not None else 'insufficient historical baseline'} historically."
+            return "I could not obtain sufficient evidence from local sources to answer that question."
 
         response = client.responses.create(model=self.model, instructions=instructions, input=input_items, tools=TOOLS, tool_choice="required", parallel_tool_calls=False, store=False, max_output_tokens=700)
         for _ in range(2):

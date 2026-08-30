@@ -208,7 +208,10 @@ def main() -> None:
             dashboard = {
                 "generated_at": now.isoformat(), "kpis": kpis, "chart": chart,
                 "incidents": entries, "resolved": memory,
-                "analytics": {"historical": bd.build_dataset_stats(history_events), "live": bd.build_dataset_stats(retained)},
+                "analytics": {
+                    "historical": bd.build_dataset_stats(history_events),
+                    "live": bd.build_dataset_stats(retained, processing_window_seconds=bd.PROCESSING_TIME_UPDATE_SECONDS),
+                },
             }
             write_atomic(output_path, json.dumps(dashboard, indent=2))
             print(f"[{now.isoformat()}] refreshed dashboard — {len(retained)} tx retained, {len(entries)} incident(s)", file=sys.stderr)

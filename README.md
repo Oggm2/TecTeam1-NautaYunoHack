@@ -1,48 +1,42 @@
 # PagoTotal Intelligence — Control Tower
 
-Sistema demostrable de monitoreo y diagnóstico para una plataforma de orquestación de pagos. Observa un stream simulado, detecta caídas relevantes de conversión, aísla su causa raíz y muestra evidencia, impacto económico y una recomendación para revisión humana.
+PagoTotal Intelligence is a demonstrable monitoring and diagnosis system for a payment-orchestration platform. It observes a simulated transaction stream, detects material conversion drops, isolates their root cause, and presents evidence, estimated economic impact, and a recommendation for human review.
 
-Creado para el reto **La torre de control** de NextWave Hackathon. El sistema no modifica rutas de pago ni ejecuta remediaciones.
+Created for the **Control Tower** NextWave Hackathon challenge. It never changes payment routing or executes remediation.
 
-## Qué hace
+## What it does
 
-- Distingue caídas reales de conversión frente a ruido estadístico.
-- Diagnostica por merchant, provider, método, país, banco emisor y motivo de rechazo.
-- Explica desde cuándo ocurre, a quién afecta, cuánto cuesta y por qué lo cree.
-- Separa y prioriza incidencias simultáneas.
-- Reconoce recurrencias con memoria de incidentes.
-- Permite una inyección en vivo con **Trial by Fire**.
+- Distinguishes real conversion drops from normal statistical noise.
+- Diagnoses by merchant, provider, payment method, country, issuing bank, and decline reason.
+- Explains when an incident began, who it affects, how much it costs, and why the system believes it.
+- Separates and prioritizes simultaneous incidents.
+- Recognizes recurring patterns through incident memory.
+- Supports a live, judge-defined **Trial by Fire** injection.
 
-## Requisitos
+## Quick start
 
-- Python **3.11+**
-- No hay dependencias obligatorias para el pipeline central.
-- OpenAI es opcional para el chatbot y para redactar explicaciones.
+Requirements: Python **3.11+**. The core pipeline uses only the Python standard library.
 
-## Demo rápida
+Open two terminals at the repository root.
 
-Abre dos terminales en la raíz del repositorio.
-
-**Terminal 1 — simulación, detección, diagnóstico y actualización de datos**
+**Terminal 1 — simulation, detection, diagnosis, and dashboard data**
 
 ```powershell
-# Solo si data/history.jsonl no existe localmente:
+# Run only if data/history.jsonl does not exist locally.
 py src/generate_history.py --days 28 --events-per-minute 5
 
 py src/live_dashboard.py --history data/history.jsonl --injections examples/injections.json --events-per-second 15 --refresh-seconds 10
 ```
 
-**Terminal 2 — dashboard, configuración y Trial by Fire**
+**Terminal 2 — dashboard server, settings, and Trial by Fire**
 
 ```powershell
 py src/control_server.py --port 8001
 ```
 
-Abre [http://localhost:8001/PagoTotal-Intelligence_1.html](http://localhost:8001/PagoTotal-Intelligence_1.html).
+Open [http://localhost:8001/PagoTotal-Intelligence_1.html](http://localhost:8001/PagoTotal-Intelligence_1.html). Stop each process with `Ctrl+C`. On macOS/Linux, use `python3` instead of `py` when needed.
 
-La inyección de ejemplo genera dos incidencias simultáneas. Detén cada proceso con `Ctrl+C`. En macOS/Linux usa `python3` en lugar de `py` si es necesario.
-
-## Arquitectura
+## Architecture
 
 ```text
 historical JSONL ──> baseline + recovery model ─────────────────────┐
@@ -54,153 +48,90 @@ Trial by Fire / settings ─> control server ───────────�
 browser dashboard <─────────────────────────────────────────────────┘
 ```
 
-| Componente | Archivo | Responsabilidad |
+| Component | File | Responsibility |
 | --- | --- | --- |
-| Generador | `src/generator.py` | Emite transacciones, montos, ciclo de vida, reintentos e inyecciones. |
-| Histórico | `src/generate_history.py` | Genera operación normal para el baseline. |
-| Detector | `src/detector.py` | Detecta deterioros persistentes de conversión. |
-| Diagnóstico | `src/diagnoser.py` | Hace drill-down y aísla el segmento responsable. |
-| Costo | `src/cost_estimator.py` | Estima pérdida atribuible y recuperación esperada. |
-| Prioridad | `src/prioritizer.py` | Ordena las incidencias por impacto y estrategia. |
-| Memoria | `src/incident_memory.py` | Busca casos similares por similitud coseno. |
-| Runtime | `src/live_dashboard.py` | Conecta el pipeline y escribe `frontend/dashboard_data.json`. |
-| API/UI | `src/control_server.py` + `frontend/` | Sirve el dashboard, controles, chatbot y Trial by Fire. |
+| Generator | `src/generator.py` | Emits transactions, amounts, lifecycle events, retries, and controlled injections. |
+| History | `src/generate_history.py` | Generates normal operation for the baseline. |
+| Detector | `src/detector.py` | Detects persistent conversion deterioration. |
+| Diagnoser | `src/diagnoser.py` | Performs drill-down and isolates the responsible segment. |
+| Cost | `src/cost_estimator.py` | Estimates attributable loss and expected recovery. |
+| Priority | `src/prioritizer.py` | Ranks incidents using configurable strategy. |
+| Memory | `src/incident_memory.py` | Finds similar resolved incidents with cosine similarity. |
+| Runtime | `src/live_dashboard.py` | Connects the pipeline and writes `frontend/dashboard_data.json`. |
+| API/UI | `src/control_server.py` + `frontend/` | Serves the dashboard, settings, chatbot, and Trial by Fire. |
 
-## Datos
+## Detection and diagnosis
 
-Cada línea de los archivos `.jsonl` representa una transacción. Incluye:
+The detector compares a rolling live window with historical expected conversion. By default it requires:
 
-```text
-transaction_id, checkout_id, customer_id, attempt_number
-created_at, provider_request_at, provider_response_at, completed_at
-merchant, provider, country, payment_method, issuing_bank
-status, decline_code, amount, currency, amount_usd, processing_time_ms
-```
-
-Los estados que cuentan para conversión son `approved`, `declined`, `failed` y `expired`. Las dimensiones de diagnóstico son:
-
-```text
-merchant × provider × payment_method × country × issuing_bank × decline_code
-```
-
-## Detección y diagnóstico
-
-El detector compara una ventana móvil del stream contra una conversión esperada calculada desde el histórico. Por defecto exige:
-
-| Regla | Valor |
+| Rule | Default |
 | --- | ---: |
-| Ventana | 300 s |
-| Evaluación | 30 s |
-| Persistencia | 3 evaluaciones |
-| Mínimo actual | 30 intentos |
-| Caída mínima | 5 pp |
-| Umbral estadístico | Z = 3.0 |
+| Window | 300 s |
+| Evaluation cadence | 30 s |
+| Persistence | 3 evaluations |
+| Minimum current volume | 30 attempts |
+| Minimum drop | 5 pp |
+| Statistical threshold | Z = 3.0 |
 
-El diagnóstico solo profundiza a un subsegmento si sigue siendo anómalo, tiene volumen suficiente y explica al menos 60% de las aprobaciones perdidas de su segmento padre. Si la evidencia no alcanza, reporta incertidumbre en vez de inventar una causa.
+A subsegment becomes part of the root-cause path only when it remains anomalous, has sufficient volume, and explains at least 60% of its parent segment’s lost approvals. If evidence is insufficient, the system reports uncertainty rather than inventing a cause.
 
-Los parámetros se ajustan en **Settings**. Se guardan en `data/runtime_config.json` y se aplican en la siguiente actualización del proceso vivo.
+Settings are saved in `data/runtime_config.json` and applied by the live runtime on its next refresh.
 
-## Costo de incidencia
+## Incidence cost
 
-Se usan importes reales, no ticket promedio:
-
-```text
-aprobaciones perdidas = max(0, intentos × conversión esperada − aprobaciones reales)
-
-GMV no recuperado esperado =
-Σ(monto × proporción atribuible × (1 − probabilidad de recuperación))
-```
-
-La probabilidad de recuperación se aprende de reintentos exitosos históricos por checkout, con fallbacks por método, motivo de rechazo, país y hora.
-
-El dashboard muestra la estimación de la **ventana de diagnóstico actual**:
+The calculation uses actual failed-payment amounts, not an average ticket:
 
 ```text
-costo en ventana = costo estimado por hora × duración de la ventana / 60
+lost approvals = max(0, attempts × expected conversion − actual approvals)
+
+expected unrecovered GMV =
+Σ(amount × incident-attribution share × (1 − recovery probability))
 ```
 
-Ejemplo: USD 3,600/h durante una ventana de 5 minutos produce USD 300. No es un acumulado desde que inició el incidente ni una conciliación contable final.
+Recovery probability is learned from historical successful retries by checkout, with fallbacks by payment method, decline reason, country, and hour.
 
-Una incidencia puede mostrar costo cero si aún no hay evidencia suficiente, no existen aprobaciones perdidas atribuibles o el importe se redondea visualmente a cero.
+The dashboard displays an estimate for the **current diagnosis window**:
 
-## Dashboard
+```text
+window cost = estimated cost per hour × window duration / 60
+```
 
-El selector superior adapta toda la interfaz:
+For example, USD 3,600/hour over a five-minute window is USD 300. This is not a running total and not final financial reconciliation.
 
-- **Technical:** stream, umbrales, evidencia estadística y árbol de causa raíz.
-- **Financial:** exposición económica, costo por hora y prioridad.
-- **Simple:** qué pasó, a quién afecta y qué debe revisarse.
+## Dashboard modes and Trial by Fire
 
-La estrategia de prioridad se configura en **Settings → Prioritization strategy**. Puede ponderar impacto económico, urgencia, caída de conversión e importancia de cada merchant; no cambia la detección.
+The global audience selector adapts the complete dashboard:
 
-## Trial by Fire
+- **Technical:** stream, statistical thresholds, evidence, and root-cause drill-down.
+- **Financial:** economic exposure, cost per hour, and ranked work.
+- **Simple:** a direct explanation of what happened, who is affected, and what to review.
 
-El botón **Trial by Fire** crea una incidencia nueva en vivo sin reiniciar el proceso. El juez puede seleccionar merchant, provider, país, método, banco emisor, motivo de rechazo, tasa de aprobación, proporción de tráfico y duración.
+**Trial by Fire** creates a new live incident without restarting the runtime. The judge selects merchant, provider, country, payment method, issuing bank, decline reason, approval rate, traffic share, and duration. The injection is stored in `data/live_injections.json`; the detector and diagnoser only receive the resulting events.
 
-La API guarda la inyección en `data/live_injections.json`. El generador la recarga y el detector/diagnóstico reaccionan solo a los eventos generados; no conocen la causa configurada en el formulario.
-
-Para una prueba limpia, inicia el runtime sin los casos predefinidos:
+For a clean trial without preconfigured incidents:
 
 ```powershell
 Set-Content -Path data/empty_injections.json -Value "[]"
 py src/live_dashboard.py --history data/history.jsonl --injections data/empty_injections.json --events-per-second 15 --refresh-seconds 10
 ```
 
-Usa una proporción de tráfico de al menos 30%, una tasa de aprobación baja y una duración igual o mayor a la ventana para obtener evidencia suficiente.
+## OpenAI and chatbot (optional)
 
-## Memoria de incidentes
-
-Los diagnósticos suficientes se guardan en `data/incident_memory.json`. La memoria compara dimensiones, motivo de rechazo, hora y severidad mediante un vecino cercano por similitud coseno. Cuando encuentra una recurrencia, el dashboard muestra el caso previo y su resolución.
-
-Para sembrar la memoria:
-
-```powershell
-py src/generate_history.py --days 60 --events-per-minute 5
-py src/generate_incident_batch.py --scenarios examples/incident_training_scenarios.json --hours 1.75 --events-per-second 15
-py src/build_dashboard.py --history data/history.jsonl --transactions data/incident_training_batch.jsonl
-```
-
-## OpenAI y chatbot (opcional)
-
-El proyecto funciona sin OpenAI. La API se usa únicamente para redactar diagnósticos ya calculados y responder el chatbot con agregados locales de histórico, stream, incidencias y memoria. No decide alertas, costos ni causas raíz.
+The project works without OpenAI. OpenAI is used only to write a diagnosis already computed from facts and to answer chatbot questions using local aggregates. It does not decide alerts, costs, or root causes.
 
 ```powershell
 py -m pip install -r requirements.txt
-$env:OPENAI_API_KEY = "tu_clave"
+$env:OPENAI_API_KEY = "your_key"
 py src/control_server.py --port 8001 --chat-model gpt-5
 ```
 
-La clave se lee de `OPENAI_API_KEY` en el entorno del servidor. **No se carga automáticamente un archivo `.env`**. Nunca subas una clave al repositorio ni al frontend.
+The server reads `OPENAI_API_KEY` from its environment; it does **not** automatically load a `.env` file. Never commit an API key or expose it in the frontend.
 
-Para usar OpenAI al redactar explicaciones del stream:
-
-```powershell
-py src/live_dashboard.py --history data/history.jsonl --injections examples/injections.json --use-openai --model gpt-5
-```
-
-## Ejecución offline y pruebas
-
-Para reconstruir el dashboard a partir de un stream capturado:
+## Offline execution and tests
 
 ```powershell
 py src/build_dashboard.py --history data/history.jsonl --transactions data/live_transactions.jsonl
-py src/control_server.py --port 8001
-```
-
-Para ejecutar pruebas:
-
-```powershell
 py -m unittest discover -s tests -v
 ```
 
-## Estructura y límites
-
-```text
-src/         Pipeline y servidor local
-frontend/    Dashboard y snapshot de datos
-examples/    Escenarios e inyecciones reproducibles
-data/        Datos generados localmente
-tests/       Pruebas unitarias
-```
-
-Los JSONL históricos pueden ser grandes; genéralos localmente. Esta es una simulación, los costos son estimaciones operativas y toda recomendación requiere una decisión humana.
+Historical JSONL files can be large and should be generated locally. This is a payment simulation: all impact figures are operational estimates, and every recommendation requires human approval.

@@ -10,7 +10,7 @@
       "resolved_at": "2026-08-26T18:42:00+00:00",
       "duration_minutes": 41,
       "cost_per_hour_usd": 48400,
-      "resolution_note": "Stripe confirmó degradación regional; se enrutararon temporalmente pagos de Brasil a un provider alterno."
+      "resolution_note": "Stripe confirmed regional degradation; Brazil payments were temporarily routed to an alternative provider."
     },
     {
       "incident_id": "memory-banorte-2026-08-19",
@@ -24,7 +24,7 @@
       "resolved_at": "2026-08-19T15:18:00+00:00",
       "duration_minutes": 27,
       "cost_per_hour_usd": 16100,
-      "resolution_note": "Banorte restableció el servicio; se monitoreó la recuperación de conversión."
+      "resolution_note": "Banorte restored service; conversion recovery was monitored."
     },
     {
       "incident_id": "5cca1c6f-c2cc-43cb-8b40-bc4bb006677f",
