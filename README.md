@@ -35,7 +35,7 @@ py src/live_dashboard.py --history data/history.jsonl --injections examples/inje
 py src/control_server.py --port 8001
 ```
 
-Open [http://localhost:8001/PagoTotal-Intelligence_1.html](http://localhost:8001/PagoTotal-Intelligence_1.html). Stop each process with `Ctrl+C`. On macOS/Linux, use `python3` instead of `py` when needed.
+Open the [SentiPay dashboard](http://localhost:8001/PagoTotal-Intelligence_1.html). The filename is retained for backward-compatible local URLs; the product is branded as SentiPay. Stop each process with `Ctrl+C`. On macOS/Linux, use `python3` instead of `py` when needed.
 
 ## Architecture
 
@@ -104,7 +104,7 @@ The dashboard keeps a persistent per-incident ledger. Every 30 seconds it adds o
 new estimated loss = declined amount × incident attribution × (1 − retry-success probability)
 ```
 
-It shows three distinct metrics: **Accumulated Incident Loss** for an open financial exposure, **Current Loss Rate** for the latest rolling-window hourly estimate, and **Total Incident Loss** for Today, This week, or This month. When conversion is healthy for the configured windows, the financial exposure ends and its loss is frozen; the operational incident stays open until a human resolves it. Recovered incidents retain their frozen cost, last observed loss rate, and time to recovery. This is still an estimate of unrecovered payment value, not final financial reconciliation or platform revenue.
+It shows three distinct metrics: **Accumulated Incident Loss** for active financial exposure, **Current Loss Rate** for the latest rolling-window hourly estimate, and **Total Incident Loss** for Today, This week, or This month. When conversion is healthy for the configured windows, the financial exposure ends and its loss is frozen. The incident leaves the active queue, appears under **Recovered** in incident history, and no longer contributes to the active-incident count. An operator can later document its cause, action, and validation to move it to **Resolved**. Recovered incidents retain their frozen cost, last observed loss rate, and time to recovery. This is still an estimate of unrecovered payment value, not final financial reconciliation or platform revenue.
 
 ### Incident identity and governed knowledge
 
@@ -114,7 +114,7 @@ The demo keeps three deliberately separate repositories:
 
 - **Synthetic training incidents:** `examples/incident_training_scenarios.json` and injection fixtures; never used for recurrence recommendations.
 - **Observed incidents:** `data/incident_lifecycle.json`; detected, investigating, monitoring, or statistically recovered cases.
-- **Incident memory:** `data/incident_memory.json`; an incident is stored when statistical recovery is verified. Each record is labeled `statistically_recovered` or `operator_confirmed`, so recurrence context is never mistaken for a human-confirmed root cause. Legacy auto-seeded records remain quarantined and excluded from matching.
+- **Incident memory:** `data/incident_memory.json`; an incident is stored when statistical recovery is verified. Each record is labeled `statistically_recovered`, `operator_confirmed`, or `historical_resolved`, so recurrence context is never mistaken for a human-confirmed root cause. Legacy auto-seeded records remain quarantined and excluded from matching.
 
 ### Evidence graph context
 
@@ -141,6 +141,8 @@ The global audience selector adapts the complete dashboard:
 - **Simple:** a direct explanation of what happened, who is affected, and what to review.
 
 **Trial by Fire** creates a new live incident without restarting the runtime. The judge selects merchant, provider, country, payment method, issuing bank, decline reason, approval rate, traffic share, and duration. The injection is stored in `data/live_injections.json`; the detector and diagnoser only receive the resulting events.
+
+The UI immediately displays a clearly labeled **Manual Trial Alert** so the judge can see that the injection was accepted. Its cost is `$0` until completed declined payments are observed and the detector independently confirms the incident with sufficient statistical evidence. Trial injections can be removed from the same modal; removing one stops only its simulated traffic and does not delete incident history.
 
 For a clean trial without preconfigured incidents:
 
