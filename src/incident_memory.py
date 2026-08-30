@@ -1,4 +1,4 @@
-"""Persistent incident memory and ML-based recurrence matching.
+"""Governed resolved knowledge and recurrence matching.
 
 Every stored incident is encoded as a sparse feature vector — one-hot for
 each affected dimension value (plus a "this dimension is involved at all"
@@ -9,6 +9,10 @@ under cosine similarity. This generalizes past exact segment-overlap: two
 incidents that share a *pattern* (same failing dimension, similar time of
 day, same decline reason) can match even when the exact merchant or bank
 differs.
+
+Only cases closed by an operator belong to this memory. Synthetic scenarios
+belong in ``examples/`` and observed/unconfirmed incidents belong in the
+lifecycle store; neither can produce a recurrence recommendation.
 
 No numpy/scikit-learn dependency: with the handful of incidents this store
 realistically holds for a hackathon-scale demo, a brute-force nearest-
@@ -27,16 +31,42 @@ from typing import Any
 DIMENSION_KEYS = ("merchant", "provider", "payment_method", "country", "issuing_bank")
 
 
+def _store(content: Any) -> dict[str, Any]:
+    """Migrate legacy auto-seeded records into quarantined observed history."""
+    if isinstance(content, dict) and content.get("version") == 2:
+        return {
+            "version": 2,
+            "resolved_knowledge": list(content.get("resolved_knowledge", [])),
+            "unverified_observed_incidents": list(content.get("unverified_observed_incidents", [])),
+        }
+    legacy = content.get("incidents", []) if isinstance(content, dict) else (content if isinstance(content, list) else [])
+    # Old records were written at diagnosis time and cannot honestly be called
+    # resolved knowledge. Keep them for audit, never for recommendation.
+    return {"version": 2, "resolved_knowledge": [], "unverified_observed_incidents": list(legacy)}
+
+
 def load(path: str) -> list[dict[str, Any]]:
     file = Path(path)
     if not file.exists():
         return []
-    content = json.loads(file.read_text(encoding="utf-8"))
-    return content.get("incidents", []) if isinstance(content, dict) else content
+    try:
+        content = json.loads(file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    return _store(content)["resolved_knowledge"]
 
 
 def save(path: str, incidents: list[dict[str, Any]]) -> None:
-    Path(path).write_text(json.dumps({"incidents": incidents}, indent=2, ensure_ascii=False), encoding="utf-8")
+    file = Path(path)
+    try:
+        existing = json.loads(file.read_text(encoding="utf-8")) if file.exists() else {}
+    except (OSError, json.JSONDecodeError):
+        existing = {}
+    store = _store(existing)
+    store["resolved_knowledge"] = incidents
+    temporary = file.with_suffix(file.suffix + ".tmp")
+    temporary.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
+    temporary.replace(file)
 
 
 def _parse_time(value: str | None) -> datetime | None:
@@ -97,7 +127,7 @@ def match(current: dict[str, Any], records: list[dict[str, Any]], minimum_simila
 
 
 def record_from_entry(entry: dict[str, Any]) -> dict[str, Any]:
-    """Turn a diagnosed dashboard incident into a memory record for future recurrence matching."""
+    """Legacy helper; callers should use lifecycle.record_for_memory after closure."""
     diagnosis = entry["diagnosis"]
     return {
         "incident_id": diagnosis.get("incident_id"),
@@ -111,8 +141,8 @@ def record_from_entry(entry: dict[str, Any]) -> dict[str, Any]:
 
 
 def upsert(records: list[dict[str, Any]], new_record: dict[str, Any]) -> list[dict[str, Any]]:
-    """Add or refresh the memory record for this exact root-cause segment."""
-    segment = new_record.get("root_cause_segment", {})
-    kept = [record for record in records if record.get("root_cause_segment", {}) != segment]
+    """Add or refresh one operator-approved incident without erasing history."""
+    incident_id = new_record.get("incident_id")
+    kept = [record for record in records if record.get("incident_id") != incident_id]
     kept.append(new_record)
     return kept

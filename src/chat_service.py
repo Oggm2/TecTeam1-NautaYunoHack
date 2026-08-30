@@ -26,7 +26,7 @@ TOOLS: list[dict[str, Any]] = [
         "filters": {"type": "object", "description": "Exact dimensions to filter. Omit dimensions that do not apply.", "properties": {key: {"type": "string"} for key in FILTER_KEYS}, "additionalProperties": False},
         "live_minutes": {"type": "integer", "description": "Live-stream window between 1 and 120 minutes. Omit it for the full retained stream."}
     }, "additionalProperties": False}},
-    {"type": "function", "name": "get_incidents", "description": "Lists prioritized active incidents with segment, drop, cost, confidence, and recommendation.", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"type": "function", "name": "get_incidents", "description": "Lists prioritized open and recovered incidents with localized impact, lifecycle status, cost, confidence, and guarded counterfactual routing recommendation when comparable traffic exists.", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}},
     {"type": "function", "name": "get_incident_details", "description": "Gets evidence for a specific incident. Use get_incidents first to obtain its incident_id.", "parameters": {"type": "object", "properties": {"incident_id": {"type": "string"}}, "required": ["incident_id"], "additionalProperties": False}},
     {"type": "function", "name": "search_incident_memory", "description": "Searches incident memory for similar resolved incidents. It can be filtered by known dimensions.", "parameters": {"type": "object", "properties": {
         "filters": {"type": "object", "properties": {key: {"type": "string"} for key in FILTER_KEYS}, "additionalProperties": False}
@@ -108,11 +108,20 @@ class DataRepository:
         for entry in entries:
             diagnosis = entry.get("diagnosis", {})
             metrics = diagnosis.get("root_metrics", {})
+            counterfactual = diagnosis.get("counterfactual_recommendation", {})
             compact.append({
                 "incident_id": entry.get("incident_id"), "severity": entry.get("severity"), "status": entry.get("status"),
                 "root_cause_segment": entry.get("root_cause_segment"), "conversion_drop_pp": metrics.get("conversion_drop_pp"),
                 "cost_per_hour_usd": entry.get("cost_per_hour_usd"), "confidence_pct": entry.get("confidence_pct"),
                 "recommended_action": diagnosis.get("recommended_action"),
+                "counterfactual_routing": {
+                    "decision": counterfactual.get("decision"),
+                    "candidate_provider": counterfactual.get("candidate_provider"),
+                    "uplift_pp": (counterfactual.get("comparison") or {}).get("uplift_pp"),
+                    "source_attempts": (counterfactual.get("comparison") or {}).get("source_attempts"),
+                    "candidate_attempts": (counterfactual.get("comparison") or {}).get("candidate_attempts"),
+                    "guardrail_status": counterfactual.get("guardrail_status"),
+                },
             })
         return {"source": "current dashboard diagnosis", "incidents": compact}
 
@@ -153,7 +162,7 @@ class ChatService:
         prior = [{"role": item["role"], "content": item["content"][:1200]} for item in (history or [])[-MAX_HISTORY_MESSAGES:] if item.get("role") in {"user", "assistant"} and isinstance(item.get("content"), str)]
         input_items: list[Any] = [*prior, {"role": "user", "content": question[:2000]}]
         instructions = f"""You are PagoTotal Intelligence, a payment-operations assistant. Respond in English for a {audience} audience.
-You must use the read-only tools before stating a metric, incident, comparison, or recurrence. The tools return facts calculated locally; do not invent data or causes. Distinguish historical data, the live stream, and memory. If volume is insufficient or a tool provides no evidence, say so clearly. Never execute routing changes or imply they have already been executed.
+You must use the read-only tools before stating a metric, incident, comparison, or recurrence. The tools return facts calculated locally; do not invent data or causes. Distinguish historical data, the live stream, and memory. If volume is insufficient or a tool provides no evidence, say so clearly. A counterfactual route comparison is observational: call it a conditional, capped experiment and list pending fraud, cost, capacity, and compliance guardrails. Never execute routing changes or imply they have already been executed.
 Your final answer must always be complete: answer the question directly in the first sentence. If there are no incidents or matches, say so explicitly, for example: “No active incidents have been detected yet.” Never return only a heading, an empty list, or “Based on the available evidence.” Use at most two tools per question unless a tool reports an error."""
         client = OpenAI()
         used_sources: list[str] = []
@@ -175,7 +184,7 @@ Your final answer must always be complete: answer the question directly in the f
             """Guarantee a useful, factual response if the model returns no final text."""
             for name, result in reversed(tool_results):
                 if name == "get_incidents":
-                    active = [item for item in result.get("incidents", []) if item.get("status") == "active"]
+                    active = [item for item in result.get("incidents", []) if item.get("status") in {"active", "detected", "investigating", "monitoring"}]
                     return "No active incidents have been detected yet." if not active else f"There are {len(active)} active incident(s) detected."
                 if name == "search_incident_memory":
                     matches = result.get("matches", [])

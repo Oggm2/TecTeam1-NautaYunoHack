@@ -25,11 +25,14 @@ from pathlib import Path
 from typing import Any
 
 import build_dashboard as bd
+import counterfactual_routing
 import detector
+import evidence_graph
 import explainer
 import generator
 import incident_memory
 import incident_loss_ledger
+import incident_lifecycle
 import prioritizer
 from detector import parse_timestamp
 from recovery_estimator import RecoveryEstimator
@@ -64,6 +67,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--recovery-horizon-hours", type=float, default=24.0)
     parser.add_argument("--chart-minutes", type=int, default=30)
     parser.add_argument("--memory", default="data/incident_memory.json")
+    parser.add_argument("--lifecycle", default="data/incident_lifecycle.json", help="Persistent, operator-controlled incident workflow state.")
+    parser.add_argument("--operational-events", default="data/operational_events.json", help="Optional deploy, routing, 3DS, fraud, provider-status and campaign evidence.")
+    parser.add_argument("--routing-policy", default="data/routing_guardrails.json", help="Guardrails for read-only counterfactual routing experiments.")
     parser.add_argument("--output", default="frontend/dashboard_data.json")
     parser.add_argument("--transactions-out", default="data/live_transactions.jsonl")
     parser.add_argument("--loss-ledger", default="data/incident_loss_ledger.json", help="Persistent non-duplicating loss ledger for active and resolved incidents.")
@@ -92,6 +98,8 @@ def main() -> None:
     live_injections_mtime: int | None = None
     live_injections: list[generator.Injection] = []
     memory = incident_memory.load(args.memory)
+    lifecycle_path = Path(args.lifecycle)
+    lifecycle_state = incident_lifecycle.load(lifecycle_path)
     priority_config = prioritizer.normalize_priority_config()
 
     def reload_controls() -> bool:
@@ -195,8 +203,13 @@ def main() -> None:
                     for signature, alert in active_alerts.items()
                     if signature in engine.active_evidence
                 }
+                # An operator may have closed an incident since the prior
+                # evaluation. Reload memory so the next diagnosis can flag a
+                # recurrence immediately.
+                memory = incident_memory.load(args.memory)
+                routing_policy = counterfactual_routing.load_policy(args.routing_policy)
                 active_diagnoses = bd.diagnose_alerts(
-                    list(active_alerts.values()), retained, history_events, args, memory,
+                    list(active_alerts.values()), retained, history_events, args, memory, routing_policy,
                 ) if active_alerts else []
                 if args.use_openai:
                     for diagnosis in active_diagnoses:
@@ -209,6 +222,18 @@ def main() -> None:
 
             prioritized = prioritizer.prioritize(active_diagnoses, priority_config) if active_diagnoses else []
             entries = bd.build_incident_entries(prioritized, memory)
+            # The control server owns operator actions. Re-read its persisted
+            # updates on every refresh before adding detector observations.
+            lifecycle_state = incident_lifecycle.load(lifecycle_path)
+            entries = incident_lifecycle.reconcile(
+                lifecycle_state, entries, now, evaluated=evaluated_this_refresh,
+            )
+            operational_events = evidence_graph.load_operational_events(args.operational_events)
+            lifecycle_records = lifecycle_state.get("incidents", {})
+            for entry in entries:
+                record = lifecycle_records.get(entry.get("incident_id"), {})
+                entry["evidence_graph"] = evidence_graph.build(entry.get("diagnosis", {}), record, now, operational_events)
+            incident_lifecycle.save(lifecycle_path, lifecycle_state)
             if evaluated_this_refresh or time.monotonic() - last_ledger_checkpoint >= args.ledger_checkpoint_seconds:
                 loss_ledger = incident_loss_ledger.checkpoint(loss_ledger, entries, retained, recovery_estimator, now)
                 last_ledger_checkpoint = time.monotonic()
@@ -227,6 +252,15 @@ def main() -> None:
             dashboard = {
                 "generated_at": now.isoformat(), "kpis": kpis, "chart": chart,
                 "incidents": entries, "resolved": memory,
+                "lifecycle": {
+                    "healthy_evaluations_required": 2,
+                    "incident_identity": "immutable_incident_id_v2",
+                    "repositories": {
+                        "synthetic_training": "examples/incident_training_scenarios.json",
+                        "observed_incidents": args.lifecycle,
+                        "resolved_knowledge": args.memory,
+                    },
+                },
                 "analytics": {
                     "historical": bd.build_dataset_stats(history_events),
                     "live": bd.build_dataset_stats(retained, processing_window_seconds=bd.PROCESSING_TIME_UPDATE_SECONDS),

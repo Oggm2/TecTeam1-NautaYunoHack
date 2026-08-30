@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2457A6"/></marker></defs>
+<rect width="1600" height="1000" fill="#F8FAFC"/>
+<text x="70" y="82" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="#101828">PagoTotal Intelligence | Architecture</text>
+<text x="72" y="120" font-family="Arial, sans-serif" font-size="18" font-weight="400" fill="#667085">Local hackathon deployment: payment monitoring, diagnosis, control APIs, and dashboard</text>
+<line x1="70" y1="132" x2="1530" y2="132" stroke="#D0D5DD" stroke-width="2"/>
+<rect x="70" y="205" width="300" height="160" rx="16" fill="#EAF2FF" stroke="#A9C7F8" stroke-width="2"/>
+<text x="92" y="247" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#182230">Mock transaction stream</text>
+<text x="92" y="285" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">generator.py</text><text x="92" y="310" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">Scenarios + live trial injections</text><text x="92" y="335" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">merchant | provider | method | country | bank</text>
+<rect x="450" y="175" width="470" height="220" rx="16" fill="#E8F7F5" stroke="#9ADBD4" stroke-width="2"/>
+<text x="472" y="217" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#182230">Live dashboard engine</text>
+<text x="472" y="255" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">live_dashboard.py</text><text x="472" y="280" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">Rolling detector + time-aware baseline</text><text x="472" y="305" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">Hierarchical diagnosis + cost/recovery</text><text x="472" y="330" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">Prioritization + incident memory match</text>
+<rect x="1000" y="205" width="300" height="160" rx="16" fill="#F2F4F7" stroke="#D0D5DD" stroke-width="2"/>
+<text x="1022" y="247" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#182230">Dashboard snapshot</text>
+<text x="1022" y="285" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">frontend/dashboard_data.json</text><text x="1022" y="310" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">KPIs | incidents | evidence | chart</text><text x="1022" y="335" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">rewritten every refresh cycle</text>
+<rect x="70" y="505" width="255" height="138" rx="16" fill="#FFFFFF" stroke="#D0D5DD" stroke-width="2"/>
+<text x="92" y="547" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#182230">Historical baseline</text>
+<text x="92" y="585" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">data/history.jsonl</text><text x="92" y="610" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">Normal transactions</text><text x="92" y="635" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">weekday/hour expectations</text>
+<rect x="360" y="505" width="255" height="138" rx="16" fill="#FFFFFF" stroke="#D0D5DD" stroke-width="2"/>
+<text x="382" y="547" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#182230">Live state</text>
+<text x="382" y="585" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">live_transactions.jsonl</text><text x="382" y="610" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">active_incident_costs.json</text><text x="382" y="635" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">priorities.json</text>
+<rect x="650" y="505" width="255" height="138" rx="16" fill="#FFFFFF" stroke="#D0D5DD" stroke-width="2"/>
+<text x="672" y="547" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#182230">Memory and controls</text>
+<text x="672" y="585" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">incident_memory.json</text><text x="672" y="610" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">runtime_config.json</text><text x="672" y="635" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">live_injections.json</text>
+<rect x="1030" y="505" width="310" height="138" rx="16" fill="#FFF7E8" stroke="#F6D7A7" stroke-width="2"/>
+<text x="1052" y="547" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#182230">Control server API</text>
+<text x="1052" y="585" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">control_server.py</text><text x="1052" y="610" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">/api/config | /api/trial-injections</text><text x="1052" y="635" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">/api/chat (optional OpenAI)</text>
+<rect x="1130" y="740" width="330" height="152" rx="16" fill="#EEF4FF" stroke="#B8D2F8" stroke-width="2"/>
+<text x="1152" y="782" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#182230">Operations dashboard</text>
+<text x="1152" y="820" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">PagoTotal-Intelligence_1.html</text><text x="1152" y="845" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">Polls snapshot + uses control APIs</text><text x="1152" y="870" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">Command Center | Explorer | Memory</text>
+<rect x="70" y="740" width="300" height="152" rx="16" fill="#FDF2FA" stroke="#F4B8DA" stroke-width="2"/>
+<text x="92" y="782" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#182230">Optional OpenAI service</text>
+<text x="92" y="820" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">Used only for safe explanation/chat</text><text x="92" y="845" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">Receives calculated aggregates, not</text><text x="92" y="870" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">raw payment streams</text>
+<line x1="370" y1="285" x2="450" y2="285" stroke="#2457A6" stroke-width="4" marker-end="url(#arrow)"/>
+<line x1="920" y1="285" x2="1000" y2="285" stroke="#2457A6" stroke-width="4" marker-end="url(#arrow)"/>
+<text x="70" y="480" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#101828">Local operational data</text>
+<line x1="197" y1="505" x2="560" y2="395" stroke="#087E8B" stroke-width="4" marker-end="url(#arrow)"/>
+<line x1="487" y1="505" x2="650" y2="395" stroke="#087E8B" stroke-width="4" marker-end="url(#arrow)"/>
+<line x1="777" y1="505" x2="760" y2="395" stroke="#087E8B" stroke-width="4" marker-end="url(#arrow)"/>
+<path d="M1300 285 H1410 V700 H1295 V740" fill="none" stroke="#2457A6" stroke-width="4" marker-end="url(#arrow)"/>
+<path d="M1185 643 V740" fill="none" stroke="#B54708" stroke-width="4" marker-end="url(#arrow)"/>
+<path d="M1030 575 H960 V700 H370 V815" fill="none" stroke="#B54708" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="440" y="765" width="580" height="105" rx="14" fill="none" stroke="#F2C6C2" stroke-width="2"/>
+<text x="450" y="805" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#B42318">Human-in-the-loop boundary</text>
+<text x="450" y="842" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#667085">The platform recommends actions; it never executes routing changes.</text>
+</svg>

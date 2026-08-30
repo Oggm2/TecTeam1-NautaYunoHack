@@ -184,7 +184,7 @@ def dominant_decline_reason(
 
 def recommendation(segment: dict[str, str], decline: dict[str, Any] | None) -> str:
     if "provider" in segment:
-        return f"Contact {segment['provider']} and evaluate temporarily routing affected payments to an alternative provider."
+        return f"Validate {segment['provider']} status and collect a comparable-route analysis before proposing any capped experiment."
     if "issuing_bank" in segment:
         detail = "; the dominant decline code indicates unavailability" if decline and decline["decline_reason"] == "issuer_unavailable" else ""
         return f"Validate the status of {segment['issuing_bank']} with the affected merchant{detail}."

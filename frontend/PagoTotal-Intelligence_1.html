@@ -362,6 +362,12 @@
   .rec .why ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
   .rec .why li { font-size: 13.5px; color: var(--ink-soft); display: flex; gap: 9px; align-items: flex-start; }
   .rec .why li svg { flex-shrink: 0; margin-top: 3px; color: var(--ok); }
+  .rec-counterfactual { margin-top: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: rgba(13,18,28,.72); }
+  .rec-counterfactual .ct-label { font-size: 10.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--money); }
+  .rec-counterfactual .ct-metrics { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .rec-counterfactual .ct-chip { font-size:11.5px; color:var(--ink-soft); padding:4px 7px; border-radius:6px; background:var(--raised); border:1px solid var(--line-soft); }
+  .rec-counterfactual .ct-note { font-size:11.5px; line-height:1.45; color:var(--ink-faint); margin-top:9px; }
+  .rec-counterfactual ul { margin:8px 0 0; padding-left:17px; color:var(--ink-soft); font-size:11.5px; line-height:1.45; }
   .rec .actions { display: flex; gap: 10px; margin-top: 18px; align-items: center; }
   .btn {
     font-family: inherit; font-weight: 700; font-size: 13.5px; cursor: pointer;
@@ -742,9 +748,11 @@
     <section class="view" id="view-incidents">
       <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Incidents: prioritized work queue.</strong> Each row is a separate issue identified by its dimension signature. Start with the highest economic impact and confidence; use filters to explore, not to diagnose.<div class="guide-steps">Review: severity → affected segment → conversion drop → cost/hour → confidence.</div></div></aside>
       <div class="tabs">
-        <div class="tab active" data-status="active">Active <span class="count" id="c-active">2</span></div>
-        <div class="tab" data-status="investigating">Investigating <span class="count" id="c-inv">1</span></div>
-        <div class="tab" data-status="resolved">Resolved <span class="count" id="c-res">3</span></div>
+        <div class="tab active" data-status="open">Open <span class="count" id="c-active">2</span></div>
+        <div class="tab" data-status="investigating">Detected / investigating <span class="count" id="c-inv">1</span></div>
+        <div class="tab" data-status="monitoring">Monitoring <span class="count" id="c-mon">0</span></div>
+        <div class="tab" data-status="recovered">Recovered <span class="count" id="c-rec">0</span></div>
+        <div class="tab" data-status="resolved">Resolved & stored <span class="count" id="c-res">3</span></div>
       </div>
       <div class="filters" id="filters"></div>
       <div class="card">
@@ -755,7 +763,7 @@
       </div>
       <p style="color:var(--ink-faint);font-size:12.5px;margin-top:14px;display:flex;gap:8px;align-items:center">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
-        The system has already investigated every incident. Filters are for exploration — you don't need them to find the root cause.
+        Detection is automatic; mitigation and closure are not. Each incident remains visible with its owner, state, and evidence until an operator documents the outcome.
       </p>
     </section>
 
@@ -813,13 +821,14 @@
 
           <div class="rec" id="rec-card">
             <div class="rl">Recommended action</div>
-            <div class="action" id="rec-action">Temporarily route affected Brazil PIX traffic through an alternative provider.</div>
+            <div class="action" id="rec-action">Collect comparable route evidence; only a human may approve a capped experiment after fraud and cost guardrails.</div>
             <div class="why">
               <h4>Why?</h4>
               <ul id="rec-why"></ul>
             </div>
+            <div class="rec-counterfactual" id="rec-counterfactual"></div>
             <div class="actions">
-              <button class="btn primary" id="rec-review">Review recommendation</button>
+              <button class="btn primary" id="rec-review">Document operator review</button>
               <button class="btn ghost">Dismiss</button>
               <span class="no-exec"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Never auto-executes</span>
             </div>
@@ -867,7 +876,7 @@
         </div>
         <div style="margin-top:18px;padding:14px 16px;background:var(--ok-dim);border:1px solid #1c5843;border-radius:12px;font-size:13.5px;color:#a7f3d0;display:flex;gap:10px;align-items:flex-start">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
-          <span><b>Previous resolution:</b> traffic was rerouted to an alternative provider (Adyen). Conversion recovered within 12 minutes. The same play is recommended now.</span>
+          <span><b>Previous resolution:</b> an operator rerouted traffic to Adyen and conversion recovered within 12 minutes. This history is context only; it does not authorize the current action.</span>
         </div>
       </div>
 
@@ -1026,7 +1035,7 @@
       confNote:{cls:"strong", text:"Strong evidence — the drop is isolated to a single issuing bank for one merchant. Concentrated, not diffuse."},
       financial:{revenue:"$11,050", gross:"$18,420", recovery:"40%", lost:"1,690", daily:"$265K"},
       recommendation:{
-        action:"Escalate to the issuing-bank liaison and temporarily reroute Santander MX card traffic through a secondary acquirer.",
+        action:"Escalate to the issuing-bank liaison and collect comparable-route evidence before proposing any capped experiment.",
         why:["94% diagnosis confidence","Highest incidence cost of all active incidents","Isolated issuing-bank degradation (not provider-wide)","Decline code 05 spike points to authorization refusals"]
       }
     },
@@ -1068,7 +1077,7 @@
       confNote:{cls:"strong", text:"Strong evidence — degradation is isolated to a single provider × country × method. Neighboring segments are all normal."},
       financial:{revenue:"$8,520", gross:"$14,200", recovery:"40%", lost:"1,247", daily:"$204K"},
       recommendation:{
-        action:"Temporarily route affected Brazil PIX traffic through an alternative provider.",
+        action:"Compare matching route performance and, only if fraud and cost guardrails pass, propose a capped experiment for human approval.",
         why:["96% diagnosis confidence","Significant incidence cost","Localized provider + country + method degradation","Similar incident found in memory (Aug 17)"]
       }
     },
@@ -1119,6 +1128,15 @@
   const displayValue = (dim, value) => dim==="country" ? (COUNTRY_NAMES[value]||value) : dim==="provider" ? (PROVIDER_NAMES[value]||value) : value;
   const pct1 = n => (Math.round(n*10)/10).toFixed(1);
   const signedPP = n => (n>=0 ? "−"+pct1(n) : "+"+pct1(-n)) + " pp";
+  const OPEN_STATUSES = new Set(["active","detected","investigating","monitoring"]);
+  const STATUS_LABELS = {
+    active:"Active", detected:"Detected", investigating:"Investigating", monitoring:"Mitigating / Monitoring",
+    recovered_automatically:"Recovered automatically", resolved_by_operator:"Resolved by operator"
+  };
+  const isOpenStatus = status => OPEN_STATUSES.has(status);
+  const lifecycleLabel = status => STATUS_LABELS[status] || status || "Detected";
+  const CONCLUSION_LABELS = {impact_localized:"Impact localized", likely_source:"Likely source", cause_confirmed:"Cause confirmed"};
+  const conclusionLabel = value => CONCLUSION_LABELS[value] || "Impact localized";
 
   function segmentToDisplay(segment){
     const merchant = segment.merchant || "Multiple";
@@ -1161,11 +1179,12 @@
     return levels;
   }
 
-  function buildEvidence(diagnosis){
+  function buildEvidence(diagnosis, evidenceGraph){
     const m = diagnosis.root_metrics;
     const disp = segmentToDisplay(diagnosis.root_cause_segment||{});
+    const conclusion = conclusionLabel(evidenceGraph?.conclusion_level);
     const chain = [
-      {el:"Root cause", cls:"key", v:`<span class="a">${disp.rootCause || "Insufficient evidence"}</span>`, sub:`${(diagnosis.drill_down_path||[]).length+1} dimension(s) isolated`},
+      {el:conclusion, cls:"key", v:`<span class="a">${disp.rootCause || "Insufficient evidence"}</span>`, sub:evidenceGraph?.conclusion_level==="cause_confirmed" ? "confirmed with operator or external evidence" : "localized payment impact; causal confirmation requires external or operator evidence"},
       {el:"Expected conversion", v:`<span class="a">${(m.expected_conversion*100).toFixed(1)}%</span>`},
       {el:"Actual conversion", cls:"bad", v:`<span class="big">${(m.observed_conversion*100).toFixed(1)}%</span>`, sub:`${signedPP(m.conversion_drop_pp)} vs. expected`},
     ];
@@ -1184,7 +1203,7 @@
   function realIncidentToView(entry){
     const d = entry.diagnosis, m = d.root_metrics, disp = segmentToDisplay(d.root_cause_segment||{});
     const windowStart = d.incident_window && d.incident_window.started_at ? new Date(d.incident_window.started_at) : null;
-    const sevLabel = entry.status==="investigating" ? "Investigating" : entry.severity==="crit" ? "Critical" : entry.severity==="high" ? "High" : "Elevated";
+    const sevLabel = entry.status==="detected" || entry.status==="investigating" ? "Investigating" : entry.severity==="crit" ? "Critical" : entry.severity==="high" ? "High" : "Elevated";
     const explanation = d.explanation || {};
     const windowCost = entry.window_expected_unrecovered_gmv_usd ?? ((entry.cost_per_hour_usd||0) * (entry.duration_minutes||0) / 60);
     const confNote = {
@@ -1196,18 +1215,24 @@
     if (d.dominant_decline) why.push(`Decline code ${d.dominant_decline.decline_reason} spike (+${(d.dominant_decline.share_of_excess_declines*100).toFixed(0)}% of excess declines)`);
     if (!d.evidence_sufficient) why.push("Evidence not yet concentrated enough to name a single segment");
     return {
-      key: entry.incident_id, priority: entry.priority_rank, severity: entry.severity, sevLabel, status: entry.status,
+      key: entry.incident_id, lifecycleKey: entry.lifecycle_key || entry.incident_id, priority: entry.priority_rank, severity: entry.severity, sevLabel, status: entry.status,
+      owner: entry.owner || "Payments Operations", statusReason: entry.status_reason || "Awaiting the next lifecycle update.",
+      statusHistory: entry.status_history || [], operator: entry.operator || {}, recoveryEvaluations: entry.recovery_evaluations || 0,
+      conclusionLevel: entry.evidence_graph?.conclusion_level || "impact_localized", evidenceGraph: entry.evidence_graph || {nodes:[]},
       merchant: disp.merchant, provider: disp.provider, country: disp.country, method: disp.method, bank: disp.bank,
       rootCause: disp.rootCause,
       convFrom: +(m.expected_conversion*100).toFixed(1), convTo: +(m.observed_conversion*100).toFixed(1),
       money: d.evidence_sufficient ? Math.round(entry.accumulated_incident_loss_usd||0) : 0,
       currentRate: d.evidence_sufficient ? Math.round(entry.current_expected_unrecovered_gmv_per_hour_usd ?? m.expected_unrecovered_amount_per_hour_usd ?? 0) : 0,
+      lastObservedRate: d.evidence_sufficient ? Math.round(entry.last_observed_loss_rate_per_hour_usd ?? entry.cost_per_hour_usd ?? 0) : 0,
+      financialExposureEnded: entry.financial_exposure_status === "ended",
+      incidentDurationMinutes: entry.incident_duration_minutes, timeToRecoveryMinutes: entry.time_to_recovery_minutes, timeToResolutionMinutes: entry.time_to_resolution_minutes,
       grossMoney: d.evidence_sufficient ? Math.round(m.gross_lost_amount_per_hour_usd||0) : 0,
       recoveryRate: d.evidence_sufficient ? Math.round((m.expected_recovery_rate||0)*100) : 0,
       affected: Math.round(m.attempts||0), confidence: entry.confidence_pct,
       start: windowStart ? windowStart.toISOString().slice(11,16) : "—",
       duration: entry.duration_minutes!=null ? `${entry.duration_minutes} min` : "—",
-      tree: buildTree(d), evidence: buildEvidence(d), confNote,
+      tree: buildTree(d), evidence: buildEvidence(d, entry.evidence_graph), confNote,
       financial: d.evidence_sufficient ? {
         revenue: "$"+Math.round(entry.current_expected_unrecovered_gmv_per_hour_usd ?? m.expected_unrecovered_amount_per_hour_usd ?? 0).toLocaleString("en-US"),
         accumulated: "$"+Math.round(entry.accumulated_incident_loss_usd||0).toLocaleString("en-US"),
@@ -1216,8 +1241,16 @@
         recovery: Math.round((m.expected_recovery_rate||0)*100)+"%",
         lost: Math.round((m.lost_approvals||0) * (entry.duration_minutes ? 60/entry.duration_minutes : 1)).toLocaleString("en-US"),
         daily: "$"+Math.round((m.expected_unrecovered_amount_per_hour_usd||0)*24).toLocaleString("en-US"),
+        lastObservedRate: "$"+Math.round(entry.last_observed_loss_rate_per_hour_usd ?? entry.cost_per_hour_usd ?? 0).toLocaleString("en-US"),
+        financialExposureEnded: entry.financial_exposure_status === "ended",
+        timeToRecoveryMinutes: entry.time_to_recovery_minutes,
+        timeToResolutionMinutes: entry.time_to_resolution_minutes,
       } : null,
-      recommendation: {action: d.recommended_action || "Continue monitoring; evidence is not yet sufficient for a specific action.", why},
+      recommendation: {
+        action: d.counterfactual_recommendation?.action || d.recommended_action || "Continue monitoring; evidence is not yet sufficient for a specific action.",
+        why: d.counterfactual_recommendation?.reasons?.length ? [...d.counterfactual_recommendation.reasons, ...why] : why,
+        counterfactual: d.counterfactual_recommendation || null,
+      },
       profiles: explanation.profiles || {},
     };
   }
@@ -1264,15 +1297,16 @@
   /* ------------------------------------------------ RENDER: COMMAND INCIDENTS ------------------------------------------------ */
   function incCard(inc){
     const drop = (inc.convFrom - inc.convTo).toFixed(1);
+    const rateCaption = inc.financialExposureEnded ? `financial exposure ended${inc.timeToRecoveryMinutes!=null?` · recovered in ${inc.timeToRecoveryMinutes} min`:""}` : `current ${money(inc.currentRate)}/hr`;
     const metrics = audienceMode === "simple"
       ? `<div class="im"><div class="k">What changed</div><div class="v drop tnum">${drop} pp lower</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">Payments in this group fail more often than normal.</div></div>
          <div class="im"><div class="k">Estimated impact</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">${inc.affected.toLocaleString()} payments affected in the current window</div></div>`
       : audienceMode === "financial"
-      ? `<div class="im"><div class="k">Accumulated incident loss</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">${money(inc.currentRate||inc.money)}/hr current loss rate</div></div>
+      ? `<div class="im"><div class="k">Accumulated incident loss</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">${rateCaption}</div></div>
          <div class="im"><div class="k">Conversion loss</div><div class="v drop tnum">−${drop} pp</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">${inc.convFrom}% expected → ${inc.convTo}% observed</div></div>
          <div class="im"><div class="k">Exposure</div><div class="v tnum">${inc.affected.toLocaleString()} tx</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">in the current analysis window</div></div>`
       : `<div class="im"><div class="k">Conversion</div><div class="v"><span class="conv-mini"><span class="from tnum">${inc.convFrom}%</span> <span class="to tnum">${inc.convTo}%</span></span></div></div>
-         <div class="im"><div class="k">Incidence cost</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">current ${money(inc.currentRate||inc.money)}/hr</div></div>
+         <div class="im"><div class="k">Incidence cost</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">${rateCaption}</div></div>
          <div class="im"><div class="k">Affected</div><div class="v tnum">${inc.affected.toLocaleString()} tx in window</div></div>
          <div class="im"><div class="k">Confidence</div><div class="v tnum">${inc.confidence}%</div></div>`;
     return `<div class="inc sev-${inc.severity}" data-open="${inc.key}">
@@ -1280,6 +1314,7 @@
       <div class="body">
         <div class="top">
           <span class="chip ${inc.severity==='crit'?'crit':inc.severity==='high'?'high':'warn'}">${inc.sevLabel}</span>
+          <span class="chip ${inc.status==='recovered_automatically'?'ok':'warn'}">${lifecycleLabel(inc.status)}</span>
           <span class="sig" style="margin:0;font-size:15px">${inc.rootCause||'Root cause pending'}</span>
           <span class="prio">PRIORITY #${inc.priority}</span>
         </div>
@@ -1288,13 +1323,13 @@
     </div>`;
   }
   function renderCommandIncidents(){
-    const active = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active").sort((a,b)=>a.priority-b.priority);
+    const active = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && isOpenStatus(i.status)).sort((a,b)=>a.priority-b.priority);
     $("#cmd-incidents").innerHTML = active.length ? active.map(incCard).join("")
       : '<div class="card pad" style="color:var(--ink-faint);font-size:13.5px">No active incidents — conversion is within the expected range.</div>';
   }
 
   function renderKpis(data){
-    const active = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active");
+    const active = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && isOpenStatus(i.status));
     const crit = active.filter(i=>i.severity==="crit").length;
     const high = active.filter(i=>i.severity==="high").length;
     const accumulatedCost = data && data.kpis && data.kpis.accumulated_incident_loss_usd != null
@@ -1465,7 +1500,7 @@
   ];
   let incidentRoutes = [];
   function refreshIncidentRoutes(){
-    incidentRoutes = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active" && i.provider && i.country)
+    incidentRoutes = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && isOpenStatus(i.status) && i.provider && i.country)
       .map(i=>({p:i.provider, c:i.country, m:i.method}));
   }
   let clockT = new Date();
@@ -1500,8 +1535,10 @@
   function renderIncidentsTable(status){
     const all = rcOrder.map(k=>INCIDENTS[k]).filter(Boolean).sort((a,b)=>a.priority-b.priority);
     let rows=[];
-    if(status==="active"){ rows = all.filter(i=>i.status==="active"); }
-    else if(status==="investigating"){ rows = all.filter(i=>i.status==="investigating"); }
+    if(status==="open"){ rows = all.filter(i=>isOpenStatus(i.status)); }
+    else if(status==="investigating"){ rows = all.filter(i=>i.status==="detected"||i.status==="investigating"); }
+    else if(status==="monitoring"){ rows = all.filter(i=>i.status==="monitoring"); }
+    else if(status==="recovered"){ rows = all.filter(i=>i.status==="recovered_automatically"); }
     if(status==="resolved"){
       $("#inc-rows").innerHTML = RESOLVED.map(r=>`<div class="grow" style="cursor:default">
         <span>${sevChip(r.sev)}</span>
@@ -1519,11 +1556,11 @@
       const rc = inc.rootCause || '<span style="color:var(--warn)">Insufficient evidence</span>';
       return `<div class="grow" data-open="${inc.key}">
         <span>${sevChip(inc.severity)}</span>
-        <span class="who"><b>${inc.merchant}</b><span>${rc}</span></span>
+        <span class="who"><b>${inc.merchant}</b><span>${rc} · ${lifecycleLabel(inc.status)} · owner: ${inc.owner||"Payments Operations"}</span></span>
         <span class="colhide" style="color:var(--ink-soft)">${inc.provider} · ${inc.country}</span>
         <span class="colhide mono" style="color:var(--ink-soft)">${inc.method}</span>
         <span class="tnum celldrop">${inc.convFrom}→${inc.convTo}%</span>
-        <span class="cellmoney tnum">${inc.money?money(inc.money):'—'}<small style="display:block;color:var(--ink-faint);font-weight:500">${inc.money?`${money(inc.currentRate||inc.money)}/hr`:''}</small></span>
+        <span class="cellmoney tnum">${inc.money?money(inc.money):'—'}<small style="display:block;color:var(--ink-faint);font-weight:500">${inc.financialExposureEnded?`recovered${inc.timeToRecoveryMinutes!=null?` in ${inc.timeToRecoveryMinutes} min`:''}`:inc.money?`${money(inc.currentRate)}/hr`:''}</small></span>
         <span class="colhide mono">${inc.affected?inc.affected.toLocaleString()+' tx':'—'}</span>
         <span class="tnum">${inc.confidence}%</span>
       </div>`;
@@ -1531,8 +1568,10 @@
   }
   function renderTabCounts(){
     const all = rcOrder.map(k=>INCIDENTS[k]).filter(Boolean);
-    $("#c-active").textContent = all.filter(i=>i.status==="active").length;
-    $("#c-inv").textContent = all.filter(i=>i.status==="investigating").length;
+    $("#c-active").textContent = all.filter(i=>isOpenStatus(i.status)).length;
+    $("#c-inv").textContent = all.filter(i=>i.status==="detected"||i.status==="investigating").length;
+    $("#c-mon").textContent = all.filter(i=>i.status==="monitoring").length;
+    $("#c-rec").textContent = all.filter(i=>i.status==="recovered_automatically").length;
     $("#c-res").textContent = RESOLVED.length;
   }
   $$(".tab").forEach(t=> t.addEventListener("click", ()=>{
@@ -1683,30 +1722,100 @@
     const cn = $("#conf-note"); cn.textContent = inc.confNote.text; cn.className = "conf-note "+inc.confNote.cls;
     // recommendation
     $("#rec-action").textContent = inc.recommendation.action;
-    $("#rec-why").innerHTML = inc.recommendation.why.map(w=>`<li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>${w}</li>`).join("");
+    $("#rec-why").innerHTML = inc.recommendation.why.map(w=>`<li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>${escapeHtml(w)}</li>`).join("");
+    renderCounterfactual(inc.recommendation.counterfactual);
     const recCard = $("#rec-card");
     if(!inc.rootCause){ recCard.style.borderColor="#5c4718"; $(".rl",recCard).style.color="var(--warn)"; }
     else { recCard.style.borderColor="#26405f"; $(".rl",recCard).style.color="var(--info)"; }
     // financial
     if(inc.financial){
-      $("#fin").innerHTML = `
-        <div class="f money"><div class="v tnum">${inc.financial.accumulated||"$0"}</div><div class="k">Accumulated Incident Loss</div></div>
-        <div class="f money"><div class="v tnum">${inc.financial.revenue}</div><div class="k">Current Incidence Cost / hour</div></div>
-        <div class="f secondary"><div class="v tnum">${inc.financial.gross||inc.financial.revenue}</div><div class="k">Gross Incidence Cost / hour</div></div>
-        <div class="f"><div class="v tnum">${inc.financial.recovery||"—"}</div><div class="k">Expected recovery within 24h</div></div>`;
-      $("#fin-note").textContent = "Accumulated Incident Loss adds only newly completed, incident-attributable declines. Current Loss Rate is recalculated from the latest rolling window. Figures are directional estimates, not exact accounting.";
+      if(inc.financial.financialExposureEnded){
+        $("#fin").innerHTML = `
+          <div class="f money"><div class="v tnum">${inc.financial.accumulated||"$0"}</div><div class="k">Frozen Incident Loss</div></div>
+          <div class="f"><div class="v tnum">$0/hr</div><div class="k">Current Loss Rate</div></div>
+          <div class="f secondary"><div class="v tnum">${inc.financial.lastObservedRate}</div><div class="k">Last Observed Loss Rate</div></div>
+          <div class="f"><div class="v tnum">${inc.financial.timeToRecoveryMinutes!=null?`${inc.financial.timeToRecoveryMinutes} min`:"—"}</div><div class="k">Time to Financial Recovery</div></div>`;
+        $("#fin-note").textContent = "Financial exposure ended after healthy windows, so the accumulated estimate is frozen. The operational incident remains open until an operator confirms its cause and outcome.";
+      } else {
+        $("#fin").innerHTML = `
+          <div class="f money"><div class="v tnum">${inc.financial.accumulated||"$0"}</div><div class="k">Accumulated Incident Loss</div></div>
+          <div class="f money"><div class="v tnum">${inc.financial.revenue}</div><div class="k">Current Incidence Cost / hour</div></div>
+          <div class="f secondary"><div class="v tnum">${inc.financial.gross||inc.financial.revenue}</div><div class="k">Gross Incidence Cost / hour</div></div>
+          <div class="f"><div class="v tnum">${inc.financial.recovery||"—"}</div><div class="k">Expected recovery within 24h</div></div>`;
+        $("#fin-note").textContent = "Accumulated Incident Loss adds only newly completed, incident-attributable declines. Current Loss Rate is recalculated from the latest rolling window. Figures are directional estimates, not exact accounting.";
+      }
     } else {
       $("#fin").innerHTML = `<div class="f" style="grid-column:1/-1;border-color:#5c4718"><div class="v" style="color:var(--warn);font-size:19px">Not quantified yet</div><div class="k">Incidence cost is withheld until a root cause reaches sufficient confidence. The system does not attach a dollar figure to a guess.</div></div>`;
       $("#fin-note").textContent = "No confident root cause → no defensible cost estimate. Honesty over false precision.";
     }
     renderProfiles(inc);
   }
+  function renderCounterfactual(counterfactual){
+    const panel=$("#rec-counterfactual");
+    if(!panel) return;
+    if(!counterfactual){
+      panel.innerHTML='<div class="ct-label">Routing safety</div><div class="ct-note">No counterfactual route comparison is available. A recommendation cannot authorize or execute a routing change.</div>';
+      return;
+    }
+    const comparison=counterfactual.comparison;
+    const policy=counterfactual.policy||{};
+    const guardrails=policy.required_guardrails||[];
+    if(counterfactual.decision==='controlled_experiment_recommended' && comparison){
+      panel.innerHTML=`<div class="ct-label">Counterfactual route evidence · human review required</div><div class="ct-metrics"><span class="ct-chip">${escapeHtml(comparison.source_provider_display_name)} ${Number(comparison.source_conversion_pct).toFixed(1)}%</span><span class="ct-chip">${escapeHtml(comparison.provider_display_name)} ${Number(comparison.candidate_conversion_pct).toFixed(1)}%</span><span class="ct-chip" style="color:var(--ok)">+${Number(comparison.uplift_pp).toFixed(1)} pp</span><span class="ct-chip">n=${comparison.source_attempts} / ${comparison.candidate_attempts}</span><span class="ct-chip">issuer matched · z=${Number(comparison.z_score).toFixed(2)}</span></div><div class="ct-note">Observational comparison over ${counterfactual.observed_window_minutes??counterfactual.comparison_window_minutes} min. It is not proof of causality or a promise that moved traffic will perform the same.</div><div class="ct-note"><b style="color:var(--warn)">Required before any human-run test:</b></div><ul>${guardrails.map(item=>`<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+      return;
+    }
+    const alternatives=counterfactual.alternatives||[];
+    const closest=alternatives[0];
+    const evidence=closest ? ` Best comparable alternative: ${escapeHtml(closest.provider_display_name)} at ${Number(closest.uplift_pp).toFixed(1)} pp uplift (z=${Number(closest.z_score).toFixed(2)}).` : "";
+    panel.innerHTML=`<div class="ct-label">Counterfactual check</div><div class="ct-note">${escapeHtml(counterfactual.reason||"No safe routing experiment is recommended from the available evidence.")}${evidence}</div><div class="ct-note">Routing remains unchanged. The system will wait for a comparable merchant × country × method cohort and the required guardrails.</div>`;
+  }
   function renderProfiles(inc){
     let panel=$("#profile-panel"); if(!panel){ panel=document.createElement("div"); panel.id="profile-panel"; panel.className="evi-card"; $("#rec-card").insertAdjacentElement("afterend",panel); }
     const p=inc.profiles||{}, text={technical:p.technical||inc.confNote.text,financial:p.financial||`Accumulated Incident Loss: ${money(inc.money||0)}. Current Loss Rate: ${money(inc.currentRate||0)} per hour.`,simple:p.simple||"Some payments are failing more often than normal."};
     const k=audienceMode; panel.innerHTML=`<div class="eh"><div class="why">${k==='technical'?'Technical evidence':k==='financial'?'Incidence Cost':'What this means'}</div></div><div class="evi-body"><div style="font-size:13.5px;color:var(--ink-soft)">${text[k]}</div>${k==='technical'?`<div style="height:10px;margin-top:12px;background:linear-gradient(90deg,var(--crit) ${inc.convTo||0}%,var(--ok) ${inc.convTo||0}%);border-radius:6px"></div><small>Observed vs expected conversion</small>`:k==='financial'?`<div style="height:12px;width:78%;margin-top:12px;background:var(--money);border-radius:6px"></div><small>Estimated cost in this window</small>`:`<div style="font-size:26px;margin-top:12px">🔎 → 💳 → 👥</div><small>Problem found, impact measured, human action recommended.</small>`}</div>`;
   }
-  function renderExplorer(){ renderSwitch(); renderTree(); renderEvidence(); }
+  function renderEvidenceGraph(inc){
+    let panel=$("#evidence-graph-panel");
+    if(!panel){ panel=document.createElement("div"); panel.id="evidence-graph-panel"; panel.className="evi-card"; $("#profile-panel")?.insertAdjacentElement("afterend",panel) || $("#rec-card").insertAdjacentElement("afterend",panel); }
+    const nodes=inc.evidenceGraph?.nodes||[];
+    const level=conclusionLabel(inc.conclusionLevel);
+    const color={impact_localized:"var(--info)",likely_source:"var(--warn)",cause_confirmed:"var(--ok)"}[inc.conclusionLevel]||"var(--info)";
+    const items=nodes.length ? nodes.map((node,index)=>`<div style="display:grid;grid-template-columns:20px 1fr;gap:10px;position:relative;padding-bottom:${index===nodes.length-1?0:13}px"><div style="display:flex;flex-direction:column;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:${node.certainty==='confirmed'?'var(--ok)':node.certainty==='hypothesis'?'var(--warn)':'var(--info)'};margin-top:4px"></span>${index===nodes.length-1?'':`<span style="width:1px;flex:1;background:var(--line);margin-top:5px"></span>`}</div><div><div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:12.5px">${escapeHtml(node.title)}</b><span class="mono" style="font-size:10px;color:var(--ink-faint);white-space:nowrap">${node.at?new Date(node.at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"—"}</span></div><div style="font-size:12px;color:var(--ink-soft);margin-top:3px">${escapeHtml(node.detail)}</div><small style="color:var(--ink-faint)">${escapeHtml(node.source||"")} · ${escapeHtml(node.certainty||"observed")}</small></div></div>`).join("") : '<div style="font-size:12.5px;color:var(--ink-soft)">No operational context has been attached yet. The graph shows payment evidence only; it does not claim a confirmed cause.</div>';
+    panel.innerHTML=`<div class="eh"><div class="why">Evidence graph</div><div class="rc" style="color:${color}">${level}</div></div><div class="evi-body"><div style="font-size:12px;color:var(--ink-soft);margin-bottom:14px">Temporal chain of payment signals, operational context, and human confirmation.</div>${items}</div>`;
+  }
+  function renderWorkflow(inc){
+    let panel=$("#workflow-panel");
+    if(!panel){ panel=document.createElement("div"); panel.id="workflow-panel"; panel.className="evi-card"; $("#profile-panel")?.insertAdjacentElement("afterend",panel) || $("#rec-card").insertAdjacentElement("afterend",panel); }
+    const history=(inc.statusHistory||[]).slice(-5).reverse().map(item=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b style="font-size:12px">${escapeHtml(lifecycleLabel(item.status))}</b><span class="mono" style="float:right;color:var(--ink-faint);font-size:10px">${item.at?new Date(item.at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"—"}</span><div style="font-size:12px;color:var(--ink-soft);margin-top:3px">${escapeHtml(item.reason||"")}</div></div>`).join("");
+    const state=`<div class="eh"><div class="why">Incident workflow</div><div class="rc">${escapeHtml(lifecycleLabel(inc.status))}</div></div><div class="evi-body"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><span class="chip ${inc.status==='recovered_automatically'?'ok':'warn'}">${escapeHtml(lifecycleLabel(inc.status))}</span><span style="font-size:12px;color:var(--ink-soft)">Owner: <b>${escapeHtml(inc.owner||"Payments Operations")}</b></span></div><div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px">${escapeHtml(inc.statusReason||"")}</div>${history}</div>`;
+    let action="";
+    if(["detected","investigating","monitoring","active"].includes(inc.status)){
+      action=`<div style="padding:0 18px 18px"><details ${inc.status==='monitoring'?'':'open'}><summary style="cursor:pointer;color:var(--info);font-weight:700">Document review and start monitored response</summary><div style="display:grid;gap:9px;margin-top:12px"><input id="wf-owner" value="${escapeHtml(inc.owner||"Payments Operations")}" placeholder="Incident owner"><textarea id="wf-action" rows="2" placeholder="Human decision / proposed mitigation (this system will not execute it)">${escapeHtml(inc.operator?.proposed_action||"")}</textarea><input id="wf-ticket" value="${escapeHtml(inc.operator?.provider_ticket||"")}" placeholder="Provider ticket or status reference (optional)"><small style="color:var(--ink-faint)">Record that deploys, antifraud rules, 3DS configuration, campaigns, and routing changes were checked before action.</small><button class="btn primary" id="wf-monitor">Start mitigating / monitoring</button></div></details></div>`;
+    } else if(inc.status==='recovered_automatically'){
+      action=`<div style="padding:0 18px 18px"><details open><summary style="cursor:pointer;color:var(--ok);font-weight:700">Close with operator evidence and store in incident memory</summary><div style="display:grid;gap:9px;margin-top:12px"><input id="wf-owner" value="${escapeHtml(inc.owner||"Payments Operations")}" placeholder="Incident owner"><select id="wf-category"><option value="provider_degradation">Provider degradation</option><option value="issuing_bank">Issuing bank</option><option value="payment_method">Payment method</option><option value="fraud_or_3ds_rule">Fraud / 3DS rule</option><option value="routing_or_configuration">Routing / configuration</option><option value="insufficient_evidence">Insufficient evidence</option></select><textarea id="wf-cause" rows="2" placeholder="Confirmed root cause" required></textarea><textarea id="wf-action" rows="2" placeholder="Human action or decision taken" required></textarea><textarea id="wf-validation" rows="2" placeholder="Validation result across healthy windows" required></textarea><textarea id="wf-note" rows="2" placeholder="Optional closure note"></textarea><button class="btn primary" id="wf-resolve">Resolve by operator & store in memory</button><small style="color:var(--ink-faint)">This is a documentation step after recovery; no payment routing is changed by this product.</small></div></details></div>`;
+    } else {
+      action='<div style="padding:0 18px 18px;color:var(--ok);font-size:12.5px">This incident was closed by an operator and stored in incident memory.</div>';
+    }
+    panel.innerHTML=state+action;
+    $("#wf-monitor")?.addEventListener("click",()=>submitMonitoring(inc));
+    $("#wf-resolve")?.addEventListener("click",()=>submitResolution(inc));
+  }
+  function applyLifecycleRecord(inc, record){
+    inc.status=record.status; inc.owner=record.owner; inc.statusHistory=record.status_history||[]; inc.operator=record.operator||{};
+    inc.statusReason=(inc.statusHistory.at(-1)||{}).reason||"Workflow updated.";
+    renderCommandIncidents(); renderTabCounts(); renderKpis(latestDashboardData); renderIncidentsTable($(".tab.active")?.dataset.status||"open"); renderWorkflow(inc);
+  }
+  async function submitMonitoring(inc){
+    const payload={owner:$("#wf-owner").value,proposed_action:$("#wf-action").value,provider_ticket:$("#wf-ticket").value,recent_changes_checked:["deploys","antifraud rules","3DS configuration","campaigns","routing"]};
+    try { const response=await fetch(`/api/incidents/${encodeURIComponent(inc.lifecycleKey)}/monitor`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); const result=await response.json(); if(!response.ok) throw new Error(result.error||"Could not update incident"); applyLifecycleRecord(inc,result.incident); toast("Monitoring started. Recommendation documented; no change was executed."); }
+    catch(error) { toast("Could not update incident: "+error.message); }
+  }
+  async function submitResolution(inc){
+    const payload={owner:$("#wf-owner").value,category:$("#wf-category").value,confirmed_root_cause:$("#wf-cause").value,action_taken:$("#wf-action").value,validation_result:$("#wf-validation").value,resolution_note:$("#wf-note").value};
+    try { const response=await fetch(`/api/incidents/${encodeURIComponent(inc.lifecycleKey)}/resolve`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); const result=await response.json(); if(!response.ok) throw new Error(result.error||"Could not resolve incident"); applyLifecycleRecord(inc,result.incident); toast("Incident resolved by operator and stored in memory."); }
+    catch(error) { toast("Could not resolve incident: "+error.message); }
+  }
+  function renderExplorer(){ renderSwitch(); renderTree(); renderEvidence(); renderEvidenceGraph(INCIDENTS[currentInc]); renderWorkflow(INCIDENTS[currentInc]); }
 
   /* ------------------------------------------------ NAVIGATION ------------------------------------------------ */
   const VIEW_TITLES = {command:"Command Center", incidents:"Incidents", explorer:"Root Cause Explorer", memory:"Incident Memory", analytics:"Analytics", controls:"Detection Controls"};
@@ -1789,7 +1898,7 @@
     const el=$("#toast"); el.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>'+msg;
     el.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),3200);
   }
-  $("#rec-review").addEventListener("click", ()=> toast("Recommendation sent to operations for review — no changes executed."));
+  $("#rec-review").addEventListener("click", ()=> { $("#workflow-panel")?.scrollIntoView({behavior:"smooth",block:"center"}); toast("Document the human review below — no changes are executed."); });
 
   /* ------------------------------------------------ ANALYTICS CHAT ------------------------------------------------ */
   const chatHistory=[];
@@ -1915,7 +2024,7 @@
     return base;
   }
   function renderAudienceSidecard(){
-    const active=rcOrder.map(key=>INCIDENTS[key]).filter(inc=>inc&&inc.status==="active").sort((a,b)=>a.priority-b.priority);
+    const active=rcOrder.map(key=>INCIDENTS[key]).filter(inc=>inc&&isOpenStatus(inc.status)).sort((a,b)=>a.priority-b.priority);
     const target=$("#audience-sidecard");
     if(audienceMode==="technical"){ target.innerHTML=""; return; }
     const top=active[0];
@@ -1943,13 +2052,13 @@
     $("#incident-list-title").textContent=copy.incidents;
     $("#incident-list-hint").textContent=copy.incidentHint;
     $(".legend").innerHTML=copy.chartLegend;
-    const active=rcOrder.map(key=>INCIDENTS[key]).filter(inc=>inc&&inc.status==="active").length;
+    const active=rcOrder.map(key=>INCIDENTS[key]).filter(inc=>inc&&isOpenStatus(inc.status)).length;
     $("#mar-unit").textContent=audienceMode==='financial'?`accumulated across ${active} active issue${active===1?'':'s'}`:audienceMode==='simple'?"an estimate that grows while payment problems continue":`accumulated across ${active} active incident${active===1?'':'s'}`;
     $("#crumb").textContent=viewTitle(currentView);
     document.title=`PagoTotal · ${copy.name} workspace`;
     renderCommandIncidents();
     const activeTab=$(".tab.active");
-    renderIncidentsTable(activeTab?activeTab.dataset.status:"active");
+    renderIncidentsTable(activeTab?activeTab.dataset.status:"open");
     buildChart(latestDashboardData&&latestDashboardData.chart);
     renderAudienceSidecard();
     if(currentInc) renderExplorer();
@@ -1966,14 +2075,14 @@
     renderCommandIncidents();
     renderKpis(data);
     buildChart(data && data.chart);
-    renderIncidentsTable(activeTab ? activeTab.dataset.status : "active");
+    renderIncidentsTable(activeTab ? activeTab.dataset.status : "open");
     renderTabCounts();
     renderMemoryList();
     renderMemoryPanel();
     renderAnalytics(data && data.analytics);
     if (currentInc) renderExplorer();
 
-    const activeMoney = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active").reduce((s,i)=>s+(i.money||0),0);
+    const activeMoney = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && isOpenStatus(i.status)).reduce((s,i)=>s+(i.money||0),0);
     marBase = activeMoney || marBase;
     if (data && data.kpis && data.kpis.transactions_window) {
       txCount = data.kpis.transactions_window;

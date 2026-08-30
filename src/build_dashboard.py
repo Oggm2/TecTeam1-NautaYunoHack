@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import detector
+import counterfactual_routing
 import diagnoser
 import explainer
 import incident_memory
@@ -106,7 +107,7 @@ def replay_transactions(history_events: list[dict[str, Any]], events: list[dict[
 
 def diagnose_alerts(
     alerts: list[dict[str, Any]], events: list[dict[str, Any]], history_events: list[dict[str, Any]],
-    args: argparse.Namespace, memory: list[dict[str, Any]],
+    args: argparse.Namespace, memory: list[dict[str, Any]], routing_policy: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     diag_args = argparse.Namespace(
         min_attempts=args.diag_min_attempts, min_history_attempts=args.min_history_attempts,
@@ -114,9 +115,19 @@ def diagnose_alerts(
         min_contribution=args.min_contribution, max_depth=args.max_depth,
         recovery_horizon_hours=args.recovery_horizon_hours,
     )
+    routing_policy = routing_policy or counterfactual_routing.load_policy(getattr(args, "routing_policy", None))
     diagnoses = []
     for alert in alerts:
         diagnosis = diagnoser.diagnose(alert, events, history_events, diag_args)
+        # This is the stable detector identity used by the live incident
+        # lifecycle. The diagnosis UUID changes on each drill-down refresh.
+        diagnosis["alert_signature"] = alert.get("alert_signature")
+        # Payment data can support an observational route comparison, but it
+        # cannot authorize a switch.  Attach a conditional experiment only
+        # when the exact merchant-country-method cohort is comparable.
+        routing_recommendation = counterfactual_routing.recommend(diagnosis, events, routing_policy)
+        diagnosis["counterfactual_recommendation"] = routing_recommendation
+        diagnosis["recommended_action"] = routing_recommendation["action"]
         recurrence = incident_memory.match(diagnosis, memory)
         diagnosis["recurrence"] = recurrence
         diagnosis["explanation"] = explainer.deterministic_explanation(diagnosis, recurrence)
@@ -158,6 +169,8 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident], m
         entries.append({
             "incident_id": diagnosis.get("incident_id"),
             "alert_id": diagnosis.get("alert_id"),
+            "lifecycle_key": diagnosis.get("alert_signature") or diagnosis.get("alert_id"),
+            "detection_signature": diagnosis.get("alert_signature") or diagnosis.get("alert_id"),
             "incident_key": incident.incident_key,
             "priority_rank": incident.priority_rank,
             "priority_score": incident.priority_score,
@@ -245,7 +258,7 @@ def build_kpis(
     loss_ledger: dict[str, Any] | None = None, observed_at: datetime | None = None,
 ) -> dict[str, Any]:
     current_window = chart.get("current_window") or {}
-    active = [e for e in entries if e["status"] == "active"]
+    active = [e for e in entries if e["status"] in {"active", "detected", "investigating", "monitoring"}]
     return {
         "current_conversion_pct": current_window.get("observed_pct"),
         "expected_conversion_pct": current_window.get("expected_pct"),
@@ -255,7 +268,7 @@ def build_kpis(
         "active_incidents": len(active),
         "critical_count": sum(e["severity"] == "crit" for e in entries),
         "high_count": sum(e["severity"] == "high" for e in entries),
-        "investigating_count": sum(e["status"] == "investigating" for e in entries),
+        "investigating_count": sum(e["status"] in {"detected", "investigating", "monitoring"} for e in entries),
         "incidence_cost_current_window_usd": round(sum(e.get("window_expected_unrecovered_gmv_usd", 0.0) for e in active), 2),
         "accumulated_incident_loss_usd": round(sum(e.get("accumulated_incident_loss_usd", 0.0) for e in active), 2),
         "current_loss_rate_per_hour_usd": round(sum(e.get("current_expected_unrecovered_gmv_per_hour_usd", e["cost_per_hour_usd"]) for e in active), 2),
@@ -343,6 +356,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--priorities-out", default="data/priorities.json")
     parser.add_argument("--alerts-out", default="data/alerts.jsonl")
     parser.add_argument("--memory", default="data/incident_memory.json")
+    parser.add_argument("--routing-policy", default="data/routing_guardrails.json", help="Guardrails for read-only counterfactual routing experiments.")
     parser.add_argument("--runtime-config", default="data/runtime_config.json", help="Runtime priority settings shared with the live dashboard.")
     parser.add_argument("--output", default="frontend/dashboard_data.json")
     return parser.parse_args()
@@ -361,7 +375,8 @@ def main() -> None:
             sink.write(json.dumps(alert, separators=(",", ":")) + "\n")
 
     memory = incident_memory.load(args.memory)
-    diagnoses = diagnose_alerts(alerts, events, history_events, args, memory)
+    routing_policy = counterfactual_routing.load_policy(args.routing_policy)
+    diagnoses = diagnose_alerts(alerts, events, history_events, args, memory, routing_policy)
     Path(args.diagnoses_out).parent.mkdir(parents=True, exist_ok=True)
     with Path(args.diagnoses_out).open("w", encoding="utf-8") as sink:
         for diagnosis in diagnoses:
@@ -402,15 +417,8 @@ def main() -> None:
     output_path.write_text(json.dumps(dashboard, indent=2), encoding="utf-8")
     print(f"wrote {output_path} with {len(entries)} incident(s)", file=sys.stderr)
 
-    # Learn from this run: confidently diagnosed incidents join memory so future runs (or a later
-    # live_dashboard.py session) can recognize them as recurrences instead of starting from zero.
-    updated_memory = memory
-    for entry in entries:
-        if entry["diagnosis"].get("evidence_sufficient"):
-            updated_memory = incident_memory.upsert(updated_memory, incident_memory.record_from_entry(entry))
-    if updated_memory != memory:
-        incident_memory.save(args.memory, updated_memory)
-        print(f"updated {args.memory} — {len(updated_memory)} incident(s) in memory", file=sys.stderr)
+    # A statistical diagnosis is not operational closure. Memory is written
+    # only by the explicit operator-resolution workflow in live_dashboard.
 
 
 if __name__ == "__main__":

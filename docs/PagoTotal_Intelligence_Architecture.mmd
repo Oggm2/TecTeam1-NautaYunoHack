@@ -1,0 +1,32 @@
+flowchart LR
+  G[Mock transaction stream
+generator.py] --> E[Live dashboard engine
+live_dashboard.py]
+  H[data/history.jsonl
+Historical baseline] --> E
+  R[data/routing_guardrails.json
+sample + uplift + fraud/cost gates] --> E
+  C[data/runtime_config.json
+live injections] --> E
+  X[Operational context
+deploy | routing | 3DS | fraud | provider status] --> E
+  E --> I[Immutable incident identity
+incident_id]
+  I --> L[Financial exposure ledger
+active → ended]
+  I --> O[Observed lifecycle
+detected → monitoring → recovered]
+  O --> K[Resolved knowledge
+operator-approved only]
+  E --> S[frontend/dashboard_data.json]
+  E --> Q[Counterfactual recommendation
+10% experiment proposal only]
+  S --> D[Operations dashboard
+evidence graph + workflow]
+  A[control_server.py
+controls | trials | lifecycle | context API] --> D
+  A --> C
+  A --> X
+  A -. operator closure .-> K
+  A -. optional, server-side .-> AI[OpenAI API
+explanation and chat]

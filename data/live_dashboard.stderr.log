@@ -1,0 +1,44 @@
+live dashboard running at 15.0/s, refreshing every 10.0s — Ctrl+C to stop
+loaded 9 live trial injection(s)
+[2026-08-30T09:13:33.833292+00:00] refreshed dashboard — 1 tx retained, 4 incident(s)
+[2026-08-30T09:13:43.839274+00:00] refreshed dashboard — 151 tx retained, 4 incident(s)
+[2026-08-30T09:13:53.834912+00:00] refreshed dashboard — 301 tx retained, 4 incident(s)
+[2026-08-30T09:14:03.835560+00:00] refreshed dashboard — 451 tx retained, 4 incident(s)
+[2026-08-30T09:14:13.847711+00:00] refreshed dashboard — 601 tx retained, 4 incident(s)
+[2026-08-30T09:14:23.910963+00:00] refreshed dashboard — 752 tx retained, 4 incident(s)
+[2026-08-30T09:14:33.975062+00:00] refreshed dashboard — 903 tx retained, 4 incident(s)
+[2026-08-30T09:14:43.978511+00:00] refreshed dashboard — 1053 tx retained, 4 incident(s)
+[2026-08-30T09:14:53.977727+00:00] refreshed dashboard — 1203 tx retained, 4 incident(s)
+[2026-08-30T09:15:04.046723+00:00] refreshed dashboard — 1354 tx retained, 4 incident(s)
+[2026-08-30T09:15:14.035121+00:00] refreshed dashboard — 1504 tx retained, 4 incident(s)
+[2026-08-30T09:15:24.113897+00:00] refreshed dashboard — 1655 tx retained, 4 incident(s)
+[2026-08-30T09:15:34.179889+00:00] new incident: {'issuing_bank': 'Banorte', 'country': 'MX', 'merchant': 'PagoModa', 'payment_method': 'card'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'merchant': 'PagoModa', 'country': 'MX', 'issuing_bank': 'Banorte', 'payment_method': 'card'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'merchant': 'PagoModa', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'issuing_bank': 'Bradesco', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'payment_method': 'card', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'provider': 'adyen', 'country': 'MX', 'merchant': 'PagoModa', 'issuing_bank': 'Banorte'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'merchant': 'TechStore', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'issuing_bank': 'Itau', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'issuing_bank': 'Banco do Brasil', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'payment_method': 'wallet', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'merchant': 'TravelNow', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'provider': 'stripe', 'country': 'BR'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'issuing_bank': 'Nubank', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] new incident: {'payment_method': 'pix', 'country': 'BR', 'provider': 'stripe'}
+[2026-08-30T09:15:34.179889+00:00] refreshed dashboard — 1806 tx retained, 5 incident(s)
+[2026-08-30T09:17:28.259239+00:00] new incident: {'provider': 'stripe', 'country': 'MX', 'issuing_bank': 'Banorte', 'merchant': 'PagoModa', 'payment_method': 'card'}
+[2026-08-30T09:17:28.259239+00:00] refreshed dashboard — 1807 tx retained, 5 incident(s)
+[2026-08-30T09:19:07.753191+00:00] new incident: {'payment_method': 'wallet', 'country': 'MX', 'merchant': 'PagoModa'}
+[2026-08-30T09:19:07.753191+00:00] refreshed dashboard — 1808 tx retained, 5 incident(s)
+[2026-08-30T09:20:51.708403+00:00] refreshed dashboard — 1809 tx retained, 3 incident(s)
+[2026-08-30T09:21:01.775982+00:00] refreshed dashboard — 6720 tx retained, 3 incident(s)
+[2026-08-30T09:21:11.846614+00:00] refreshed dashboard — 6871 tx retained, 3 incident(s)
+Traceback (most recent call last):
+  File "C:\Users\charl\Documents\GitHub\TecTeam1-NautaYunoHack\src\live_dashboard.py", line 278, in <module>
+    main()
+  File "C:\Users\charl\Documents\GitHub\TecTeam1-NautaYunoHack\src\live_dashboard.py", line 241, in main
+    write_atomic(ledger_path, json.dumps(loss_ledger, indent=2))
+  File "C:\Users\charl\Documents\GitHub\TecTeam1-NautaYunoHack\src\live_dashboard.py", line 46, in write_atomic
+    os.replace(tmp, path)
+PermissionError: [WinError 5] Access is denied: 'data\\incident_loss_ledger.json.tmp' -> 'data\\incident_loss_ledger.json'

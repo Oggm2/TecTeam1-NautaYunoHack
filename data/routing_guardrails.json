@@ -1,0 +1,20 @@
+{
+  "comparison_window_minutes": 30,
+  "minimum_attempts_per_route": 30,
+  "minimum_attempts_per_issuer_stratum": 8,
+  "minimum_uplift_pp": 2.0,
+  "minimum_z_score": 1.96,
+  "max_experiment_traffic_pct": 10,
+  "required_guardrails": [
+    "Fraud and chargeback risk review for the target route",
+    "Provider fee, FX and commercial-cost review",
+    "Provider capacity, latency and availability check",
+    "Merchant, compliance and payment-method eligibility approval"
+  ],
+  "stop_conditions": [
+    "Stop if fraud or chargeback risk breaches the approved threshold",
+    "Stop if incremental provider cost exceeds the approved cap",
+    "Stop if approval uplift is not sustained across the agreed evaluation windows",
+    "Stop if latency, provider errors or customer-impact signals deteriorate"
+  ]
+}

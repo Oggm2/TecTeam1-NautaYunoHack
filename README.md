@@ -1,14 +1,15 @@
 # PagoTotal Intelligence — Control Tower
 
-PagoTotal Intelligence is a demonstrable monitoring and diagnosis system for a payment-orchestration platform. It observes a simulated transaction stream, detects material conversion drops, isolates their root cause, and presents evidence, estimated economic impact, and a recommendation for human review.
+PagoTotal Intelligence is a demonstrable monitoring and diagnosis system for a payment-orchestration platform. It observes a simulated transaction stream, detects material conversion drops, localizes their impact, and presents evidence, estimated economic impact, and a recommendation for human review. A concentrated segment is not presented as a confirmed cause until an operator or external evidence validates it.
 
 Created for the **Control Tower** NextWave Hackathon challenge. It never changes payment routing or executes remediation.
 
 ## What it does
 
 - Distinguishes real conversion drops from normal statistical noise.
-- Diagnoses by merchant, provider, payment method, country, issuing bank, and decline reason.
+- Localizes impact by merchant, provider, payment method, country, issuing bank, and decline reason; distinguishes localized impact, likely source, and confirmed cause.
 - Explains when an incident began, who it affects, how much it costs, and why the system believes it.
+- Compares matched route cohorts and proposes only capped, human-approved routing experiments with fraud and cost guardrails.
 - Separates and prioritizes simultaneous incidents.
 - Recognizes recurring patterns through incident memory.
 - Supports a live, judge-defined **Trial by Fire** injection.
@@ -39,13 +40,16 @@ Open [http://localhost:8001/PagoTotal-Intelligence_1.html](http://localhost:8001
 ## Architecture
 
 ```text
-historical JSONL ──> baseline + recovery model ─────────────────────┐
-                                                                    │
-mock stream ─> detector ─> diagnoser ─> prioritizer ─> dashboard JSON
-                                                                    │
-Trial by Fire / settings ─> control server ─────────────────────────┘
-                                                                    │
-browser dashboard <─────────────────────────────────────────────────┘
+Demo now
+mock stream ─> detector ─> diagnosis ─> lifecycle/ledger ─> dashboard JSON
+                    ↑              ↑        ↑           ↑
+  historical JSONL ─┘       route comparison  operational events   resolved knowledge
+Trial by Fire / controls ───────────────> control server ─> dashboard
+
+Production target
+Kafka / PubSub / Kinesis ─> Flink / stream state ─> ClickHouse / BigQuery
+Postgres (configuration, audit, incidents) ─> authenticated APIs ─> UI / Slack / Jira
+OpenTelemetry + provider / 3DS / fraud / routing webhooks ─> evidence graph
 ```
 
 | Component | File | Responsibility |
@@ -53,10 +57,14 @@ browser dashboard <────────────────────�
 | Generator | `src/generator.py` | Emits transactions, amounts, lifecycle events, retries, and controlled injections. |
 | History | `src/generate_history.py` | Generates normal operation for the baseline. |
 | Detector | `src/detector.py` | Detects persistent conversion deterioration. |
-| Diagnoser | `src/diagnoser.py` | Performs drill-down and isolates the responsible segment. |
+| Diagnoser | `src/diagnoser.py` | Performs drill-down and localizes the affected segment. |
+| Counterfactual recommender | `src/counterfactual_routing.py` | Compares issuer-matched live route cohorts and proposes only a human-approved, capped experiment. |
 | Cost | `src/cost_estimator.py` | Estimates attributable loss and expected recovery. |
 | Priority | `src/prioritizer.py` | Ranks incidents using configurable strategy. |
-| Memory | `src/incident_memory.py` | Finds similar resolved incidents with cosine similarity. |
+| Identity + lifecycle | `src/incident_identity.py` + `src/incident_lifecycle.py` | Mints one immutable incident id; separates financial recovery from operational closure. |
+| Financial ledger | `src/incident_loss_ledger.py` | Accumulates each incident exactly once using the immutable incident id. |
+| Evidence graph | `src/evidence_graph.py` | Orders payment evidence, operational context, hypotheses, and confirmed cause. |
+| Knowledge | `src/incident_memory.py` | Matches only operator-approved resolved knowledge; legacy observed cases are quarantined. |
 | Runtime | `src/live_dashboard.py` | Connects the pipeline and writes `frontend/dashboard_data.json`. |
 | API/UI | `src/control_server.py` + `frontend/` | Serves the dashboard, settings, chatbot, and Trial by Fire. |
 
@@ -73,7 +81,7 @@ The detector compares a rolling live window with historical expected conversion.
 | Minimum drop | 5 pp |
 | Statistical threshold | Z = 3.0 |
 
-A subsegment becomes part of the root-cause path only when it remains anomalous, has sufficient volume, and explains at least 60% of its parent segment’s lost approvals. If evidence is insufficient, the system reports uncertainty rather than inventing a cause.
+A subsegment becomes part of the diagnostic path only when it remains anomalous, has sufficient volume, and explains at least 60% of its parent segment’s lost approvals. This proves **where impact is localized**, not necessarily why it happened. The Evidence Graph labels a provider, issuer, 3DS, fraud, routing, or campaign signal as a **likely source** until an operator or integrated external source confirms the cause.
 
 Settings are saved in `data/runtime_config.json` and applied by the live runtime on its next refresh.
 
@@ -96,7 +104,33 @@ The dashboard keeps a persistent per-incident ledger. Every 30 seconds it adds o
 new estimated loss = declined amount × incident attribution × (1 − retry-success probability)
 ```
 
-It shows three distinct metrics: **Accumulated Incident Loss** for active incidents, **Current Loss Rate** for the latest rolling-window hourly estimate, and **Total Incident Loss** for Today, This week, or This month. When an incident resolves, its ledger total is frozen and remains part of period totals. This is still an estimate of unrecovered payment value, not final financial reconciliation or platform revenue.
+It shows three distinct metrics: **Accumulated Incident Loss** for an open financial exposure, **Current Loss Rate** for the latest rolling-window hourly estimate, and **Total Incident Loss** for Today, This week, or This month. When conversion is healthy for the configured windows, the financial exposure ends and its loss is frozen; the operational incident stays open until a human resolves it. Recovered incidents retain their frozen cost, last observed loss rate, and time to recovery. This is still an estimate of unrecovered payment value, not final financial reconciliation or platform revenue.
+
+### Incident identity and governed knowledge
+
+At first sustained detection the lifecycle mints an immutable `incident_id` from tenant, first-detected timestamp, and canonical detection signature. That exact id is used by lifecycle, financial ledger, dashboard, chatbot, tickets, and resolved knowledge; the changing set of correlated detector alerts is never used as a financial key.
+
+The demo keeps three deliberately separate repositories:
+
+- **Synthetic training incidents:** `examples/incident_training_scenarios.json` and injection fixtures; never used for recurrence recommendations.
+- **Observed incidents:** `data/incident_lifecycle.json`; detected, investigating, monitoring, or statistically recovered cases.
+- **Resolved knowledge:** `data/incident_memory.json`; only operator-approved cases with confirmed cause, action, result, and evidence. Legacy auto-seeded records are preserved as unverified observed history and excluded from matching.
+
+### Evidence graph context
+
+`data/operational_events.json` can receive contextual events from future deploy, feature-flag, fraud, 3DS, routing, campaign, provider-status, latency, or ticket integrations. The demo API accepts the same contract at `POST /api/operational-events`; contextual events are shown chronologically and retain an `observed`, `hypothesis`, or `confirmed` verification level.
+
+### Safe counterfactual routing recommendations
+
+The product never says “route to another provider” from a diagnosis alone. For an incident already localized to a **merchant × country × payment-method × affected-provider** cohort, it compares the last 30 minutes of terminal transactions against alternative providers. The comparison is issuer-stratified (or exact issuer-matched if the incident is already bank-specific), weighted to the issuer mix of the affected route, and must satisfy the configured minimum sample, uplift, and z-score.
+
+If the evidence passes, the recommendation is intentionally conditional:
+
+> “Adyen approved 6.2 pp more comparable traffic. Recommend a 10% controlled routing experiment, only after fraud, cost, capacity, and compliance guardrails are approved.”
+
+The comparison is observational, not causal proof. It cannot evaluate fraud, chargebacks, provider fees, FX, capacity, eligibility, or compliance from payment events alone. Those checks remain pending external integrations and human approval; the proposed test has explicit stop conditions. If no comparable cohort or material uplift exists, the system states that no routing experiment is recommended.
+
+Policy is versionable in `data/routing_guardrails.json` and can be passed to either runtime with `--routing-policy`. It contains the comparison window, minimum sample, minimum uplift, confidence threshold, maximum traffic cap, mandatory guardrails, and stop conditions.
 
 ## Dashboard modes and Trial by Fire
 

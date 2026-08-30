@@ -10,17 +10,30 @@ from recovery_estimator import RECOVERABLE_FAILURE_STATUSES, RecoveryEstimator
 
 
 def empty() -> dict[str, Any]:
-    return {"active": {}, "resolved": {}, "claimed_transactions": {}}
+    # ``resolved`` refers to financial exposure ended, not an operator's
+    # operational closure. The lifecycle owns the latter distinction.
+    return {"version": 2, "active": {}, "resolved": {}, "claimed_transactions": {}, "archived_unverified_exposures": []}
 
 
 def normalize(raw: Any) -> dict[str, Any]:
     base = empty()
     if not isinstance(raw, dict):
         return base
-    for key in base:
-        if isinstance(raw.get(key), dict):
-            base[key] = raw[key]
+    base["claimed_transactions"] = raw.get("claimed_transactions", {}) if isinstance(raw.get("claimed_transactions"), dict) else {}
+    archived = raw.get("archived_unverified_exposures", [])
+    base["archived_unverified_exposures"] = list(archived) if isinstance(archived, list) else []
+    for collection in ("active", "resolved"):
+        for key, record in (raw.get(collection, {}) or {}).items():
+            if isinstance(record, dict) and record.get("identity_schema_version") == 2:
+                base[collection][key] = record
+            else:
+                base["archived_unverified_exposures"].append({"legacy_key": key, "record": record})
     return base
+
+
+def exposure_id(entry: dict[str, Any]) -> str:
+    """Immutable key for financial accumulation across changing alert groups."""
+    return str(entry.get("financial_exposure_id") or entry.get("incident_id") or entry.get("incident_key"))
 
 
 def matches(event: dict[str, Any], segment: dict[str, Any]) -> bool:
@@ -75,10 +88,14 @@ def period_totals(ledger: dict[str, Any], now: datetime) -> dict[str, float]:
 
 def attach(entries: list[dict[str, Any]], ledger: dict[str, Any]) -> None:
     for entry in entries:
-        record = ledger["active"].get(str(entry.get("incident_key")))
+        key = exposure_id(entry)
+        record = ledger["active"].get(key) or ledger["resolved"].get(key)
         entry["accumulated_incident_loss_usd"] = round(float(record.get("accumulated_loss_usd", 0.0)), 2) if record else 0.0
         entry["incident_started_at"] = record.get("started_at") if record else None
         entry["ledger_checkpoint_at"] = record.get("last_checkpoint_at") if record else None
+        if record and record.get("financial_exposure_ended_at"):
+            entry["financial_exposure_ended_at"] = record["financial_exposure_ended_at"]
+            entry["financial_exposure_status"] = "ended"
 
 
 def checkpoint(
@@ -87,11 +104,19 @@ def checkpoint(
 ) -> dict[str, Any]:
     """Add only newly completed, attributable declines and freeze resolved incidents."""
     ledger = normalize(ledger)
-    active_entries = [entry for entry in entries if entry.get("status") == "active" and entry.get("diagnosis", {}).get("evidence_sufficient")]
-    active_keys = {str(entry.get("incident_key")) for entry in active_entries}
+    active_entries = [
+        entry for entry in entries
+        if entry.get("status") in {"active", "detected", "investigating", "monitoring"}
+        and entry.get("diagnosis", {}).get("evidence_sufficient")
+    ]
+    active_keys = {exposure_id(entry) for entry in active_entries}
 
     for key in set(ledger["active"]) - active_keys:
         record = ledger["active"].pop(key)
+        record["financial_exposure_status"] = "ended"
+        record["financial_exposure_ended_at"] = observed_at.isoformat()
+        # Backward-compatible field for prior reports; it does not mean an
+        # operator has closed the operational incident.
         record["resolved_at"] = observed_at.isoformat()
         ledger["resolved"][key] = record
 
@@ -99,13 +124,14 @@ def checkpoint(
     # provides a deterministic tie-breaker, preventing company-wide double count.
     ordered = sorted(active_entries, key=lambda entry: (-len(entry.get("root_cause_segment", {})), entry.get("priority_rank", 999)))
     for entry in ordered:
-        key = str(entry.get("incident_key"))
+        key = exposure_id(entry)
         diagnosis = entry.get("diagnosis", {})
         segment = entry.get("root_cause_segment", {})
         window_start = parse_timestamp(diagnosis.get("incident_window", {}).get("started_at")) or observed_at
         record = ledger["active"].setdefault(key, {
-            "incident_key": key, "started_at": window_start.isoformat(), "last_checkpoint_at": window_start.isoformat(),
-            "root_cause_segment": segment, "accumulated_loss_usd": 0.0, "loss_by_date_usd": {}, "attributed_transactions": 0,
+            "incident_id": key, "identity_schema_version": 2, "started_at": window_start.isoformat(), "last_checkpoint_at": window_start.isoformat(),
+            "financial_exposure_status": "active", "root_cause_segment": segment, "accumulated_loss_usd": 0.0,
+            "loss_by_date_usd": {}, "attributed_transactions": 0,
         })
         checkpoint_at = parse_timestamp(record.get("last_checkpoint_at")) or window_start
         share = attribution(entry, events)
@@ -129,6 +155,7 @@ def checkpoint(
             record["attributed_transactions"] += 1
         record["last_checkpoint_at"] = observed_at.isoformat()
         record["root_cause_segment"] = segment
+        record["financial_exposure_status"] = "active"
 
     attach(entries, ledger)
     # Transaction identifiers only protect active/recent incidents; retaining a
