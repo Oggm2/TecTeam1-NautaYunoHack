@@ -148,6 +148,8 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident], m
         segment = diagnosis.get("root_cause_segment", {})
         window = diagnosis.get("incident_window", {})
         started_at, ended_at = parse_timestamp(window.get("started_at")), parse_timestamp(window.get("ended_at"))
+        window_minutes = max(0.0, (ended_at - started_at).total_seconds() / 60) if started_at and ended_at else 0.0
+        window_cost = float(incident.cost_per_hour_usd or 0.0) * window_minutes / 60
         severity, status = classify_severity(diagnosis, incident.priority_rank)
         recurrence = diagnosis.get("recurrence")
         if recurrence is None:
@@ -160,7 +162,7 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident], m
             "priority_score": incident.priority_score,
             "cost_per_hour_usd": incident.cost_per_hour_usd,
             "current_expected_unrecovered_gmv_per_hour_usd": incident.cost_per_hour_usd,
-            "accumulated_expected_unrecovered_gmv_usd": 0.0,
+            "window_expected_unrecovered_gmv_usd": round(window_cost, 2),
             "gross_lost_amount_per_hour_usd": diagnosis.get("root_metrics", {}).get("gross_lost_amount_per_hour_usd", 0.0),
             "urgency": incident.urgency,
             "urgency_basis": incident.urgency_basis,
@@ -171,52 +173,11 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident], m
             "confidence_pct": confidence_percent(diagnosis),
             "root_cause_segment": segment,
             "root_cause_label": " × ".join(segment.values()) if segment else None,
-            "duration_minutes": round((ended_at - started_at).total_seconds() / 60, 1) if started_at and ended_at else None,
+            "duration_minutes": round(window_minutes, 1) if started_at and ended_at else None,
             "recurrence": recurrence,
             "diagnosis": diagnosis,
         })
     return entries
-
-
-def update_accumulated_unrecovered_gmv(
-    entries: list[dict[str, Any]], tracker: dict[str, dict[str, Any]], observed_at: datetime,
-) -> None:
-    """Integrate each active incident's rolling loss rate over elapsed time.
-
-    A rate such as USD/hour is not cumulative.  The live runner calls this on
-    every refresh and uses a trapezoidal estimate between two consecutive
-    rolling-window rates, so the accumulated value grows while an incident is
-    active and still responds when its severity changes.
-    """
-    active_keys = {str(entry.get("incident_key")) for entry in entries}
-    for key in set(tracker) - active_keys:
-        tracker.pop(key, None)
-
-    for entry in entries:
-        key = str(entry.get("incident_key"))
-        rate = float(entry.get("cost_per_hour_usd") or 0.0)
-        previous = tracker.get(key)
-        if previous is None:
-            previous = {
-                "started_at": observed_at.isoformat(),
-                "last_observed_at": observed_at.isoformat(),
-                "last_rate_per_hour_usd": rate,
-                "accumulated_usd": 0.0,
-            }
-            tracker[key] = previous
-        else:
-            last_observed_at = parse_timestamp(previous.get("last_observed_at")) or observed_at
-            elapsed_seconds = max(0.0, (observed_at - last_observed_at).total_seconds())
-            previous["accumulated_usd"] += (previous["last_rate_per_hour_usd"] + rate) * 0.5 * elapsed_seconds / 3600
-            previous["last_observed_at"] = observed_at.isoformat()
-            previous["last_rate_per_hour_usd"] = rate
-
-        entry["current_expected_unrecovered_gmv_per_hour_usd"] = round(rate, 2)
-        entry["accumulated_expected_unrecovered_gmv_usd"] = round(previous["accumulated_usd"], 2)
-        started_at = parse_timestamp(previous.get("started_at")) or observed_at
-        entry["incident_started_at"] = started_at.isoformat()
-        entry["accumulated_duration_seconds"] = round((observed_at - started_at).total_seconds(), 1)
-        entry["duration_minutes"] = round(entry["accumulated_duration_seconds"] / 60, 1)
 
 
 def build_chart(events: list[dict[str, Any]], alerts: list[dict[str, Any]], history_events: list[dict[str, Any]], args: argparse.Namespace) -> dict[str, Any]:
@@ -292,7 +253,7 @@ def build_kpis(
         "critical_count": sum(e["severity"] == "crit" for e in entries),
         "high_count": sum(e["severity"] == "high" for e in entries),
         "investigating_count": sum(e["status"] == "investigating" for e in entries),
-        "accumulated_incidence_cost_usd": round(sum(e.get("accumulated_expected_unrecovered_gmv_usd", 0.0) for e in active), 2),
+        "incidence_cost_current_window_usd": round(sum(e.get("window_expected_unrecovered_gmv_usd", 0.0) for e in active), 2),
         "current_incidence_cost_per_hour_usd": round(sum(e.get("current_expected_unrecovered_gmv_per_hour_usd", e["cost_per_hour_usd"]) for e in active), 2),
         "expected_unrecovered_gmv_per_hour_usd": round(sum(e["cost_per_hour_usd"] for e in active), 2),
         "gross_lost_gmv_per_hour_usd": round(sum(e.get("gross_lost_amount_per_hour_usd", 0.0) for e in active), 2),

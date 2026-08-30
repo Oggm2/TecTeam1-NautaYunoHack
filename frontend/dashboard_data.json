@@ -1,59 +1,622 @@
 {
-  "generated_at": "2026-08-30T06:26:11.179575+00:00",
+  "generated_at": "2026-08-30T06:37:58.925641+00:00",
   "kpis": {
-    "current_conversion_pct": 89.37,
+    "current_conversion_pct": 87.66,
     "expected_conversion_pct": 94.01,
     "conversion_window_seconds": 300,
-    "conversion_window_attempts": 1656,
-    "transactions_window": 1659,
-    "active_incidents": 0,
+    "conversion_window_attempts": 1807,
+    "transactions_window": 1810,
+    "active_incidents": 2,
     "critical_count": 0,
-    "high_count": 0,
+    "high_count": 2,
     "investigating_count": 0,
-    "accumulated_incidence_cost_usd": 0,
-    "current_incidence_cost_per_hour_usd": 0,
-    "expected_unrecovered_gmv_per_hour_usd": 0,
-    "gross_lost_gmv_per_hour_usd": 0,
+    "incidence_cost_current_window_usd": 2482.44,
+    "current_incidence_cost_per_hour_usd": 29789.29,
+    "expected_unrecovered_gmv_per_hour_usd": 29789.29,
+    "gross_lost_gmv_per_hour_usd": 57293.58,
     "recovery_horizon_hours": 24.0
   },
   "chart": {
     "period_seconds": 60,
     "window_seconds": 300,
     "sustain_evaluations": 3,
-    "stream_started_at": "2026-08-30T06:24:20.647979+00:00",
+    "stream_started_at": "2026-08-30T06:35:58.326123+00:00",
     "current_window": {
-      "started_at": "2026-08-30T06:21:13.211000+00:00",
-      "ended_at": "2026-08-30T06:26:13.211000+00:00",
-      "attempts": 1656,
-      "approved": 1480,
-      "observed_pct": 89.37,
+      "started_at": "2026-08-30T06:33:00.128000+00:00",
+      "ended_at": "2026-08-30T06:38:00.128000+00:00",
+      "attempts": 1807,
+      "approved": 1584,
+      "observed_pct": 87.66,
       "expected_pct": 94.01
     },
     "points": [
       {
-        "t": "2026-08-30T06:24:00+00:00",
-        "observed_pct": 94.46,
+        "t": "2026-08-30T06:35:00+00:00",
+        "observed_pct": 100.0,
         "expected_pct": 94.01,
-        "threshold_pct": 91.05,
-        "state": "ok"
+        "threshold_pct": 52.93,
+        "state": "incident"
       },
       {
-        "t": "2026-08-30T06:25:00+00:00",
-        "observed_pct": 86.15,
+        "t": "2026-08-30T06:36:00+00:00",
+        "observed_pct": 91.44,
         "expected_pct": 94.01,
         "threshold_pct": 91.64,
-        "state": "breach"
+        "state": "incident"
       },
       {
-        "t": "2026-08-30T06:26:00+00:00",
-        "observed_pct": 89.07,
+        "t": "2026-08-30T06:37:00+00:00",
+        "observed_pct": 83.8,
         "expected_pct": 94.01,
-        "threshold_pct": 88.75,
+        "threshold_pct": 91.64,
+        "state": "incident"
+      },
+      {
+        "t": "2026-08-30T06:38:00+00:00",
+        "observed_pct": 100.0,
+        "expected_pct": 94.01,
+        "threshold_pct": 52.93,
         "state": "ok"
       }
     ]
   },
-  "incidents": [],
+  "incidents": [
+    {
+      "incident_id": "c328409d-962b-443b-ac33-a01c9a086469",
+      "alert_id": "d9c640de-22ae-491b-b959-25a659fdbb22",
+      "incident_key": "alerts:1903a277-d669-4a24-b81d-c6c091f46ed0|24095f26-3e96-4848-aa78-f1acedfc5ce9|27e6fa46-5f3c-4761-a516-2461545f5602|45907a86-74cc-4355-9953-b8c2daf851c7|4e27befb-a388-4fa0-91c2-28779619db41|76f26320-cfb7-4936-8197-5c104b2881c8|c90f97ec-e962-4f87-b734-00b7426c190e|d9c640de-22ae-491b-b959-25a659fdbb22",
+      "priority_rank": 1,
+      "priority_score": 26758.16,
+      "cost_per_hour_usd": 22114.85,
+      "current_expected_unrecovered_gmv_per_hour_usd": 22114.85,
+      "window_expected_unrecovered_gmv_usd": 1842.9,
+      "gross_lost_amount_per_hour_usd": 42535.04,
+      "urgency": 119.9273,
+      "urgency_basis": "growth_rate_usd_per_min",
+      "priority_factors": {
+        "preset": "balanced",
+        "weights_pct": {
+          "financial": 50.0,
+          "urgency": 25.0,
+          "conversion_drop": 15.0,
+          "merchant": 10.0
+        },
+        "urgency_signal": 0.24,
+        "conversion_drop_signal": 1.0,
+        "merchant": null,
+        "merchant_multiplier": 1.0,
+        "score_multiplier": 1.21
+      },
+      "readings": 8,
+      "severity": "high",
+      "status": "active",
+      "confidence_pct": 70,
+      "root_cause_segment": {
+        "provider": "stripe",
+        "country": "BR"
+      },
+      "root_cause_label": "stripe \u00d7 BR",
+      "duration_minutes": 5.0,
+      "recurrence": null,
+      "diagnosis": {
+        "incident_id": "c328409d-962b-443b-ac33-a01c9a086469",
+        "alert_id": "d9c640de-22ae-491b-b959-25a659fdbb22",
+        "diagnosed_at": "2026-08-30T06:39:39.844843+00:00",
+        "evidence_sufficient": true,
+        "confidence": "medium",
+        "root_cause_segment": {
+          "provider": "stripe",
+          "country": "BR"
+        },
+        "incident_window": {
+          "started_at": "2026-08-30T06:32:58.925641+00:00",
+          "ended_at": "2026-08-30T06:37:58.925641+00:00"
+        },
+        "root_metrics": {
+          "attempts": 260,
+          "approved": 159,
+          "observed_conversion": 0.6115,
+          "expected_conversion": 0.9518,
+          "conversion_drop_pp": 34.0245,
+          "z_score": -25.6102,
+          "lost_approvals": 88.46,
+          "gross_lost_amount_usd": 3544.59,
+          "gross_lost_amount_per_hour_usd": 42535.04,
+          "expected_recovered_amount_usd": 1701.68,
+          "expected_unrecovered_amount_usd": 1842.9,
+          "expected_unrecovered_amount_per_hour_usd": 22114.85,
+          "expected_recovery_rate": 0.4801,
+          "recovery_model_source": "default_by_payment_method",
+          "recovery_model_sample_size": 0
+        },
+        "drill_down_path": [],
+        "payment_method_impact": [
+          {
+            "value": "card",
+            "segment": {
+              "provider": "stripe",
+              "country": "BR",
+              "payment_method": "card"
+            },
+            "baseline_attempts": 13249,
+            "baseline_source": "all_time_segment",
+            "attempts": 124,
+            "approved": 74,
+            "observed_conversion": 0.5967741935483871,
+            "expected_conversion": 0.9510225643347672,
+            "conversion_drop_pp": 35.42483707863801,
+            "z_score": -18.277856868133,
+            "lost_approvals": 43.93,
+            "gross_lost_amount_usd": 1596.85,
+            "gross_lost_amount_per_hour_usd": 19162.24,
+            "expected_recovered_amount_usd": 766.49,
+            "expected_unrecovered_amount_usd": 830.36,
+            "expected_unrecovered_amount_per_hour_usd": 9964.36,
+            "expected_recovery_rate": 0.48,
+            "recovery_model_source": "default_by_payment_method",
+            "recovery_model_sample_size": 0,
+            "dimension": "payment_method",
+            "is_anomalous": true,
+            "impact_share_of_lost_approvals": 0.4966,
+            "is_selected": false
+          },
+          {
+            "value": "pix",
+            "segment": {
+              "provider": "stripe",
+              "country": "BR",
+              "payment_method": "pix"
+            },
+            "baseline_attempts": 8405,
+            "baseline_source": "all_time_segment",
+            "attempts": 67,
+            "approved": 43,
+            "observed_conversion": 0.6417910447761194,
+            "expected_conversion": 0.9609848935410967,
+            "conversion_drop_pp": 31.919384876497737,
+            "z_score": -13.493270794700722,
+            "lost_approvals": 21.39,
+            "gross_lost_amount_usd": 967.08,
+            "gross_lost_amount_per_hour_usd": 11605.0,
+            "expected_recovered_amount_usd": 483.54,
+            "expected_unrecovered_amount_usd": 483.54,
+            "expected_unrecovered_amount_per_hour_usd": 5802.5,
+            "expected_recovery_rate": 0.5,
+            "recovery_model_source": "default_by_payment_method",
+            "recovery_model_sample_size": 0,
+            "dimension": "payment_method",
+            "is_anomalous": true,
+            "impact_share_of_lost_approvals": 0.2418,
+            "is_selected": false
+          },
+          {
+            "value": "wallet",
+            "segment": {
+              "provider": "stripe",
+              "country": "BR",
+              "payment_method": "wallet"
+            },
+            "baseline_attempts": 5160,
+            "baseline_source": "all_time_segment",
+            "attempts": 52,
+            "approved": 33,
+            "observed_conversion": 0.6346153846153846,
+            "expected_conversion": 0.956412243316544,
+            "conversion_drop_pp": 32.17968587011594,
+            "z_score": -11.365241007745572,
+            "lost_approvals": 16.73,
+            "gross_lost_amount_usd": 799.69,
+            "gross_lost_amount_per_hour_usd": 9596.29,
+            "expected_recovered_amount_usd": 439.83,
+            "expected_unrecovered_amount_usd": 359.86,
+            "expected_unrecovered_amount_per_hour_usd": 4318.33,
+            "expected_recovery_rate": 0.55,
+            "recovery_model_source": "default_by_payment_method",
+            "recovery_model_sample_size": 0,
+            "dimension": "payment_method",
+            "is_anomalous": true,
+            "impact_share_of_lost_approvals": 0.1891,
+            "is_selected": false
+          }
+        ],
+        "dominant_decline": {
+          "decline_reason": "do_not_honor",
+          "excess_declines": 96.6,
+          "share_of_excess_declines": 1.0
+        },
+        "recommended_action": "Contactar a stripe y evaluar el enrutamiento temporal de pagos afectados hacia otro provider.",
+        "reason": "La ca\u00edda est\u00e1 confirmada, pero no hay un subsegmento que concentre suficiente p\u00e9rdida para atribuir una causa m\u00e1s espec\u00edfica.",
+        "recurrence": null,
+        "explanation": {
+          "mode": "deterministic",
+          "incident_id": "c328409d-962b-443b-ac33-a01c9a086469",
+          "executive_summary": "Incidente en provider=stripe, pa\u00eds=BR: costo estimado de la incidencia de USD 1,842.90 en la ventana analizada.",
+          "operational_explanation": "La conversi\u00f3n observada fue 61.2%, frente a 95.2% esperada (34.0 puntos porcentuales menos) en provider=stripe, pa\u00eds=BR. El motivo de rechazo con mayor exceso fue do_not_honor (100% de los rechazos adicionales).",
+          "recommended_action": "Contactar a stripe y evaluar el enrutamiento temporal de pagos afectados hacia otro provider.",
+          "confidence": "medium",
+          "evidence_sufficient": true,
+          "window_started_at": "2026-08-30T06:32:58.925641+00:00",
+          "window_ended_at": "2026-08-30T06:37:58.925641+00:00",
+          "profiles": {
+            "technical": "La conversi\u00f3n observada fue 61.2%, frente a 95.2% esperada (34.0 puntos porcentuales menos) en provider=stripe, pa\u00eds=BR. El motivo de rechazo con mayor exceso fue do_not_honor (100% de los rechazos adicionales).",
+            "financial": "El costo estimado de la incidencia es USD 1,842.90 en esta ventana; la proyecci\u00f3n por hora est\u00e1 en las m\u00e9tricas del incidente.",
+            "simple": "Hay un problema en provider=stripe, pa\u00eds=BR: est\u00e1n aprob\u00e1ndose menos pagos de lo normal. El equipo debe revisar la acci\u00f3n recomendada."
+          }
+        }
+      }
+    },
+    {
+      "incident_id": "68256d07-9c03-4bd4-992a-9330462ba70e",
+      "alert_id": "e5a979ee-361c-4c60-8720-80f45753430c",
+      "incident_key": "alerts:e5a979ee-361c-4c60-8720-80f45753430c",
+      "priority_rank": 2,
+      "priority_score": 10744.22,
+      "cost_per_hour_usd": 7674.44,
+      "current_expected_unrecovered_gmv_per_hour_usd": 7674.44,
+      "window_expected_unrecovered_gmv_usd": 639.54,
+      "gross_lost_amount_per_hour_usd": 14758.54,
+      "urgency": 22.1018,
+      "urgency_basis": "z_score_proxy",
+      "priority_factors": {
+        "preset": "balanced",
+        "weights_pct": {
+          "financial": 50.0,
+          "urgency": 25.0,
+          "conversion_drop": 15.0,
+          "merchant": 10.0
+        },
+        "urgency_signal": 1.0,
+        "conversion_drop_signal": 1.0,
+        "merchant": "PagoModa",
+        "merchant_multiplier": 1.0,
+        "score_multiplier": 1.4
+      },
+      "readings": 1,
+      "severity": "high",
+      "status": "active",
+      "confidence_pct": 67,
+      "root_cause_segment": {
+        "issuing_bank": "Banorte",
+        "country": "MX",
+        "merchant": "PagoModa",
+        "payment_method": "card"
+      },
+      "root_cause_label": "Banorte \u00d7 MX \u00d7 PagoModa \u00d7 card",
+      "duration_minutes": 5.0,
+      "recurrence": {
+        "similarity": 0.7447,
+        "previous_incident": {
+          "incident_id": "5cca1c6f-c2cc-43cb-8b40-bc4bb006677f",
+          "root_cause_segment": {
+            "payment_method": "card",
+            "country": "MX",
+            "issuing_bank": "BBVA"
+          },
+          "decline_reason": "issuer_unavailable",
+          "observed_at": "2026-08-30T01:00:52.031681+00:00",
+          "duration_minutes": 5.0,
+          "cost_per_hour_usd": 41667.44,
+          "resolution_note": null
+        },
+        "method": "knn_cosine_v1"
+      },
+      "diagnosis": {
+        "incident_id": "68256d07-9c03-4bd4-992a-9330462ba70e",
+        "alert_id": "e5a979ee-361c-4c60-8720-80f45753430c",
+        "diagnosed_at": "2026-08-30T06:39:17.238620+00:00",
+        "evidence_sufficient": true,
+        "confidence": "medium",
+        "root_cause_segment": {
+          "issuing_bank": "Banorte",
+          "country": "MX",
+          "merchant": "PagoModa",
+          "payment_method": "card"
+        },
+        "incident_window": {
+          "started_at": "2026-08-30T06:32:58.925641+00:00",
+          "ended_at": "2026-08-30T06:37:58.925641+00:00"
+        },
+        "root_metrics": {
+          "attempts": 39,
+          "approved": 11,
+          "observed_conversion": 0.2821,
+          "expected_conversion": 0.9617,
+          "conversion_drop_pp": 67.9604,
+          "z_score": -22.1018,
+          "lost_approvals": 26.5,
+          "gross_lost_amount_usd": 1229.88,
+          "gross_lost_amount_per_hour_usd": 14758.54,
+          "expected_recovered_amount_usd": 590.34,
+          "expected_unrecovered_amount_usd": 639.54,
+          "expected_unrecovered_amount_per_hour_usd": 7674.44,
+          "expected_recovery_rate": 0.48,
+          "recovery_model_source": "default_by_payment_method",
+          "recovery_model_sample_size": 0
+        },
+        "drill_down_path": [
+          {
+            "value": "PagoModa",
+            "segment": {
+              "issuing_bank": "Banorte",
+              "country": "MX",
+              "merchant": "PagoModa"
+            },
+            "baseline_attempts": 6975,
+            "baseline_source": "all_time_segment",
+            "attempts": 58,
+            "approved": 16,
+            "observed_conversion": 0.27586206896551724,
+            "expected_conversion": 0.9551383115952415,
+            "conversion_drop_pp": 67.92762426297243,
+            "z_score": -24.991336512547225,
+            "lost_approvals": 39.4,
+            "gross_lost_amount_usd": 1832.89,
+            "gross_lost_amount_per_hour_usd": 21994.68,
+            "expected_recovered_amount_usd": 804.16,
+            "expected_unrecovered_amount_usd": 1028.73,
+            "expected_unrecovered_amount_per_hour_usd": 12344.73,
+            "expected_recovery_rate": 0.4387,
+            "recovery_model_source": "default_by_payment_method",
+            "recovery_model_sample_size": 0,
+            "contribution_to_parent_loss": 0.9526112185686654,
+            "dimension": "merchant",
+            "is_anomalous": true,
+            "is_selected": true,
+            "siblings": [
+              {
+                "value": "TechStore",
+                "segment": {
+                  "issuing_bank": "Banorte",
+                  "country": "MX",
+                  "merchant": "TechStore"
+                },
+                "baseline_attempts": 8112,
+                "baseline_source": "all_time_segment",
+                "attempts": 61,
+                "approved": 58,
+                "observed_conversion": 0.9508196721311475,
+                "expected_conversion": 0.9488538328814395,
+                "conversion_drop_pp": -0.19658392497079458,
+                "z_score": 0.06969581718878612,
+                "lost_approvals": 0.0,
+                "gross_lost_amount_usd": 0.0,
+                "gross_lost_amount_per_hour_usd": 0.0,
+                "expected_recovered_amount_usd": 0.0,
+                "expected_unrecovered_amount_usd": 0.0,
+                "expected_unrecovered_amount_per_hour_usd": 0.0,
+                "expected_recovery_rate": 0.0,
+                "recovery_model_source": "default_by_payment_method",
+                "recovery_model_sample_size": 0,
+                "contribution_to_parent_loss": 0.0,
+                "dimension": "merchant",
+                "is_anomalous": false,
+                "is_selected": false
+              },
+              {
+                "value": "TravelNow",
+                "segment": {
+                  "issuing_bank": "Banorte",
+                  "country": "MX",
+                  "merchant": "TravelNow"
+                },
+                "baseline_attempts": 5047,
+                "baseline_source": "all_time_segment",
+                "attempts": 42,
+                "approved": 38,
+                "observed_conversion": 0.9047619047619048,
+                "expected_conversion": 0.9544464250346604,
+                "conversion_drop_pp": 4.968452027275561,
+                "z_score": -1.5442184449724297,
+                "lost_approvals": 2.09,
+                "gross_lost_amount_usd": 98.44,
+                "gross_lost_amount_per_hour_usd": 1181.25,
+                "expected_recovered_amount_usd": 48.92,
+                "expected_unrecovered_amount_usd": 49.51,
+                "expected_unrecovered_amount_per_hour_usd": 594.17,
+                "expected_recovery_rate": 0.497,
+                "recovery_model_source": "default_by_payment_method",
+                "recovery_model_sample_size": 0,
+                "contribution_to_parent_loss": 0.05053191489361702,
+                "dimension": "merchant",
+                "is_anomalous": false,
+                "is_selected": false
+              },
+              {
+                "value": "PagoModa",
+                "segment": {
+                  "issuing_bank": "Banorte",
+                  "country": "MX",
+                  "merchant": "PagoModa"
+                },
+                "baseline_attempts": 6975,
+                "baseline_source": "all_time_segment",
+                "attempts": 58,
+                "approved": 16,
+                "observed_conversion": 0.27586206896551724,
+                "expected_conversion": 0.9551383115952415,
+                "conversion_drop_pp": 67.92762426297243,
+                "z_score": -24.991336512547225,
+                "lost_approvals": 39.4,
+                "gross_lost_amount_usd": 1832.89,
+                "gross_lost_amount_per_hour_usd": 21994.68,
+                "expected_recovered_amount_usd": 804.16,
+                "expected_unrecovered_amount_usd": 1028.73,
+                "expected_unrecovered_amount_per_hour_usd": 12344.73,
+                "expected_recovery_rate": 0.4387,
+                "recovery_model_source": "default_by_payment_method",
+                "recovery_model_sample_size": 0,
+                "contribution_to_parent_loss": 0.9526112185686654,
+                "dimension": "merchant",
+                "is_anomalous": true,
+                "is_selected": true
+              }
+            ]
+          },
+          {
+            "value": "card",
+            "segment": {
+              "issuing_bank": "Banorte",
+              "country": "MX",
+              "merchant": "PagoModa",
+              "payment_method": "card"
+            },
+            "baseline_attempts": 4927,
+            "baseline_source": "all_time_segment",
+            "attempts": 39,
+            "approved": 11,
+            "observed_conversion": 0.28205128205128205,
+            "expected_conversion": 0.9616555082166768,
+            "conversion_drop_pp": 67.96042261653947,
+            "z_score": -22.101773281778577,
+            "lost_approvals": 26.5,
+            "gross_lost_amount_usd": 1229.88,
+            "gross_lost_amount_per_hour_usd": 14758.54,
+            "expected_recovered_amount_usd": 590.34,
+            "expected_unrecovered_amount_usd": 639.54,
+            "expected_unrecovered_amount_per_hour_usd": 7674.44,
+            "expected_recovery_rate": 0.48,
+            "recovery_model_source": "default_by_payment_method",
+            "recovery_model_sample_size": 0,
+            "contribution_to_parent_loss": 0.6725888324873097,
+            "dimension": "payment_method",
+            "is_anomalous": true,
+            "is_selected": true,
+            "siblings": [
+              {
+                "value": "card",
+                "segment": {
+                  "issuing_bank": "Banorte",
+                  "country": "MX",
+                  "merchant": "PagoModa",
+                  "payment_method": "card"
+                },
+                "baseline_attempts": 4927,
+                "baseline_source": "all_time_segment",
+                "attempts": 39,
+                "approved": 11,
+                "observed_conversion": 0.28205128205128205,
+                "expected_conversion": 0.9616555082166768,
+                "conversion_drop_pp": 67.96042261653947,
+                "z_score": -22.101773281778577,
+                "lost_approvals": 26.5,
+                "gross_lost_amount_usd": 1229.88,
+                "gross_lost_amount_per_hour_usd": 14758.54,
+                "expected_recovered_amount_usd": 590.34,
+                "expected_unrecovered_amount_usd": 639.54,
+                "expected_unrecovered_amount_per_hour_usd": 7674.44,
+                "expected_recovery_rate": 0.48,
+                "recovery_model_source": "default_by_payment_method",
+                "recovery_model_sample_size": 0,
+                "contribution_to_parent_loss": 0.6725888324873097,
+                "dimension": "payment_method",
+                "is_anomalous": true,
+                "is_selected": true
+              }
+            ]
+          }
+        ],
+        "payment_method_impact": [
+          {
+            "value": "card",
+            "segment": {
+              "issuing_bank": "Banorte",
+              "country": "MX",
+              "payment_method": "card"
+            },
+            "baseline_attempts": 14166,
+            "baseline_source": "all_time_segment",
+            "attempts": 117,
+            "approved": 84,
+            "observed_conversion": 0.717948717948718,
+            "expected_conversion": 0.9578627893845285,
+            "conversion_drop_pp": 23.991407143581057,
+            "z_score": -12.917072857773292,
+            "lost_approvals": 28.07,
+            "gross_lost_amount_usd": 1294.56,
+            "gross_lost_amount_per_hour_usd": 15534.72,
+            "expected_recovered_amount_usd": 621.39,
+            "expected_unrecovered_amount_usd": 673.17,
+            "expected_unrecovered_amount_per_hour_usd": 8078.06,
+            "expected_recovery_rate": 0.48,
+            "recovery_model_source": "default_by_payment_method",
+            "recovery_model_sample_size": 0,
+            "dimension": "payment_method",
+            "is_anomalous": true,
+            "impact_share_of_lost_approvals": 0.6787,
+            "is_selected": false
+          },
+          {
+            "value": "wallet",
+            "segment": {
+              "issuing_bank": "Banorte",
+              "country": "MX",
+              "payment_method": "wallet"
+            },
+            "baseline_attempts": 3610,
+            "baseline_source": "all_time_segment",
+            "attempts": 27,
+            "approved": 17,
+            "observed_conversion": 0.6296296296296297,
+            "expected_conversion": 0.9579180509413068,
+            "conversion_drop_pp": 32.82884213116771,
+            "z_score": -8.4962121042064,
+            "lost_approvals": 8.86,
+            "gross_lost_amount_usd": 360.24,
+            "gross_lost_amount_per_hour_usd": 4322.9,
+            "expected_recovered_amount_usd": 198.13,
+            "expected_unrecovered_amount_usd": 162.11,
+            "expected_unrecovered_amount_per_hour_usd": 1945.31,
+            "expected_recovery_rate": 0.55,
+            "recovery_model_source": "default_by_payment_method",
+            "recovery_model_sample_size": 0,
+            "dimension": "payment_method",
+            "is_anomalous": true,
+            "impact_share_of_lost_approvals": 0.2142,
+            "is_selected": false
+          }
+        ],
+        "dominant_decline": {
+          "decline_reason": "issuer_unavailable",
+          "excess_declines": 25.8,
+          "share_of_excess_declines": 0.9342
+        },
+        "recommended_action": "Validar el estado de Banorte con el merchant afectado; el c\u00f3digo dominante indica indisponibilidad.",
+        "recurrence": {
+          "similarity": 0.7447,
+          "previous_incident": {
+            "incident_id": "5cca1c6f-c2cc-43cb-8b40-bc4bb006677f",
+            "root_cause_segment": {
+              "payment_method": "card",
+              "country": "MX",
+              "issuing_bank": "BBVA"
+            },
+            "decline_reason": "issuer_unavailable",
+            "observed_at": "2026-08-30T01:00:52.031681+00:00",
+            "duration_minutes": 5.0,
+            "cost_per_hour_usd": 41667.44,
+            "resolution_note": null
+          },
+          "method": "knn_cosine_v1"
+        },
+        "explanation": {
+          "mode": "deterministic",
+          "incident_id": "68256d07-9c03-4bd4-992a-9330462ba70e",
+          "executive_summary": "Incidente en banco emisor=Banorte, pa\u00eds=MX, merchant=PagoModa, m\u00e9todo=card: costo estimado de la incidencia de USD 639.54 en la ventana analizada.",
+          "operational_explanation": "La conversi\u00f3n observada fue 28.2%, frente a 96.2% esperada (68.0 puntos porcentuales menos) en banco emisor=Banorte, pa\u00eds=MX, merchant=PagoModa, m\u00e9todo=card. El motivo de rechazo con mayor exceso fue issuer_unavailable (93% de los rechazos adicionales). Este patr\u00f3n ya se hab\u00eda observado (74% de similitud) el 2026-08-30.",
+          "recommended_action": "Validar el estado de Banorte con el merchant afectado; el c\u00f3digo dominante indica indisponibilidad.",
+          "confidence": "medium",
+          "evidence_sufficient": true,
+          "window_started_at": "2026-08-30T06:32:58.925641+00:00",
+          "window_ended_at": "2026-08-30T06:37:58.925641+00:00",
+          "profiles": {
+            "technical": "La conversi\u00f3n observada fue 28.2%, frente a 96.2% esperada (68.0 puntos porcentuales menos) en banco emisor=Banorte, pa\u00eds=MX, merchant=PagoModa, m\u00e9todo=card. El motivo de rechazo con mayor exceso fue issuer_unavailable (93% de los rechazos adicionales). Este patr\u00f3n ya se hab\u00eda observado (74% de similitud) el 2026-08-30.",
+            "financial": "El costo estimado de la incidencia es USD 639.54 en esta ventana; la proyecci\u00f3n por hora est\u00e1 en las m\u00e9tricas del incidente.",
+            "simple": "Hay un problema en banco emisor=Banorte, pa\u00eds=MX, merchant=PagoModa, m\u00e9todo=card: est\u00e1n aprob\u00e1ndose menos pagos de lo normal. El equipo debe revisar la acci\u00f3n recomendada."
+          }
+        }
+      }
+    }
+  ],
   "resolved": [
     {
       "incident_id": "memory-stripe-br-2026-08-26",
@@ -216,69 +779,69 @@
       ]
     },
     "live": {
-      "attempts": 1656,
-      "approved": 1480,
-      "conversion_pct": 89.37,
-      "average_ticket_usd": 40.75,
+      "attempts": 1807,
+      "approved": 1584,
+      "conversion_pct": 87.66,
+      "average_ticket_usd": 39.37,
       "by_country": [
         {
           "name": "MX",
-          "attempts": 662,
-          "conversion_pct": 92.15
+          "attempts": 691,
+          "conversion_pct": 89.44
         },
         {
           "name": "BR",
-          "attempts": 558,
-          "conversion_pct": 83.87
+          "attempts": 650,
+          "conversion_pct": 81.85
         },
         {
           "name": "CO",
-          "attempts": 436,
-          "conversion_pct": 92.2
+          "attempts": 466,
+          "conversion_pct": 93.13
         }
       ],
       "by_provider": [
         {
           "name": "stripe",
-          "attempts": 628,
-          "conversion_pct": 83.44
+          "attempts": 718,
+          "conversion_pct": 79.94
         },
         {
           "name": "adyen",
-          "attempts": 604,
-          "conversion_pct": 92.88
+          "attempts": 641,
+          "conversion_pct": 92.51
         },
         {
           "name": "dlocal",
-          "attempts": 424,
-          "conversion_pct": 93.16
+          "attempts": 448,
+          "conversion_pct": 93.08
         }
       ],
       "by_payment_method": [
         {
           "name": "card",
-          "attempts": 1029,
-          "conversion_pct": 91.16
+          "attempts": 1117,
+          "conversion_pct": 88.45
         },
         {
           "name": "wallet",
-          "attempts": 270,
-          "conversion_pct": 90.74
+          "attempts": 302,
+          "conversion_pct": 85.43
         },
         {
           "name": "pix",
-          "attempts": 158,
-          "conversion_pct": 77.85
+          "attempts": 162,
+          "conversion_pct": 83.95
         },
         {
           "name": "cash_in_store",
-          "attempts": 111,
-          "conversion_pct": 87.39
+          "attempts": 120,
+          "conversion_pct": 83.33
         },
         {
           "name": "pse",
-          "attempts": 88,
-          "conversion_pct": 87.5
+          "attempts": 106,
+          "conversion_pct": 96.23
         }
       ]
     }

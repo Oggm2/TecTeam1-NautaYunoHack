@@ -65,7 +65,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--memory", default="data/incident_memory.json")
     parser.add_argument("--output", default="frontend/dashboard_data.json")
     parser.add_argument("--transactions-out", default="data/live_transactions.jsonl")
-    parser.add_argument("--cost-tracker", default="data/active_incident_costs.json", help="Persist active incident cost accumulation across process restarts.")
     parser.add_argument("--seed", type=int)
     parser.add_argument("--use-openai", action="store_true", help="Use OpenAI only to redact confirmed diagnoses.")
     parser.add_argument("--model", default="gpt-5", help="OpenAI model used with --use-openai.")
@@ -125,12 +124,6 @@ def main() -> None:
 
     retained: list[dict[str, Any]] = []
     active_alerts: dict[str, dict[str, Any]] = {}
-    tracker_path = Path(args.cost_tracker)
-    try:
-        loaded_tracker = json.loads(tracker_path.read_text(encoding="utf-8"))
-        loss_tracker: dict[str, dict[str, Any]] = loaded_tracker if isinstance(loaded_tracker, dict) else {}
-    except (OSError, json.JSONDecodeError):
-        loss_tracker = {}
     seen_alert_ids: set[str] = set()
 
     output_path = Path(args.output)
@@ -205,9 +198,6 @@ def main() -> None:
 
             prioritized = prioritizer.prioritize(active_diagnoses, priority_config) if active_diagnoses else []
             entries = bd.build_incident_entries(prioritized, memory)
-            bd.update_accumulated_unrecovered_gmv(entries, loss_tracker, now)
-            tracker_path.parent.mkdir(parents=True, exist_ok=True)
-            write_atomic(tracker_path, json.dumps(loss_tracker, indent=2))
             chart = bd.build_chart(retained, list(active_alerts.values()), history_events, args)
             # Keep the dashboard's timeline tied to this process, even during
             # the first minute when there is only one aggregate data point.
