@@ -234,6 +234,30 @@ def build_kpis(
     }
 
 
+def build_dataset_stats(events: list[dict[str, Any]]) -> dict[str, Any]:
+    """Compact historical/live aggregates for the dashboard analytics view."""
+    terminal = [event for event in events if event.get("status") in CONVERSION_STATUSES]
+    attempts = len(terminal)
+    approved = sum(event.get("status") == "approved" for event in terminal)
+
+    def grouped(field: str) -> list[dict[str, Any]]:
+        buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for event in terminal:
+            buckets[str(event.get(field, "unknown"))].append(event)
+        return sorted([
+            {"name": name, "attempts": len(rows), "conversion_pct": round(100 * sum(row.get("status") == "approved" for row in rows) / len(rows), 2)}
+            for name, rows in buckets.items()
+        ], key=lambda row: row["attempts"], reverse=True)
+
+    return {
+        "attempts": attempts,
+        "approved": approved,
+        "conversion_pct": round(100 * approved / attempts, 2) if attempts else None,
+        "average_ticket_usd": round(sum(float(event.get("amount_usd", 0)) for event in terminal) / attempts, 2) if attempts else 0,
+        "by_country": grouped("country"), "by_provider": grouped("provider"), "by_payment_method": grouped("payment_method"),
+    }
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build dashboard data from captured live transaction JSONL.")
     parser.add_argument("--history", default="data/history.jsonl")
@@ -290,6 +314,7 @@ def main() -> None:
         "chart": chart,
         "incidents": entries,
         "resolved": memory,
+        "analytics": {"historical": build_dataset_stats(history_events), "live": build_dataset_stats(events)},
     }
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)

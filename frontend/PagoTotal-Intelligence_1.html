@@ -503,6 +503,10 @@
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 12v8"/></svg>
       <span class="t">Incident Memory</span>
     </div>
+    <div class="nav-item" data-view="analytics">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5m0 14h16M8 16v-4m4 4V8m4 8v-6"/></svg>
+      <span class="t">Analytics</span>
+    </div>
 
     <div class="nav-spacer"></div>
 
@@ -785,6 +789,16 @@
         </form>
         <p id="controls-status" style="color:var(--ink-soft);font-size:12.5px;margin:18px 0 0">Loading current controls…</p>
       </div>
+    </section>
+    <section class="view" id="view-analytics">
+      <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Analítica: contexto de la operación.</strong> Compara el historial usado como línea base contra el stream que está llegando ahora. Sirve para entender el volumen, la conversión y la mezcla de tráfico, sin confundirlo con un diagnóstico de causa raíz.<div class="guide-steps">Compara primero el resumen; después revisa país, provider y método para encontrar cambios en la distribución.</div></div></aside>
+      <div class="section-h"><h2>Historical vs live analytics</h2><span class="hint">historical baseline compared with generated live transactions</span></div>
+      <div class="kpis" id="analytics-summary"></div>
+      <div class="grid-2" style="margin-top:20px">
+        <div class="card pad"><div class="section-h"><h2>Conversion by country</h2><span class="hint">approved / attempted</span></div><div id="analytics-country"></div></div>
+        <div class="card pad"><div class="section-h"><h2>Conversion by provider</h2><span class="hint">approved / attempted</span></div><div id="analytics-provider"></div></div>
+      </div>
+      <div class="card pad" style="margin-top:20px"><div class="section-h"><h2>Conversion by payment method</h2><span class="hint">approved / attempted</span></div><div id="analytics-method"></div></div>
     </section>
   </div>
 </div>
@@ -1389,6 +1403,47 @@
       <div style="margin-top:18px;padding:14px 16px;background:var(--ok-dim);border:1px solid #1c5843;border-radius:12px;font-size:13.5px;color:#a7f3d0"><b>Previous resolution:</b> ${previous.resolution_note||"No resolution note available."}</div>`;
   }
 
+  /* ------------------------------------------------ ANALYTICS ------------------------------------------------ */
+  function formatPct(value){ return value == null ? "—" : `${Number(value).toFixed(1)}%`; }
+  function analyticsRows(historical, live){
+    const historicByName=Object.fromEntries((historical||[]).map(row=>[row.name,row]));
+    const liveByName=Object.fromEntries((live||[]).map(row=>[row.name,row]));
+    return [...new Set([...Object.keys(historicByName),...Object.keys(liveByName)])]
+      .map(name=>({name,historical:historicByName[name],live:liveByName[name]}))
+      .sort((a,b)=>((b.live?.attempts||0)+(b.historical?.attempts||0))-((a.live?.attempts||0)+(a.historical?.attempts||0)));
+  }
+  function renderAnalyticsBreakdown(id, historical, live){
+    const target=$(id); if(!target) return;
+    const rows=analyticsRows(historical,live);
+    if(!rows.length){ target.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Waiting for transaction data…</p>'; return; }
+    target.innerHTML=rows.map(row=>{
+      const hp=row.historical?.conversion_pct, lp=row.live?.conversion_pct;
+      const delta=(hp==null||lp==null)?null:lp-hp;
+      return `<div style="display:grid;grid-template-columns:minmax(92px,1fr) 2fr 70px;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)">
+        <b style="font-size:13px">${row.name}</b>
+        <div><div style="height:7px;background:var(--surface-2);border-radius:99px;overflow:hidden"><span style="display:block;height:100%;width:${Math.max(0,Math.min(100,lp||0))}%;background:var(--money);border-radius:99px"></span></div><div style="font-size:11px;color:var(--ink-faint);margin-top:5px">Live ${formatPct(lp)} · Historical ${formatPct(hp)}</div></div>
+        <span class="tnum" style="font-size:12px;text-align:right;color:${delta!=null&&delta<0?'var(--crit)':delta!=null&&delta>0?'var(--ok)':'var(--ink-soft)'}">${delta==null?'—':`${delta>=0?'+':''}${delta.toFixed(1)} pp`}</span>
+      </div>`;
+    }).join('');
+  }
+  function renderAnalytics(analytics){
+    const summary=$("#analytics-summary"); if(!summary) return;
+    if(!analytics || !analytics.historical || !analytics.live){
+      summary.innerHTML='<div class="card pad" style="grid-column:1/-1;color:var(--ink-faint)">Waiting for historical and live transaction aggregates…</div>';
+      ["#analytics-country","#analytics-provider","#analytics-method"].forEach(id=>{const el=$(id);if(el)el.innerHTML='';});
+      return;
+    }
+    const h=analytics.historical, l=analytics.live, convDelta=(l.conversion_pct==null||h.conversion_pct==null)?null:l.conversion_pct-h.conversion_pct;
+    summary.innerHTML=`
+      <div class="kpi"><div class="k">Historical attempts</div><div class="v tnum">${Number(h.attempts||0).toLocaleString()}</div><div class="m">baseline data set</div></div>
+      <div class="kpi"><div class="k">Live attempts</div><div class="v tnum">${Number(l.attempts||0).toLocaleString()}</div><div class="m">generated stream retained in memory</div></div>
+      <div class="kpi ${convDelta!=null&&convDelta<0?'state-crit':''}"><div class="k">Live conversion</div><div class="v tnum">${formatPct(l.conversion_pct)}</div><div class="m">historical ${formatPct(h.conversion_pct)} · ${convDelta==null?'—':`${convDelta>=0?'+':''}${convDelta.toFixed(1)} pp`}</div></div>
+      <div class="kpi"><div class="k">Average ticket</div><div class="v tnum">${money(l.average_ticket_usd||0)}</div><div class="m">historical ${money(h.average_ticket_usd||0)}</div></div>`;
+    renderAnalyticsBreakdown("#analytics-country",h.by_country,l.by_country);
+    renderAnalyticsBreakdown("#analytics-provider",h.by_provider,l.by_provider);
+    renderAnalyticsBreakdown("#analytics-method",h.by_payment_method,l.by_payment_method);
+  }
+
   /* ------------------------------------------------ ROOT CAUSE EXPLORER ------------------------------------------------ */
   let currentInc = null;
   function renderSwitch(){
@@ -1470,13 +1525,14 @@
   function renderExplorer(){ renderSwitch(); renderTree(); renderEvidence(); }
 
   /* ------------------------------------------------ NAVIGATION ------------------------------------------------ */
-  const VIEW_TITLES = {command:"Command Center", incidents:"Incidents", explorer:"Root Cause Explorer", memory:"Incident Memory", controls:"Detection Controls"};
+  const VIEW_TITLES = {command:"Command Center", incidents:"Incidents", explorer:"Root Cause Explorer", memory:"Incident Memory", analytics:"Analytics", controls:"Detection Controls"};
   const VIEW_HELP = {
     command: {title:"Cómo usar Command Center", intro:"Es el resumen para saber si la operación está sana y decidir dónde mirar primero.", steps:[["1. Mira la conversión","Compárala contra el valor esperado; una diferencia sostenida puede indicar un incidente."],["2. Revisa el dinero en riesgo","La cifra principal estima el impacto por hora de los incidentes activos."],["3. Abre un incidente","Usa las tarjetas para pasar al detalle de causa raíz antes de tomar una acción."]]},
     incidents: {title:"Cómo usar Incidents", intro:"Esta es la cola de trabajo: cada registro es un problema separado y ya analizado por el sistema.", steps:[["1. Empieza por prioridad","Da preferencia a mayor costo por hora y severidad."],["2. Lee el segmento","Merchant, provider, país, método y banco indican dónde se concentra la caída."],["3. Confirma la confianza","Una confianza baja significa que hay que reunir más evidencia antes de atribuir una causa."]]},
     explorer: {title:"Cómo usar Root Cause Explorer", intro:"Aquí puedes comprobar por qué el sistema propone una causa y una acción concreta.", steps:[["1. Sigue las ramas rojas","Muestran los segmentos donde la pérdida se concentra frente a los que permanecen normales."],["2. Contrasta la evidencia","Revisa conversión esperada, observada, volumen y motivo de rechazo."],["3. Decide con control humano","La recomendación orienta la respuesta; nunca cambia el enrutamiento automáticamente."]]},
     memory: {title:"Cómo usar Incident Memory", intro:"La memoria evita que el equipo investigue desde cero un problema que ya ocurrió.", steps:[["1. Compara la firma","Busca coincidencias de provider, país, método, merchant o banco emisor."],["2. Valida la similitud","Una coincidencia alta aporta contexto, pero se debe confirmar con la evidencia actual."],["3. Recupera la lección","Consulta qué acción resolvió el caso anterior y cuánto tardó en recuperarse."]]},
-    controls: {title:"Cómo usar Detection Controls", intro:"Estos parámetros cambian qué tan sensible es el detector ante una caída de conversión.", steps:[["Ventana y evaluación","Definen cuánto histórico reciente analiza y con qué frecuencia."],["Persistencia y volumen","Evitan alertas por una muestra pequeña o un minuto de ruido."],["Umbrales estadísticos","Más estrictos reducen falsos positivos, pero pueden detectar más tarde."]]}
+    controls: {title:"Cómo usar Detection Controls", intro:"Estos parámetros cambian qué tan sensible es el detector ante una caída de conversión.", steps:[["Ventana y evaluación","Definen cuánto histórico reciente analiza y con qué frecuencia."],["Persistencia y volumen","Evitan alertas por una muestra pequeña o un minuto de ruido."],["Umbrales estadísticos","Más estrictos reducen falsos positivos, pero pueden detectar más tarde."]]},
+    analytics: {title:"Cómo usar Analytics", intro:"Esta vista compara la línea base histórica con el stream actual para entender la operación a alto nivel.", steps:[["Lee el resumen","Compara volumen, conversión y ticket promedio entre ambos conjuntos."],["Revisa la mezcla","Los gráficos muestran cómo cambia la conversión por país, provider y método."],["No reemplaza el diagnóstico","Para investigar una caída concreta, abre el incidente y revisa Root Cause Explorer."]]}
   };
   let currentView = "command";
   function openHelp(){
@@ -1630,6 +1686,7 @@
     renderTabCounts();
     renderMemoryList();
     renderMemoryPanel();
+    renderAnalytics(data && data.analytics);
     if (currentInc) renderExplorer();
 
     const activeMoney = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active").reduce((s,i)=>s+(i.money||0),0);

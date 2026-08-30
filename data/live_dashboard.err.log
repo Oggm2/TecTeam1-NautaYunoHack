@@ -1,0 +1,9 @@
+live dashboard running at 15.0/s, refreshing every 10.0s — Ctrl+C to stop
+[2026-08-30T01:34:08.170373+00:00] refreshed dashboard — 1 tx retained, 0 incident(s)
+[2026-08-30T01:34:18.234193+00:00] refreshed dashboard — 152 tx retained, 0 incident(s)
+[2026-08-30T01:34:28.234479+00:00] refreshed dashboard — 302 tx retained, 0 incident(s)
+[2026-08-30T01:34:38.301183+00:00] refreshed dashboard — 453 tx retained, 0 incident(s)
+[2026-08-30T01:34:48.367329+00:00] refreshed dashboard — 604 tx retained, 0 incident(s)
+[2026-08-30T01:34:58.367689+00:00] refreshed dashboard — 754 tx retained, 0 incident(s)
+[2026-08-30T01:35:08.434275+00:00] new incident: {'provider': 'stripe', 'country': 'BR'}
+[2026-08-30T01:35:08.434275+00:00] refreshed dashboard — 905 tx retained, 1 incident(s)
