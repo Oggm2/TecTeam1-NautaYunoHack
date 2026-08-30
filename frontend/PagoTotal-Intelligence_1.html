@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <style>img{max-width:100%}[hidden]{display:none!important}body{margin:0}</style>
-<title>PagoTotal Intelligence</title>
+<title>SentiPay</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
@@ -587,7 +587,7 @@
     <div class="brand">
       <div class="logo"></div>
       <div>
-        <div class="name">PagoTotal</div>
+        <div class="name">SentiPay</div>
         <div class="sub">Intelligence</div>
       </div>
     </div>
@@ -752,7 +752,7 @@
         <div class="tab" data-status="investigating">Detected / investigating <span class="count" id="c-inv">1</span></div>
         <div class="tab" data-status="monitoring">Monitoring <span class="count" id="c-mon">0</span></div>
         <div class="tab" data-status="recovered">Recovered <span class="count" id="c-rec">0</span></div>
-        <div class="tab" data-status="resolved">Resolved & stored <span class="count" id="c-res">3</span></div>
+        <div class="tab" data-status="resolved">Resolved <span class="count" id="c-res">3</span></div>
       </div>
       <div class="filters" id="filters"></div>
       <div class="card">
@@ -839,7 +839,7 @@
 
     <!-- ============ VIEW: MEMORY ============ -->
     <section class="view" id="view-memory">
-      <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Incident Memory: identify recurrences.</strong> This view compares the current incident signature with resolved cases. High similarity is useful evidence for context and past actions, but it does not replace reviewing the current diagnosis.<div class="guide-steps">Compare the signature, decline reason, and previous resolution outcome.</div></div></aside>
+      <aside class="view-guide" role="note" hidden><span class="guide-icon">i</span><div><strong>Incident Memory: identify recurrences.</strong> This view compares the current incident signature with statistically recovered and operator-confirmed cases. High similarity is useful context, but it does not replace reviewing the current diagnosis.<div class="guide-steps">Compare the signature, decline reason, verification level, and any documented resolution outcome.</div></div></aside>
       <div class="section-h"><h2>Recurrence check</h2><span class="hint">every new incident is matched against operational history</span></div>
       <div class="card pad" id="memory-current" style="margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
@@ -955,6 +955,7 @@
       <label style="font-size:12px">Duration (seconds)<input name="duration_seconds" type="number" min="30" max="900" step="30" value="300" style="width:100%;margin-top:4px"></label>
       <div style="grid-column:1/-1;display:flex;gap:10px;align-items:center;margin-top:6px"><button class="btn primary" type="submit">Inject live incident</button><span id="trial-status" style="font-size:12px;color:var(--ink-faint)"></span></div>
     </form>
+    <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:14px"><div class="section-h" style="margin:0 0 8px"><h2>Active trial incidents</h2><span class="hint">Remove only judge-created trial injections</span></div><div id="trial-active-list" style="display:grid;gap:7px"></div></div>
     <div class="steps" id="tbf-steps"></div>
     <div class="result" id="tbf-result">
       <div class="rl">✓ Injection accepted</div>
@@ -978,10 +979,27 @@
   </div>
 </div>
 
+<!-- ===================== HISTORY RESOLUTION ===================== -->
+<div class="overlay" id="history-resolution-overlay" role="dialog" aria-modal="true" aria-labelledby="history-resolution-title">
+  <div class="help-modal">
+    <div class="th"><div><div class="help-kicker">Operator closure</div><h3 id="history-resolution-title">Document recovered incident</h3></div><span class="x" id="history-resolution-close" aria-label="Close">✕</span></div>
+    <p class="help-intro">This incident is already stored because statistical recovery was verified. Add the human-confirmed cause and validation to upgrade its history record; no payment routing is changed.</p>
+    <form id="history-resolution-form" style="display:grid;gap:10px">
+      <input id="history-resolution-owner" required placeholder="Incident owner" value="Payments Operations">
+      <select id="history-resolution-category" required><option value="provider_degradation">Provider degradation</option><option value="issuing_bank">Issuing bank</option><option value="payment_method">Payment method</option><option value="fraud_or_3ds_rule">Fraud / 3DS rule</option><option value="routing_or_configuration">Routing / configuration</option><option value="insufficient_evidence">Insufficient evidence</option></select>
+      <textarea id="history-resolution-cause" rows="2" required placeholder="Confirmed root cause"></textarea>
+      <textarea id="history-resolution-action" rows="2" required placeholder="Human action or decision taken"></textarea>
+      <textarea id="history-resolution-validation" rows="2" required placeholder="Validation result across healthy windows"></textarea>
+      <textarea id="history-resolution-note" rows="2" placeholder="Optional closure note"></textarea>
+      <div class="actions"><button class="btn primary" type="submit">Mark as resolved</button><button class="btn ghost" type="button" id="history-resolution-cancel">Cancel</button></div>
+    </form>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <button class="chat-toggle" id="chat-toggle" aria-label="Open analytics chat">✦</button>
 <section class="chat-panel" id="chat-panel" aria-label="Analytics chat">
-  <div class="chat-head"><div><h3>Ask PagoTotal</h3><p>Query historical data, the live stream, incidents, and memory.</p></div><button class="chat-close" id="chat-close" aria-label="Close chat">×</button></div>
+  <div class="chat-head"><div><h3>Ask SentiPay</h3><p>Query historical data, the live stream, incidents, and memory.</p></div><button class="chat-close" id="chat-close" aria-label="Close chat">×</button></div>
   <div class="chat-messages" id="chat-messages"><div class="chat-message assistant">Hello. I can explain current conversion, compare segments with historical data, or review incidents and recurrences.</div></div>
   <div class="chat-suggestions"><button class="chat-suggestion">What is affecting conversion right now?</button><button class="chat-suggestion">Which provider has the highest risk?</button><button class="chat-suggestion">Are there recurring incidents?</button></div>
   <form class="chat-form" id="chat-form"><textarea id="chat-input" placeholder="Ask about the data…" maxlength="2000" required></textarea><button class="btn primary" type="submit">Send</button></form>
@@ -1203,7 +1221,7 @@
   function realIncidentToView(entry){
     const d = entry.diagnosis, m = d.root_metrics, disp = segmentToDisplay(d.root_cause_segment||{});
     const windowStart = d.incident_window && d.incident_window.started_at ? new Date(d.incident_window.started_at) : null;
-    const sevLabel = entry.status==="detected" || entry.status==="investigating" ? "Investigating" : entry.severity==="crit" ? "Critical" : entry.severity==="high" ? "High" : "Elevated";
+    const sevLabel = entry.manual_trial ? "Trial alert" : entry.status==="detected" || entry.status==="investigating" ? "Investigating" : entry.severity==="crit" ? "Critical" : entry.severity==="high" ? "High" : "Elevated";
     const explanation = d.explanation || {};
     const windowCost = entry.window_expected_unrecovered_gmv_usd ?? ((entry.cost_per_hour_usd||0) * (entry.duration_minutes||0) / 60);
     const confNote = {
@@ -1220,7 +1238,7 @@
       statusHistory: entry.status_history || [], operator: entry.operator || {}, recoveryEvaluations: entry.recovery_evaluations || 0,
       conclusionLevel: entry.evidence_graph?.conclusion_level || "impact_localized", evidenceGraph: entry.evidence_graph || {nodes:[]},
       merchant: disp.merchant, provider: disp.provider, country: disp.country, method: disp.method, bank: disp.bank,
-      rootCause: disp.rootCause,
+      rootCause: entry.manual_trial ? `Manual Trial Alert · ${disp.rootCause}` : disp.rootCause,
       convFrom: +(m.expected_conversion*100).toFixed(1), convTo: +(m.observed_conversion*100).toFixed(1),
       money: d.evidence_sufficient ? Math.round(entry.accumulated_incident_loss_usd||0) : 0,
       currentRate: d.evidence_sufficient ? Math.round(entry.current_expected_unrecovered_gmv_per_hour_usd ?? m.expected_unrecovered_amount_per_hour_usd ?? 0) : 0,
@@ -1260,8 +1278,12 @@
     return {sev: r.severity||"high", who: disp.rootCause||"Unknown segment", meta:`${disp.provider} · ${disp.country}`,
       method: disp.method, conv:"—", money: r.cost_per_hour_usd ? "$"+Math.round(r.cost_per_hour_usd).toLocaleString("en-US") : "—",
       affected: r.attempts ? r.attempts.toLocaleString()+"/hr" : "—", conf: r.confidence_pct ? r.confidence_pct+"%" : "—",
+      incidentId: r.incident_id,
+      memoryStatus: r.memory_status||"historical_resolved",
       date: r.resolved_at ? new Date(r.resolved_at).toLocaleDateString("en-US", {month:"short", day:"2-digit"}) : "—"};
   }
+  const isRecoveredMemory = record => record.memoryStatus === "statistically_recovered";
+  const memoryStatusLabel = status => status === "statistically_recovered" ? "statistically recovered" : status === "operator_confirmed" ? "operator confirmed" : "historical resolved";
 
   let INCIDENTS = MOCK_INCIDENTS, RESOLVED = MOCK_RESOLVED, MEMORY = [], MEMORY_MATCHES = [], rcOrder = ["santander","dlocal","uncertainty"], usingRealData = false, lastGeneratedAt = null;
   const POLL_MS = 8000;
@@ -1538,18 +1560,18 @@
     if(status==="open"){ rows = all.filter(i=>isOpenStatus(i.status)); }
     else if(status==="investigating"){ rows = all.filter(i=>i.status==="detected"||i.status==="investigating"); }
     else if(status==="monitoring"){ rows = all.filter(i=>i.status==="monitoring"); }
-    else if(status==="recovered"){ rows = all.filter(i=>i.status==="recovered_automatically"); }
-    if(status==="resolved"){
-      $("#inc-rows").innerHTML = RESOLVED.map(r=>`<div class="grow" style="cursor:default">
+    if(status==="recovered" || status==="resolved"){
+      const historyRows=RESOLVED.filter(r=>status==="recovered" ? isRecoveredMemory(r) : !isRecoveredMemory(r));
+      $("#inc-rows").innerHTML = historyRows.length ? historyRows.map(r=>`<div class="grow" style="cursor:default">
         <span>${sevChip(r.sev)}</span>
-        <span class="who"><b>${r.who}</b><span>resolved · ${r.date}</span></span>
+        <span class="who"><b>${r.who}</b><span>${memoryStatusLabel(r.memoryStatus)} · ${r.date}</span></span>
         <span class="colhide" style="color:var(--ink-soft)">${r.meta}</span>
         <span class="colhide mono" style="color:var(--ink-soft)">${r.method}</span>
         <span class="tnum" style="color:var(--ink-soft)">${r.conv}</span>
         <span class="cellmoney">${r.money}/hr</span>
         <span class="colhide mono">${r.affected}</span>
-        <span class="chip ok" style="justify-self:start">resolved</span>
-      </div>`).join("");
+        <span style="display:flex;gap:7px;align-items:center;justify-self:start"><span class="chip ok">${isRecoveredMemory(r) ? "recovered" : "resolved"}</span>${isRecoveredMemory(r) ? `<button class="btn ghost" type="button" data-resolve-history="${escapeHtml(r.incidentId||"")}" style="padding:5px 8px;font-size:11px">Document resolution</button>` : ""}</span>
+      </div>`).join("") : `<div style="padding:18px 4px;color:var(--ink-faint);font-size:13px">No ${status} incidents yet.</div>`;
       return;
     }
     $("#inc-rows").innerHTML = rows.map(inc=>{
@@ -1571,8 +1593,8 @@
     $("#c-active").textContent = all.filter(i=>isOpenStatus(i.status)).length;
     $("#c-inv").textContent = all.filter(i=>i.status==="detected"||i.status==="investigating").length;
     $("#c-mon").textContent = all.filter(i=>i.status==="monitoring").length;
-    $("#c-rec").textContent = all.filter(i=>i.status==="recovered_automatically").length;
-    $("#c-res").textContent = RESOLVED.length;
+    $("#c-rec").textContent = RESOLVED.filter(isRecoveredMemory).length;
+    $("#c-res").textContent = RESOLVED.filter(r=>!isRecoveredMemory(r)).length;
   }
   $$(".tab").forEach(t=> t.addEventListener("click", ()=>{
     $$(".tab").forEach(x=>x.classList.remove("active")); t.classList.add("active");
@@ -1588,7 +1610,7 @@
       <span class="mono" style="color:var(--ink-faint)">${m.date}</span>
       <span class="cellmoney">${m.money}</span>
       <span style="color:var(--ink-soft);font-size:12px">${m.method||""}${m.conf?' · confidence '+m.conf:''}</span>
-    </div>`).join("") : '<div style="padding:18px 4px;color:var(--ink-faint);font-size:13px">No resolved incidents yet — incident memory isn\'t connected to live data in this build.</div>';
+    </div>`).join("") : '<div style="padding:18px 4px;color:var(--ink-faint);font-size:13px">No statistically recovered incidents in memory yet.</div>';
   }
 
   function memorySignature(segment){ return Object.entries(segment||{}).map(([key,value])=>`${key}=${value}`).join(" × "); }
@@ -1597,7 +1619,7 @@
     const target = $("#memory-current");
     const match = MEMORY_MATCHES[0];
     if(!match){
-      target.innerHTML = `<div style="padding:8px 2px"><div class="section-h"><h2>No recurrence detected</h2></div><p style="color:var(--ink-soft);font-size:13.5px;margin:0">${MEMORY.length} resolved incident(s) were checked. None matches an active incident strongly enough to claim a recurrence.</p></div>`;
+      target.innerHTML = `<div style="padding:8px 2px"><div class="section-h"><h2>No recurrence detected</h2></div><p style="color:var(--ink-soft);font-size:13.5px;margin:0">${MEMORY.length} recovered incident(s) were checked. None matches an active incident strongly enough to claim a recurrence.</p></div>`;
       return;
     }
     const previous = match.recurrence.previous_incident;
@@ -1606,8 +1628,8 @@
     const currentCost = match.cost_per_hour_usd || 0;
     target.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
       <div class="sim-badge">Similar incident found · ${similarity}% similarity</div>
-      <div style="font-size:12.5px;color:var(--ink-soft)">Matched against resolved operational history</div></div>
-      <div class="mem-compare"><div class="mem-side"><div class="mlab">Previous resolved incident</div><div class="sig">${memorySignature(previous.root_cause_segment)}</div><div class="date">${new Date(previous.resolved_at).toLocaleDateString()} · resolved in ${previous.duration_minutes||"—"} min</div><div style="margin-top:12px"><div class="row"><span>Incidence cost</span><span class="v" style="color:var(--money)">$${Math.round(previous.cost_per_hour_usd||0).toLocaleString()}/hr</span></div><div class="row"><span>Decline reason</span><span class="v mono">${previous.decline_reason||"—"}</span></div></div></div>
+      <div style="font-size:12.5px;color:var(--ink-soft)">Matched against recovered incident memory</div></div>
+      <div class="mem-compare"><div class="mem-side"><div class="mlab">Previous recovered incident</div><div class="sig">${memorySignature(previous.root_cause_segment)}</div><div class="date">${new Date(previous.resolved_at).toLocaleDateString()} · ${previous.memory_status === "operator_confirmed" ? "operator confirmed" : "statistically recovered"}</div><div style="margin-top:12px"><div class="row"><span>Incidence cost</span><span class="v" style="color:var(--money)">$${Math.round(previous.cost_per_hour_usd||0).toLocaleString()}/hr</span></div><div class="row"><span>Decline reason</span><span class="v mono">${previous.decline_reason||"—"}</span></div></div></div>
       <div class="mem-arrow">→</div><div class="mem-side"><div class="mlab">Current incident</div><div class="sig" style="color:var(--crit)">${memorySignature(match.root_cause_segment)}</div><div class="date">Active now · confidence ${match.confidence_pct||"—"}%</div><div style="margin-top:12px"><div class="row"><span>Incidence cost</span><span class="v" style="color:var(--money)">$${Math.round(currentCost).toLocaleString()}/hr</span></div><div class="row"><span>Decline reason</span><span class="v mono">${(current.dominant_decline||{}).decline_reason||"—"}</span></div></div></div></div>
       <div style="margin-top:18px;padding:14px 16px;background:var(--ok-dim);border:1px solid #1c5843;border-radius:12px;font-size:13.5px;color:#a7f3d0"><b>Previous resolution:</b> ${previous.resolution_note||"No resolution note available."}</div>`;
   }
@@ -1815,6 +1837,45 @@
     try { const response=await fetch(`/api/incidents/${encodeURIComponent(inc.lifecycleKey)}/resolve`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); const result=await response.json(); if(!response.ok) throw new Error(result.error||"Could not resolve incident"); applyLifecycleRecord(inc,result.incident); toast("Incident resolved by operator and stored in memory."); }
     catch(error) { toast("Could not resolve incident: "+error.message); }
   }
+  let historyResolutionIncidentId=null;
+  function closeHistoryResolution(){
+    historyResolutionIncidentId=null;
+    $("#history-resolution-overlay").classList.remove("open");
+    $("#history-resolution-form").reset();
+    $("#history-resolution-owner").value="Payments Operations";
+  }
+  function openHistoryResolution(incidentId){
+    if(!incidentId) return;
+    historyResolutionIncidentId=incidentId;
+    const record=MEMORY.find(item=>item.incident_id===incidentId);
+    $("#history-resolution-owner").value=record?.owner||"Payments Operations";
+    $("#history-resolution-overlay").classList.add("open");
+  }
+  async function submitHistoryResolution(event){
+    event.preventDefault();
+    if(!historyResolutionIncidentId) return;
+    const payload={
+      owner:$("#history-resolution-owner").value,
+      category:$("#history-resolution-category").value,
+      confirmed_root_cause:$("#history-resolution-cause").value,
+      action_taken:$("#history-resolution-action").value,
+      validation_result:$("#history-resolution-validation").value,
+      resolution_note:$("#history-resolution-note").value,
+    };
+    try {
+      const response=await fetch(`/api/incidents/${encodeURIComponent(historyResolutionIncidentId)}/resolve`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const result=await response.json();
+      if(!response.ok) throw new Error(result.error||"Could not resolve incident");
+      MEMORY=MEMORY.map(item=>item.incident_id===historyResolutionIncidentId?{...item,memory_status:"operator_confirmed",resolved_at:result.incident.operational_resolved_at,confirmed_root_cause:payload.confirmed_root_cause,action_taken:payload.action_taken,resolution_note:payload.resolution_note||payload.action_taken}:item);
+      RESOLVED=MEMORY.map(resolvedEntryToView);
+      closeHistoryResolution(); renderTabCounts(); renderIncidentsTable($(".tab.active")?.dataset.status||"open"); renderMemoryList(); renderMemoryPanel();
+      toast("Incident resolved by operator. Its history record was updated.");
+    } catch(error) { toast("Could not resolve incident: "+error.message); }
+  }
+  $("#history-resolution-form").addEventListener("submit",submitHistoryResolution);
+  $("#history-resolution-close").addEventListener("click",closeHistoryResolution);
+  $("#history-resolution-cancel").addEventListener("click",closeHistoryResolution);
+  $("#history-resolution-overlay").addEventListener("click",event=>{ if(event.target===$("#history-resolution-overlay")) closeHistoryResolution(); });
   function renderExplorer(){ renderSwitch(); renderTree(); renderEvidence(); renderEvidenceGraph(INCIDENTS[currentInc]); renderWorkflow(INCIDENTS[currentInc]); }
 
   /* ------------------------------------------------ NAVIGATION ------------------------------------------------ */
@@ -1888,6 +1949,8 @@
   // open incident -> explorer
   function openIncident(key){ currentInc = key==="uncertainty"?"uncertainty":key; renderExplorer(); go("explorer"); }
   document.addEventListener("click", e=>{
+    const resolutionButton=e.target.closest("[data-resolve-history]");
+    if(resolutionButton){ e.preventDefault(); openHistoryResolution(resolutionButton.dataset.resolveHistory); return; }
     const t = e.target.closest("[data-open]");
     if(t){ openIncident(t.dataset.open); }
   });
@@ -1935,6 +1998,7 @@
     $("#tbf-steps").innerHTML='<div class="tstep run"><span class="sp"><span class="ring"></span></span><span class="lab">Ready for a live, judge-defined injection</span></div>';
     $("#trial-status").textContent="";
     populateTrialOptions();
+    loadTrialInjections();
   }
   $("#open-trial").addEventListener("click", openTrial);
   $("#tbf-close").addEventListener("click", ()=> $("#overlay").classList.remove("open"));
@@ -1943,12 +2007,21 @@
   const TRIAL_OPTIONS={MX:{methods:["card","wallet","cash_in_store"],banks:["BBVA","Banorte","Santander","Citibanamex"]},CO:{methods:["card","pse","wallet","cash_in_store"],banks:["Bancolombia","Davivienda","Banco de Bogota","Nequi"]},BR:{methods:["card","wallet","pix","cash_in_store"],banks:["Itau","Bradesco","Nubank","Banco do Brasil"]}};
   function populateTrialOptions(){ const options=TRIAL_OPTIONS[$("#trial-country").value]; $("#trial-method").innerHTML=options.methods.map(value=>`<option value="${value}">${value}</option>`).join(""); $("#trial-bank").innerHTML=options.banks.map(value=>`<option value="${value}">${value}</option>`).join(""); }
   $("#trial-country").addEventListener("change",populateTrialOptions);
+  async function loadTrialInjections(){
+    const target=$("#trial-active-list");
+    try {
+      const response=await fetch("/api/trial-injections",{cache:"no-store"}); const payload=await response.json(); if(!response.ok) throw new Error();
+      const injections=payload.injections||[];
+      target.innerHTML=injections.length?injections.map(injection=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px"><span style="flex:1"><b>${escapeHtml(injection.name||"Judge live trial")}</b><br><span style="color:var(--ink-faint)">${escapeHtml(Object.values(injection.filters||{}).join(" × "))}</span></span><button class="btn ghost trial-remove" data-trial-id="${escapeHtml(injection.id)}" style="padding:5px 8px">Remove</button></div>`).join(""):'<div style="color:var(--ink-faint);font-size:12px">No active trial incidents.</div>';
+      $$(".trial-remove").forEach(button=>button.addEventListener("click",async()=>{ button.disabled=true; try { const response=await fetch(`/api/trial-injections/${encodeURIComponent(button.dataset.trialId)}`,{method:"DELETE"}); if(!response.ok) throw new Error(); toast("Trial incident removed."); loadTrialInjections(); } catch { toast("Could not remove the trial incident."); button.disabled=false; } }));
+    } catch { target.innerHTML='<div style="color:var(--ink-faint);font-size:12px">Start control_server.py to manage trial incidents.</div>'; }
+  }
   $("#trial-form").addEventListener("submit",async event=>{
     event.preventDefault(); const form=new FormData(event.target), submit=$("#trial-form button"), status=$("#trial-status");
     const filters=Object.fromEntries(["merchant","provider","country","payment_method","issuing_bank"].map(key=>[key,String(form.get(key))]));
     const payload={name:String(form.get("name")),filters,decline_reason:String(form.get("decline_reason")),approval_rate:Number(form.get("approval_rate")),traffic_share:Number(form.get("traffic_share")),duration_seconds:Number(form.get("duration_seconds"))};
     submit.disabled=true; status.textContent="Injecting into the live stream…";
-    try { const response=await fetch("/api/trial-injections",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); const result=await response.json(); if(!response.ok) throw new Error(result.error||"Injection failed"); $("#tbf-result-signature").textContent=Object.values(result.filters).join(" × "); $("#tbf-result").classList.add("show"); $("#tbf-steps").innerHTML='<div class="tstep done"><span class="sp">✓</span><span class="lab">Live injection created; the detector is now collecting evidence.</span></div>'; status.textContent=`Active for ${result.duration_seconds}s at ${(result.approval_rate*100).toFixed(0)}% approval.`; toast("Live trial injection accepted."); }
+    try { const response=await fetch("/api/trial-injections",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); const result=await response.json(); if(!response.ok) throw new Error(result.error||"Injection failed"); $("#tbf-result-signature").textContent=Object.values(result.filters).join(" × "); $("#tbf-result").classList.add("show"); $("#tbf-steps").innerHTML='<div class="tstep done"><span class="sp">✓</span><span class="lab">Manual Trial Alert created immediately; live evidence is now being collected.</span></div>'; status.textContent=`Alert active for ${result.duration_seconds}s at ${(result.approval_rate*100).toFixed(0)}% approval.`; toast("Manual Trial Alert created."); loadTrialInjections(); }
     catch(error) { status.textContent="Could not inject: "+error.message; }
     finally { submit.disabled=false; }
   });
@@ -2055,7 +2128,7 @@
     const active=rcOrder.map(key=>INCIDENTS[key]).filter(inc=>inc&&isOpenStatus(inc.status)).length;
     $("#mar-unit").textContent=audienceMode==='financial'?`accumulated across ${active} active issue${active===1?'':'s'}`:audienceMode==='simple'?"an estimate that grows while payment problems continue":`accumulated across ${active} active incident${active===1?'':'s'}`;
     $("#crumb").textContent=viewTitle(currentView);
-    document.title=`PagoTotal · ${copy.name} workspace`;
+    document.title=`SentiPay · ${copy.name} workspace`;
     renderCommandIncidents();
     const activeTab=$(".tab.active");
     renderIncidentsTable(activeTab?activeTab.dataset.status:"open");

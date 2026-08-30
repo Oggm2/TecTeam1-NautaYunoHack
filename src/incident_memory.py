@@ -1,4 +1,4 @@
-"""Governed resolved knowledge and recurrence matching.
+"""Recovered incident memory and recurrence matching.
 
 Every stored incident is encoded as a sparse feature vector — one-hot for
 each affected dimension value (plus a "this dimension is involved at all"
@@ -10,9 +10,13 @@ incidents that share a *pattern* (same failing dimension, similar time of
 day, same decline reason) can match even when the exact merchant or bank
 differs.
 
-Only cases closed by an operator belong to this memory. Synthetic scenarios
-belong in ``examples/`` and observed/unconfirmed incidents belong in the
-lifecycle store; neither can produce a recurrence recommendation.
+An incident enters this memory when the detector verifies that conversion has
+recovered for the required number of healthy evaluation windows.  This lets a
+later incident benefit from the observed pattern immediately, without waiting
+for an operator to complete its post-mortem.  Each record explicitly states
+whether it is ``statistically_recovered`` or ``operator_confirmed`` so a
+similarity match never implies that an unconfirmed root cause was verified by
+a person.  Synthetic scenarios remain outside this memory.
 
 No numpy/scikit-learn dependency: with the handful of incidents this store
 realistically holds for a hackathon-scale demo, a brute-force nearest-
@@ -32,17 +36,28 @@ DIMENSION_KEYS = ("merchant", "provider", "payment_method", "country", "issuing_
 
 
 def _store(content: Any) -> dict[str, Any]:
-    """Migrate legacy auto-seeded records into quarantined observed history."""
-    if isinstance(content, dict) and content.get("version") == 2:
+    """Migrate earlier memory formats without losing their audit trail."""
+    if isinstance(content, dict) and content.get("version") == 3:
         return {
-            "version": 2,
-            "resolved_knowledge": list(content.get("resolved_knowledge", [])),
+            "version": 3,
+            "incident_memory": list(content.get("incident_memory", [])),
+            "unverified_observed_incidents": list(content.get("unverified_observed_incidents", [])),
+        }
+    if isinstance(content, dict) and content.get("version") == 2:
+        recovered = []
+        for record in content.get("resolved_knowledge", []):
+            migrated = dict(record)
+            migrated.setdefault("memory_status", "historical_resolved")
+            recovered.append(migrated)
+        return {
+            "version": 3,
+            "incident_memory": recovered,
             "unverified_observed_incidents": list(content.get("unverified_observed_incidents", [])),
         }
     legacy = content.get("incidents", []) if isinstance(content, dict) else (content if isinstance(content, list) else [])
-    # Old records were written at diagnosis time and cannot honestly be called
-    # resolved knowledge. Keep them for audit, never for recommendation.
-    return {"version": 2, "resolved_knowledge": [], "unverified_observed_incidents": list(legacy)}
+    # Old records were written at diagnosis time, before verified recovery.
+    # Keep them for audit, never for recurrence recommendations.
+    return {"version": 3, "incident_memory": [], "unverified_observed_incidents": list(legacy)}
 
 
 def load(path: str) -> list[dict[str, Any]]:
@@ -53,7 +68,7 @@ def load(path: str) -> list[dict[str, Any]]:
         content = json.loads(file.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
-    return _store(content)["resolved_knowledge"]
+    return _store(content)["incident_memory"]
 
 
 def save(path: str, incidents: list[dict[str, Any]]) -> None:
@@ -63,7 +78,7 @@ def save(path: str, incidents: list[dict[str, Any]]) -> None:
     except (OSError, json.JSONDecodeError):
         existing = {}
     store = _store(existing)
-    store["resolved_knowledge"] = incidents
+    store["incident_memory"] = incidents
     temporary = file.with_suffix(file.suffix + ".tmp")
     temporary.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
     temporary.replace(file)
@@ -141,7 +156,7 @@ def record_from_entry(entry: dict[str, Any]) -> dict[str, Any]:
 
 
 def upsert(records: list[dict[str, Any]], new_record: dict[str, Any]) -> list[dict[str, Any]]:
-    """Add or refresh one operator-approved incident without erasing history."""
+    """Add or refresh one recovered incident without erasing history."""
     incident_id = new_record.get("incident_id")
     kept = [record for record in records if record.get("incident_id") != incident_id]
     kept.append(new_record)

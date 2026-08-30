@@ -1,6 +1,6 @@
-# PagoTotal Intelligence — Control Tower
+# SentiPay — Control Tower
 
-PagoTotal Intelligence is a demonstrable monitoring and diagnosis system for a payment-orchestration platform. It observes a simulated transaction stream, detects material conversion drops, localizes their impact, and presents evidence, estimated economic impact, and a recommendation for human review. A concentrated segment is not presented as a confirmed cause until an operator or external evidence validates it.
+SentiPay is a demonstrable monitoring and diagnosis system for a payment-orchestration platform. It observes a simulated transaction stream, detects material conversion drops, localizes their impact, and presents evidence, estimated economic impact, and a recommendation for human review. A concentrated segment is not presented as a confirmed cause until an operator or external evidence validates it.
 
 Created for the **Control Tower** NextWave Hackathon challenge. It never changes payment routing or executes remediation.
 
@@ -43,7 +43,7 @@ Open [http://localhost:8001/PagoTotal-Intelligence_1.html](http://localhost:8001
 Demo now
 mock stream ─> detector ─> diagnosis ─> lifecycle/ledger ─> dashboard JSON
                     ↑              ↑        ↑           ↑
-  historical JSONL ─┘       route comparison  operational events   resolved knowledge
+  historical JSONL ─┘       route comparison  operational events   incident memory
 Trial by Fire / controls ───────────────> control server ─> dashboard
 
 Production target
@@ -64,7 +64,7 @@ OpenTelemetry + provider / 3DS / fraud / routing webhooks ─> evidence graph
 | Identity + lifecycle | `src/incident_identity.py` + `src/incident_lifecycle.py` | Mints one immutable incident id; separates financial recovery from operational closure. |
 | Financial ledger | `src/incident_loss_ledger.py` | Accumulates each incident exactly once using the immutable incident id. |
 | Evidence graph | `src/evidence_graph.py` | Orders payment evidence, operational context, hypotheses, and confirmed cause. |
-| Knowledge | `src/incident_memory.py` | Matches only operator-approved resolved knowledge; legacy observed cases are quarantined. |
+| Knowledge | `src/incident_memory.py` | Stores statistically recovered incidents for recurrence matching, preserving whether each was later operator-confirmed. |
 | Runtime | `src/live_dashboard.py` | Connects the pipeline and writes `frontend/dashboard_data.json`. |
 | API/UI | `src/control_server.py` + `frontend/` | Serves the dashboard, settings, chatbot, and Trial by Fire. |
 
@@ -108,13 +108,13 @@ It shows three distinct metrics: **Accumulated Incident Loss** for an open finan
 
 ### Incident identity and governed knowledge
 
-At first sustained detection the lifecycle mints an immutable `incident_id` from tenant, first-detected timestamp, and canonical detection signature. That exact id is used by lifecycle, financial ledger, dashboard, chatbot, tickets, and resolved knowledge; the changing set of correlated detector alerts is never used as a financial key.
+At first sustained detection the lifecycle mints an immutable `incident_id` from tenant, first-detected timestamp, and canonical detection signature. That exact id is used by lifecycle, financial ledger, dashboard, chatbot, tickets, and incident memory; the changing set of correlated detector alerts is never used as a financial key.
 
 The demo keeps three deliberately separate repositories:
 
 - **Synthetic training incidents:** `examples/incident_training_scenarios.json` and injection fixtures; never used for recurrence recommendations.
 - **Observed incidents:** `data/incident_lifecycle.json`; detected, investigating, monitoring, or statistically recovered cases.
-- **Resolved knowledge:** `data/incident_memory.json`; only operator-approved cases with confirmed cause, action, result, and evidence. Legacy auto-seeded records are preserved as unverified observed history and excluded from matching.
+- **Incident memory:** `data/incident_memory.json`; an incident is stored when statistical recovery is verified. Each record is labeled `statistically_recovered` or `operator_confirmed`, so recurrence context is never mistaken for a human-confirmed root cause. Legacy auto-seeded records remain quarantined and excluded from matching.
 
 ### Evidence graph context
 

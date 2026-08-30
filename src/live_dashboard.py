@@ -46,6 +46,40 @@ def write_atomic(path: Path, content: str) -> None:
     os.replace(tmp, path)
 
 
+def direct_trial_entries(trials: list[dict[str, Any]], now: datetime, priority_start: int) -> list[dict[str, Any]]:
+    """Expose judge-created trials immediately, before statistical confirmation arrives."""
+    entries: list[dict[str, Any]] = []
+    for trial in trials:
+        activated_at = parse_timestamp(trial.get("activated_at"))
+        if not trial.get("direct_alert") or not activated_at:
+            continue
+        if now > activated_at + timedelta(seconds=int(trial.get("duration_seconds", 0))):
+            continue
+        filters = {key: str(value) for key, value in trial.get("filters", {}).items()}
+        configured_rate = float(trial.get("approval_rate", 0))
+        diagnosis = {
+            "incident_id": f"trial:{trial['id']}", "alert_id": f"trial:{trial['id']}",
+            "evidence_sufficient": False, "confidence": "manual_trial",
+            "reason": "Manual Trial Alert: live traffic injection was created; statistical evidence is now being collected.",
+            "root_cause_segment": filters,
+            "incident_window": {"started_at": activated_at.isoformat(), "ended_at": now.isoformat()},
+            "root_metrics": {"expected_conversion": 1.0, "observed_conversion": configured_rate, "conversion_drop_pp": (1 - configured_rate) * 100, "attempts": 0},
+            "drill_down_path": [], "payment_method_impact": [], "dominant_decline": {"decline_reason": trial.get("decline_reason"), "share_of_excess_declines": 0},
+            "recommended_action": "Observe the live Trial by Fire injection. The statistical detector will validate and refine the diagnosis as evidence arrives.",
+        }
+        entries.append({
+            "incident_id": diagnosis["incident_id"], "alert_id": diagnosis["alert_id"], "incident_key": diagnosis["incident_id"],
+            "priority_rank": priority_start + len(entries), "priority_score": 0.0, "cost_per_hour_usd": 0.0,
+            "current_expected_unrecovered_gmv_per_hour_usd": 0.0, "window_expected_unrecovered_gmv_usd": 0.0,
+            "accumulated_incident_loss_usd": 0.0, "gross_lost_amount_per_hour_usd": 0.0, "urgency": 0.0,
+            "urgency_basis": "manual_trial", "priority_factors": {}, "readings": 1, "severity": "high", "status": "active",
+            "confidence_pct": 100, "root_cause_segment": filters, "root_cause_label": " × ".join(filters.values()),
+            "duration_minutes": round((now - activated_at).total_seconds() / 60, 1), "recurrence": None,
+            "diagnosis": diagnosis, "manual_trial": True, "trial_injection_id": trial["id"], "trial_name": trial.get("name", "Judge live trial"),
+        })
+    return entries
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate a live transaction stream and keep the dashboard JSON continuously up to date.")
     parser.add_argument("--history", default="data/history.jsonl")
@@ -97,6 +131,7 @@ def main() -> None:
     live_injections_path = Path(args.live_injections)
     live_injections_mtime: int | None = None
     live_injections: list[generator.Injection] = []
+    direct_trials: list[dict[str, Any]] = []
     memory = incident_memory.load(args.memory)
     lifecycle_path = Path(args.lifecycle)
     lifecycle_state = incident_lifecycle.load(lifecycle_path)
@@ -117,12 +152,14 @@ def main() -> None:
             return False
 
     def reload_live_injections() -> None:
-        nonlocal live_injections_mtime, live_injections
+        nonlocal live_injections_mtime, live_injections, direct_trials
         mtime = live_injections_path.stat().st_mtime_ns if live_injections_path.exists() else None
         if mtime == live_injections_mtime:
             return
         try:
             live_injections = generator.load_injections(str(live_injections_path)) if mtime is not None else []
+            raw_trials = json.loads(live_injections_path.read_text(encoding="utf-8")) if mtime is not None else []
+            direct_trials = raw_trials if isinstance(raw_trials, list) else []
             live_injections_mtime = mtime
             print(f"loaded {len(live_injections)} live trial injection(s)", file=sys.stderr)
         except (OSError, ValueError, json.JSONDecodeError) as error:
@@ -228,6 +265,21 @@ def main() -> None:
             entries = incident_lifecycle.reconcile(
                 lifecycle_state, entries, now, evaluated=evaluated_this_refresh,
             )
+            # Statistical recovery is enough to make an incident useful as
+            # recurrence context. The memory record keeps its verification
+            # status, so this is not presented as an operator-confirmed cause.
+            recovered_records = [
+                record for record in lifecycle_state.get("incidents", {}).values()
+                if record.get("status") == incident_lifecycle.RECOVERED_STATUS
+                and record.get("memory_sync_status") != incident_lifecycle.RECOVERED_STATUS
+            ]
+            if recovered_records:
+                memory = incident_memory.load(args.memory)
+                for record in recovered_records:
+                    memory = incident_memory.upsert(memory, incident_lifecycle.record_for_memory(record))
+                    record["memory_sync_status"] = incident_lifecycle.RECOVERED_STATUS
+                incident_memory.save(args.memory, memory)
+            entries.extend(direct_trial_entries(direct_trials, now, len(entries) + 1))
             operational_events = evidence_graph.load_operational_events(args.operational_events)
             lifecycle_records = lifecycle_state.get("incidents", {})
             for entry in entries:

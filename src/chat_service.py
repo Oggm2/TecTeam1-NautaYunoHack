@@ -28,7 +28,7 @@ TOOLS: list[dict[str, Any]] = [
     }, "additionalProperties": False}},
     {"type": "function", "name": "get_incidents", "description": "Lists prioritized open and recovered incidents with localized impact, lifecycle status, cost, confidence, and guarded counterfactual routing recommendation when comparable traffic exists.", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}},
     {"type": "function", "name": "get_incident_details", "description": "Gets evidence for a specific incident. Use get_incidents first to obtain its incident_id.", "parameters": {"type": "object", "properties": {"incident_id": {"type": "string"}}, "required": ["incident_id"], "additionalProperties": False}},
-    {"type": "function", "name": "search_incident_memory", "description": "Searches incident memory for similar resolved incidents. It can be filtered by known dimensions.", "parameters": {"type": "object", "properties": {
+    {"type": "function", "name": "search_incident_memory", "description": "Searches incident memory for similar statistically recovered or operator-confirmed incidents. It can be filtered by known dimensions.", "parameters": {"type": "object", "properties": {
         "filters": {"type": "object", "properties": {key: {"type": "string"} for key in FILTER_KEYS}, "additionalProperties": False}
     }, "additionalProperties": False}},
 ]
@@ -135,7 +135,7 @@ class DataRepository:
         filters = {key: str(value) for key, value in (filters or {}).items() if key in FILTER_KEYS and value}
         records = incident_memory.load(str(self.memory_path))
         matched = [record for record in records if all(str(record.get("root_cause_segment", {}).get(key, "")).casefold() == value.casefold() for key, value in filters.items())]
-        return {"source": "local incident memory", "filters": filters or "all resolved incidents", "matches": matched[:12], "total_matches": len(matched)}
+        return {"source": "local incident memory", "filters": filters or "all recovered incidents", "matches": matched[:12], "total_matches": len(matched)}
 
 
 class ChatService:
@@ -161,7 +161,7 @@ class ChatService:
         audience = audience if audience in {"technical", "financial", "simple"} else "technical"
         prior = [{"role": item["role"], "content": item["content"][:1200]} for item in (history or [])[-MAX_HISTORY_MESSAGES:] if item.get("role") in {"user", "assistant"} and isinstance(item.get("content"), str)]
         input_items: list[Any] = [*prior, {"role": "user", "content": question[:2000]}]
-        instructions = f"""You are PagoTotal Intelligence, a payment-operations assistant. Respond in English for a {audience} audience.
+        instructions = f"""You are SentiPay, a payment-operations assistant. Respond in English for a {audience} audience.
 You must use the read-only tools before stating a metric, incident, comparison, or recurrence. The tools return facts calculated locally; do not invent data or causes. Distinguish historical data, the live stream, and memory. If volume is insufficient or a tool provides no evidence, say so clearly. A counterfactual route comparison is observational: call it a conditional, capped experiment and list pending fraud, cost, capacity, and compliance guardrails. Never execute routing changes or imply they have already been executed.
 Your final answer must always be complete: answer the question directly in the first sentence. If there are no incidents or matches, say so explicitly, for example: “No active incidents have been detected yet.” Never return only a heading, an empty list, or “Based on the available evidence.” Use at most two tools per question unless a tool reports an error."""
         client = OpenAI()

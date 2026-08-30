@@ -62,23 +62,30 @@ class IncidentGovernanceTests(unittest.TestCase):
         state = incident_lifecycle.empty()
         active = incident_lifecycle.reconcile(state, [self._entry()], at, evaluated=True)[0]
         recovered = incident_lifecycle.reconcile(state, [], at + timedelta(seconds=30), evaluated=True)
-        recovered = incident_lifecycle.reconcile(state, [], at + timedelta(seconds=60), evaluated=True)[0]
+        self.assertEqual(recovered, [])
+        recovered = incident_lifecycle.reconcile(state, [], at + timedelta(seconds=60), evaluated=True)
+        self.assertEqual(recovered, [])
+        recovered = state["incidents"][active["incident_id"]]
 
         self.assertEqual(recovered["status"], "recovered_automatically")
         self.assertEqual(recovered["financial_exposure_status"], "ended")
-        self.assertEqual(recovered["current_expected_unrecovered_gmv_per_hour_usd"], 0.0)
-        self.assertEqual(recovered["time_to_recovery_minutes"], 1.0)
         self.assertEqual(recovered["incident_id"], active["incident_id"])
+        memory_record = incident_lifecycle.record_for_memory(recovered)
+        self.assertEqual(memory_record["memory_status"], "statistically_recovered")
+        self.assertEqual(memory_record["recovered_at"], (at + timedelta(seconds=60)).isoformat())
+        self.assertEqual(memory_record["time_to_recovery_minutes"], 1.0)
 
-    def test_only_operator_approved_cases_are_recurrence_knowledge(self) -> None:
+    def test_recovered_incidents_are_recurrence_memory_with_verification_status(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "memory.json"
             path.write_text(json.dumps({"incidents": [{"incident_id": "legacy", "resolution_note": None}]}), encoding="utf-8")
             self.assertEqual(incident_memory.load(str(path)), [])
-            approved = {"incident_id": "inc_approved", "root_cause_segment": {"provider": "stripe"}, "confirmed_root_cause": "Provider status confirmed", "resolution_note": "Support ticket closed"}
-            incident_memory.save(str(path), [approved])
-            self.assertEqual(incident_memory.load(str(path)), [approved])
+            recovered = {"incident_id": "inc_recovered", "root_cause_segment": {"provider": "stripe"}, "memory_status": "statistically_recovered"}
+            incident_memory.save(str(path), [recovered])
+            self.assertEqual(incident_memory.load(str(path)), [recovered])
             stored = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(stored["version"], 3)
+            self.assertEqual(stored["incident_memory"][0]["memory_status"], "statistically_recovered")
             self.assertEqual(stored["unverified_observed_incidents"][0]["incident_id"], "legacy")
 
 

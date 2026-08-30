@@ -1,4 +1,4 @@
-# Data Dictionary — PagoTotal Intelligence
+# Data Dictionary — SentiPay
 
 This document describes the data structures produced and consumed by the pipeline:
 

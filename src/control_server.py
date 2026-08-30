@@ -192,7 +192,8 @@ class Handler(SimpleHTTPRequestHandler):
                     raise ValueError("invalid decline reason")
                 injection = {"id": str(uuid.uuid4()), "name": str(payload.get("name") or "Judge live trial")[:100], "filters": filters,
                     "approval_rate": approval_rate, "traffic_share": traffic_share, "duration_seconds": duration,
-                    "decline_reason": reason, "activated_at": datetime.now(UTC).isoformat()}
+                    "decline_reason": reason, "activated_at": datetime.now(UTC).isoformat(),
+                    "direct_alert": True}
                 injections = self._trial_injections()
                 injections.append(injection)
                 self.trial_path.parent.mkdir(parents=True, exist_ok=True)

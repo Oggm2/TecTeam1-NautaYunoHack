@@ -90,7 +90,7 @@ def _not_recommended(
         "recommendation_type": "controlled_routing_experiment",
         "action": f"Do not change routing automatically. {reason}",
         "reason": reason,
-        "reasons": [reason, "No routing action is executed by PagoTotal Intelligence."],
+        "reasons": [reason, "No routing action is executed by SentiPay."],
         "cohort": cohort,
         "source_provider": source_provider,
         "comparison_window_minutes": policy["comparison_window_minutes"],

@@ -16,22 +16,6 @@
     "activated_at": "2026-08-30T05:10:18.483321+00:00"
   },
   {
-    "id": "dfa7e99d-0c82-4d9a-aba6-0b71d14c746c",
-    "name": "Judge live trial",
-    "filters": {
-      "merchant": "PagoModa",
-      "provider": "stripe",
-      "country": "MX",
-      "payment_method": "card",
-      "issuing_bank": "BBVA"
-    },
-    "approval_rate": 0.2,
-    "traffic_share": 0.35,
-    "duration_seconds": 300,
-    "decline_reason": "issuer_unavailable",
-    "activated_at": "2026-08-30T05:11:07.269744+00:00"
-  },
-  {
     "id": "859be904-a0f6-47c4-bb51-6e6ad7d62ea8",
     "name": "Judge live trial",
     "filters": {
@@ -142,5 +126,311 @@
     "duration_seconds": 300,
     "decline_reason": "issuer_unavailable",
     "activated_at": "2026-08-30T06:03:39.937185+00:00"
+  },
+  {
+    "id": "9d643a84-b285-435d-82f9-2d1a115e1091",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.25,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T10:31:40.413498+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "735805c8-517c-487d-85b2-29cbbe3f7b90",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.25,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T10:32:05.587438+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "c250abc9-12fc-4a56-bdef-1216304239e0",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TechStore",
+      "provider": "adyen",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.15,
+    "traffic_share": 0.4,
+    "duration_seconds": 300,
+    "decline_reason": "do_not_honor",
+    "activated_at": "2026-08-30T10:33:26.589422+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "26819394-5f04-4163-a56a-d25853dd4192",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.15,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T10:54:05.771384+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "7f01f99a-ca94-4729-80da-68a50911f6c5",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.15,
+    "traffic_share": 0.4,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T10:56:38.005956+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "4858f115-0e85-4522-9dea-706f7876acd5",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TechStore",
+      "provider": "stripe",
+      "country": "CO",
+      "payment_method": "card",
+      "issuing_bank": "Bancolombia"
+    },
+    "approval_rate": 0.15,
+    "traffic_share": 0.55,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T10:57:11.961871+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "9709f2c5-7afc-4e22-af13-d7bad26e4b50",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.15,
+    "traffic_share": 0.45,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:05:08.534404+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "96a7ff79-a68a-4b77-a7a0-3946db445114",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.15,
+    "traffic_share": 0.45,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:05:14.059445+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "e73399b4-7623-4864-8a6c-93f1312db888",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TravelNow",
+      "provider": "adyen",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.25,
+    "traffic_share": 0.4,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:05:44.153982+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "a8dc5ac0-4704-4b6f-b498-222f54f0c00f",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TravelNow",
+      "provider": "adyen",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.25,
+    "traffic_share": 0.4,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:05:45.413163+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "2fefa579-ad11-424f-a17b-7e8539136b0b",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.25,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:33:01.091381+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "205c398b-076b-42da-89b6-f0758309277d",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.15,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:33:07.055910+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "d4eb71ed-a5d7-4778-aef0-f56fad16df6d",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TechStore",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.5,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:37:17.840949+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "01d271aa-4154-4506-bc84-d3c335f8a88f",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TechStore",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.5,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:37:18.532717+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "de82b826-4364-49ea-889f-2c9c4307602b",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TechStore",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.5,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:37:19.170456+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "67c3bb01-637f-4a13-9d35-04279c565f5a",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TechStore",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.35,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:37:36.566636+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "b9dcf34b-f4c0-4fec-9ee2-d95402c612ea",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TechStore",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.35,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:37:36.956599+00:00",
+    "direct_alert": true
+  },
+  {
+    "id": "d5c2652b-14e6-4114-97b3-e23d6f9513f4",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "TechStore",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.35,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T11:37:37.539519+00:00",
+    "direct_alert": true
   }
 ]

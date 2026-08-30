@@ -189,8 +189,9 @@ def _record_active(entry: dict[str, Any], record: dict[str, Any], at: datetime, 
 def reconcile(state: dict[str, Any], active_entries: list[dict[str, Any]], observed_at: datetime, evaluated: bool, healthy_evaluations_required: int = 2) -> list[dict[str, Any]]:
     """Synchronize detector evidence into incident records.
 
-    An absent alert ends *financial exposure* only after healthy windows. The
-    observed incident remains visible until a person documents the outcome.
+    An absent alert ends *financial exposure* only after healthy windows. Once
+    recovered, the incident leaves the active work queue and remains available
+    through incident memory for history and optional operator closure.
     """
     records: dict[str, dict[str, Any]] = state.setdefault("incidents", {})
     tenant_id = str(state.get("tenant_id") or DEFAULT_TENANT)
@@ -222,9 +223,6 @@ def reconcile(state: dict[str, Any], active_entries: list[dict[str, Any]], obser
                 record["financial_exposure_ended_at"] = _now(observed_at)
                 _event(record, RECOVERED_STATUS, f"Conversion returned within the expected range for {healthy_evaluations_required} consecutive evaluation windows. Financial exposure is frozen; no mitigation was executed by the system.", "system", observed_at)
 
-    for record in records.values():
-        if record.get("status") == RECOVERED_STATUS and (snapshot := record.get("last_entry")):
-            materialized.append(_decorate(snapshot, record, observed_at))
     return materialized
 
 
@@ -260,7 +258,7 @@ def resolve_by_operator(state: dict[str, Any], incident_id: str, payload: dict[s
     record["owner"] = str(payload["owner"]).strip()[:120]
     record["operator"] = {**record.get("operator", {}), "category": str(payload["category"]).strip()[:80], "confirmed_root_cause": str(payload["confirmed_root_cause"]).strip()[:1500], "action_taken": str(payload["action_taken"]).strip()[:1500], "validation_result": str(payload["validation_result"]).strip()[:1500], "resolution_note": str(payload.get("resolution_note") or "").strip()[:1500] or None}
     record["operational_resolved_at"] = _now()
-    _event(record, RESOLVED_STATUS, "Operator documented the confirmed cause, human decision, and validation result; incident stored in governed knowledge.", record["owner"])
+    _event(record, RESOLVED_STATUS, "Operator documented the confirmed cause, human decision, and validation result; the recovered memory record was enriched with governed knowledge.", record["owner"])
     return record
 
 
@@ -273,7 +271,12 @@ def record_for_memory(record: dict[str, Any]) -> dict[str, Any]:
         "root_cause_segment": entry.get("root_cause_segment", diagnosis.get("root_cause_segment", {})),
         "decline_reason": (diagnosis.get("dominant_decline") or {}).get("decline_reason"),
         "observed_at": record.get("created_at"), "financial_exposure_ended_at": record.get("financial_exposure_ended_at"),
-        "resolved_at": record.get("operational_resolved_at") or record.get("updated_at"),
+        # ``resolved_at`` remains for compatibility with the existing memory
+        # view. It means recovered_at unless an operator later closes the case.
+        "resolved_at": record.get("operational_resolved_at") or record.get("financial_exposure_ended_at") or record.get("updated_at"),
+        "recovered_at": record.get("financial_exposure_ended_at"),
+        "operational_resolved_at": record.get("operational_resolved_at"),
+        "memory_status": "operator_confirmed" if record.get("status") == RESOLVED_STATUS else "statistically_recovered",
         "time_to_recovery_minutes": _minutes_between(record.get("created_at"), record.get("financial_exposure_ended_at")),
         "time_to_resolution_minutes": _minutes_between(record.get("created_at"), record.get("operational_resolved_at")),
         "accumulated_incident_loss_usd": entry.get("accumulated_incident_loss_usd"),

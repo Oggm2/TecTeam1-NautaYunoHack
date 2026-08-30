@@ -418,7 +418,7 @@ def main() -> None:
     print(f"wrote {output_path} with {len(entries)} incident(s)", file=sys.stderr)
 
     # A statistical diagnosis is not operational closure. Memory is written
-    # only by the explicit operator-resolution workflow in live_dashboard.
+    # by the live lifecycle after statistical recovery is verified.
 
 
 if __name__ == "__main__":
