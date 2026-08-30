@@ -90,13 +90,13 @@ expected unrecovered GMV =
 
 Recovery probability is learned from historical successful retries by checkout, with fallbacks by payment method, decline reason, country, and hour.
 
-The dashboard displays an estimate for the **current diagnosis window**:
+The dashboard keeps a persistent per-incident ledger. Every 30 seconds it adds only newly completed, incident-attributable declines, so the same payment is never counted again when the rolling window moves:
 
 ```text
-window cost = estimated cost per hour × window duration / 60
+new estimated loss = declined amount × incident attribution × (1 − retry-success probability)
 ```
 
-For example, USD 3,600/hour over a five-minute window is USD 300. This is not a running total and not final financial reconciliation.
+It shows three distinct metrics: **Accumulated Incident Loss** for active incidents, **Current Loss Rate** for the latest rolling-window hourly estimate, and **Total Incident Loss** for Today, This week, or This month. When an incident resolves, its ledger total is frozen and remains part of period totals. This is still an estimate of unrecovered payment value, not final financial reconciliation or platform revenue.
 
 ## Dashboard modes and Trial by Fire
 

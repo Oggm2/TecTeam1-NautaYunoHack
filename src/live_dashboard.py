@@ -29,6 +29,7 @@ import detector
 import explainer
 import generator
 import incident_memory
+import incident_loss_ledger
 import prioritizer
 from detector import parse_timestamp
 from recovery_estimator import RecoveryEstimator
@@ -65,6 +66,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--memory", default="data/incident_memory.json")
     parser.add_argument("--output", default="frontend/dashboard_data.json")
     parser.add_argument("--transactions-out", default="data/live_transactions.jsonl")
+    parser.add_argument("--loss-ledger", default="data/incident_loss_ledger.json", help="Persistent non-duplicating loss ledger for active and resolved incidents.")
+    parser.add_argument("--ledger-checkpoint-seconds", type=int, default=30, help="How often newly completed attributable declines are added to the loss ledger.")
     parser.add_argument("--seed", type=int)
     parser.add_argument("--use-openai", action="store_true", help="Use OpenAI only to redact confirmed diagnoses.")
     parser.add_argument("--model", default="gpt-5", help="OpenAI model used with --use-openai.")
@@ -124,6 +127,11 @@ def main() -> None:
 
     retained: list[dict[str, Any]] = []
     active_alerts: dict[str, dict[str, Any]] = {}
+    ledger_path = Path(args.loss_ledger)
+    try:
+        loss_ledger = incident_loss_ledger.normalize(json.loads(ledger_path.read_text(encoding="utf-8")))
+    except (OSError, json.JSONDecodeError):
+        loss_ledger = incident_loss_ledger.empty()
     seen_alert_ids: set[str] = set()
 
     output_path = Path(args.output)
@@ -135,6 +143,7 @@ def main() -> None:
     emitted = 0
     last_refresh = time.monotonic() - args.refresh_seconds
     last_evaluation = time.monotonic() - detector_args.evaluation_seconds
+    last_ledger_checkpoint = time.monotonic() - args.ledger_checkpoint_seconds
     active_diagnoses: list[dict[str, Any]] = []
     print(f"live dashboard running at {args.events_per_second}/s, refreshing every {args.refresh_seconds}s — Ctrl+C to stop", file=sys.stderr)
     try:
@@ -161,6 +170,7 @@ def main() -> None:
                 continue
             last_refresh = time.monotonic()
             transactions_sink.flush()
+            evaluated_this_refresh = False
 
             if reload_controls():
                 # Rebuild so persistence deque sizes reflect the new setting.
@@ -172,6 +182,7 @@ def main() -> None:
 
             if time.monotonic() - last_evaluation >= detector_args.evaluation_seconds:
                 last_evaluation = time.monotonic()
+                evaluated_this_refresh = True
                 alerts = engine.evaluate(now)
                 new_alerts = [alert for alert in alerts if alert["alert_id"] not in seen_alert_ids]
                 for alert in new_alerts:
@@ -198,12 +209,20 @@ def main() -> None:
 
             prioritized = prioritizer.prioritize(active_diagnoses, priority_config) if active_diagnoses else []
             entries = bd.build_incident_entries(prioritized, memory)
+            if evaluated_this_refresh or time.monotonic() - last_ledger_checkpoint >= args.ledger_checkpoint_seconds:
+                loss_ledger = incident_loss_ledger.checkpoint(loss_ledger, entries, retained, recovery_estimator, now)
+                last_ledger_checkpoint = time.monotonic()
+                ledger_path.parent.mkdir(parents=True, exist_ok=True)
+                write_atomic(ledger_path, json.dumps(loss_ledger, indent=2))
+            else:
+                incident_loss_ledger.attach(entries, loss_ledger)
             chart = bd.build_chart(retained, list(active_alerts.values()), history_events, args)
             # Keep the dashboard's timeline tied to this process, even during
             # the first minute when there is only one aggregate data point.
             chart["stream_started_at"] = wall_start.isoformat()
             kpis = bd.build_kpis(
                 entries, chart, transactions_window=len(retained), recovery_horizon_hours=args.recovery_horizon_hours,
+                loss_ledger={**loss_ledger, "period_totals_usd": incident_loss_ledger.period_totals(loss_ledger, now)}, observed_at=now,
             )
             dashboard = {
                 "generated_at": now.isoformat(), "kpis": kpis, "chart": chart,

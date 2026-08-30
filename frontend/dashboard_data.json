@@ -1,79 +1,67 @@
 {
-  "generated_at": "2026-08-30T07:47:51.906409+00:00",
+  "generated_at": "2026-08-30T08:01:38.289481+00:00",
   "kpis": {
-    "current_conversion_pct": 88.96,
+    "current_conversion_pct": 88.22,
     "expected_conversion_pct": 94.78,
     "conversion_window_seconds": 300,
-    "conversion_window_attempts": 1503,
-    "transactions_window": 1506,
+    "conversion_window_attempts": 1655,
+    "transactions_window": 1658,
     "active_incidents": 0,
     "critical_count": 0,
     "high_count": 0,
     "investigating_count": 0,
     "incidence_cost_current_window_usd": 0,
+    "accumulated_incident_loss_usd": 0,
+    "current_loss_rate_per_hour_usd": 0,
     "current_incidence_cost_per_hour_usd": 0,
     "expected_unrecovered_gmv_per_hour_usd": 0,
     "gross_lost_gmv_per_hour_usd": 0,
-    "recovery_horizon_hours": 24.0
+    "recovery_horizon_hours": 24.0,
+    "incident_loss_periods_usd": {
+      "today": 0,
+      "week": 0,
+      "month": 0
+    }
   },
   "chart": {
     "period_seconds": 60,
     "window_seconds": 300,
     "sustain_evaluations": 3,
-    "stream_started_at": "2026-08-30T07:46:11.573229+00:00",
+    "stream_started_at": "2026-08-30T07:59:47.822522+00:00",
     "current_window": {
-      "started_at": "2026-08-30T07:42:53.493000+00:00",
-      "ended_at": "2026-08-30T07:47:53.493000+00:00",
-      "attempts": 1503,
-      "approved": 1337,
-      "observed_pct": 88.96,
+      "started_at": "2026-08-30T07:56:40.214000+00:00",
+      "ended_at": "2026-08-30T08:01:40.214000+00:00",
+      "attempts": 1655,
+      "approved": 1460,
+      "observed_pct": 88.22,
       "expected_pct": 94.78
     },
     "points": [
       {
-        "t": "2026-08-30T07:46:00+00:00",
-        "observed_pct": 92.67,
+        "t": "2026-08-30T07:59:00+00:00",
+        "observed_pct": 92.26,
         "expected_pct": 94.78,
-        "threshold_pct": 92.27,
+        "threshold_pct": 89.63,
         "state": "ok"
       },
       {
-        "t": "2026-08-30T07:47:00+00:00",
-        "observed_pct": 85.64,
+        "t": "2026-08-30T08:00:00+00:00",
+        "observed_pct": 87.92,
         "expected_pct": 94.78,
-        "threshold_pct": 92.41,
+        "threshold_pct": 92.55,
+        "state": "breach"
+      },
+      {
+        "t": "2026-08-30T08:01:00+00:00",
+        "observed_pct": 87.52,
+        "expected_pct": 94.78,
+        "threshold_pct": 92.05,
         "state": "breach"
       }
     ]
   },
   "incidents": [],
   "resolved": [
-    {
-      "incident_id": "memory-stripe-br-2026-08-26",
-      "root_cause_segment": {
-        "provider": "stripe",
-        "country": "BR"
-      },
-      "decline_reason": "do_not_honor",
-      "resolved_at": "2026-08-26T18:42:00+00:00",
-      "duration_minutes": 41,
-      "cost_per_hour_usd": 48400,
-      "resolution_note": "Stripe confirmed regional degradation; Brazil payments were temporarily routed to an alternative provider."
-    },
-    {
-      "incident_id": "memory-banorte-2026-08-19",
-      "root_cause_segment": {
-        "merchant": "PagoModa",
-        "country": "MX",
-        "issuing_bank": "Banorte",
-        "payment_method": "card"
-      },
-      "decline_reason": "issuer_unavailable",
-      "resolved_at": "2026-08-19T15:18:00+00:00",
-      "duration_minutes": 27,
-      "cost_per_hour_usd": 16100,
-      "resolution_note": "Banorte restored service; conversion recovery was monitored."
-    },
     {
       "incident_id": "5cca1c6f-c2cc-43cb-8b40-bc4bb006677f",
       "root_cause_segment": {
@@ -137,6 +125,60 @@
       "observed_at": "2026-08-30T00:59:49.749158+00:00",
       "duration_minutes": 5.0,
       "cost_per_hour_usd": 15030.7,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "b67edbc3-b2c9-4d65-8911-1930199aee10",
+      "root_cause_segment": {
+        "provider": "stripe",
+        "country": "BR"
+      },
+      "decline_reason": "do_not_honor",
+      "observed_at": "2026-08-30T07:54:05.878408+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 125089.59,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "34cbdf5a-7735-46fa-a093-8585f5b4fc2f",
+      "root_cause_segment": {
+        "payment_method": "card",
+        "country": "MX",
+        "merchant": "PagoModa",
+        "issuing_bank": "Banorte"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T07:52:45.505123+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 35195.51,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "57084e29-7763-49ef-887e-2cb7128cff88",
+      "root_cause_segment": {
+        "payment_method": "wallet",
+        "country": "MX",
+        "issuing_bank": "Banorte",
+        "merchant": "PagoModa"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T07:53:28.057826+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 8657.46,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "bccfeffd-3081-40a1-96de-03acb94dbea8",
+      "root_cause_segment": {
+        "payment_method": "cash_in_store",
+        "country": "MX",
+        "issuing_bank": "Banorte",
+        "merchant": "PagoModa"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T07:50:21.215050+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 8520.61,
       "resolution_note": null
     }
   ],
@@ -213,73 +255,73 @@
       ]
     },
     "live": {
-      "attempts": 1503,
-      "approved": 1337,
-      "conversion_pct": 88.96,
-      "average_ticket_usd": 40.4,
-      "average_processing_time_ms": null,
-      "processing_time_samples": 0,
+      "attempts": 1655,
+      "approved": 1460,
+      "conversion_pct": 88.22,
+      "average_ticket_usd": 41.39,
+      "average_processing_time_ms": 645.1,
+      "processing_time_samples": 168,
       "processing_time_window_seconds": 180,
-      "processing_time_updated_at": "2026-08-30T07:45:00+00:00",
+      "processing_time_updated_at": "2026-08-30T08:00:00+00:00",
       "by_country": [
         {
           "name": "MX",
-          "attempts": 623,
-          "conversion_pct": 91.17
+          "attempts": 635,
+          "conversion_pct": 92.6
         },
         {
           "name": "BR",
-          "attempts": 528,
-          "conversion_pct": 82.95
+          "attempts": 595,
+          "conversion_pct": 80.0
         },
         {
           "name": "CO",
-          "attempts": 352,
-          "conversion_pct": 94.03
+          "attempts": 425,
+          "conversion_pct": 93.18
         }
       ],
       "by_provider": [
         {
           "name": "stripe",
-          "attempts": 582,
-          "conversion_pct": 81.44
+          "attempts": 654,
+          "conversion_pct": 80.43
         },
         {
           "name": "adyen",
-          "attempts": 571,
-          "conversion_pct": 94.92
+          "attempts": 599,
+          "conversion_pct": 92.99
         },
         {
           "name": "dlocal",
-          "attempts": 350,
-          "conversion_pct": 91.71
+          "attempts": 402,
+          "conversion_pct": 93.78
         }
       ],
       "by_payment_method": [
         {
           "name": "card",
-          "attempts": 903,
-          "conversion_pct": 90.7
+          "attempts": 956,
+          "conversion_pct": 90.69
         },
         {
           "name": "wallet",
-          "attempts": 238,
-          "conversion_pct": 88.66
+          "attempts": 282,
+          "conversion_pct": 87.23
         },
         {
           "name": "pix",
-          "attempts": 167,
-          "conversion_pct": 83.23
+          "attempts": 182,
+          "conversion_pct": 80.22
         },
         {
           "name": "cash_in_store",
-          "attempts": 112,
-          "conversion_pct": 83.04
+          "attempts": 138,
+          "conversion_pct": 82.61
         },
         {
           "name": "pse",
-          "attempts": 83,
-          "conversion_pct": 90.36
+          "attempts": 97,
+          "conversion_pct": 89.69
         }
       ]
     }

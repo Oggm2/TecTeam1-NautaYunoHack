@@ -646,7 +646,8 @@
             <div class="lbl" id="hero-label">Estimated Incidence Cost · Current Window</div>
             <div class="big"><span class="cur">$</span><span id="mar-value" class="tnum">22,640</span></div>
             <div class="unit" id="mar-unit">accrued across 2 active incidents</div>
-            <div class="unit" id="mar-gross">Current incidence cost: $— / hour</div>
+            <div class="unit" id="mar-gross">Current Loss Rate: $— / hour</div>
+            <div class="unit" style="margin-top:8px"><label for="loss-period" style="color:var(--ink-faint)">Total Incident Loss</label> <select id="loss-period" style="margin-left:7px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:3px 6px"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option></select> <b class="tnum" id="period-loss-value" style="color:var(--money)">$—</b></div>
             <div class="trend">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 7 6 6 4-4 8 8"/><path d="M21 17v-6h-6"/></svg>
               Discounts incident-attributable declines by their expected successful-retry probability
@@ -1199,7 +1200,7 @@
       merchant: disp.merchant, provider: disp.provider, country: disp.country, method: disp.method, bank: disp.bank,
       rootCause: disp.rootCause,
       convFrom: +(m.expected_conversion*100).toFixed(1), convTo: +(m.observed_conversion*100).toFixed(1),
-      money: d.evidence_sufficient ? Math.round(windowCost) : 0,
+      money: d.evidence_sufficient ? Math.round(entry.accumulated_incident_loss_usd||0) : 0,
       currentRate: d.evidence_sufficient ? Math.round(entry.current_expected_unrecovered_gmv_per_hour_usd ?? m.expected_unrecovered_amount_per_hour_usd ?? 0) : 0,
       grossMoney: d.evidence_sufficient ? Math.round(m.gross_lost_amount_per_hour_usd||0) : 0,
       recoveryRate: d.evidence_sufficient ? Math.round((m.expected_recovery_rate||0)*100) : 0,
@@ -1209,6 +1210,7 @@
       tree: buildTree(d), evidence: buildEvidence(d), confNote,
       financial: d.evidence_sufficient ? {
         revenue: "$"+Math.round(entry.current_expected_unrecovered_gmv_per_hour_usd ?? m.expected_unrecovered_amount_per_hour_usd ?? 0).toLocaleString("en-US"),
+        accumulated: "$"+Math.round(entry.accumulated_incident_loss_usd||0).toLocaleString("en-US"),
         window: "$"+Math.round(windowCost).toLocaleString("en-US"),
         gross: "$"+Math.round(m.gross_lost_amount_per_hour_usd||0).toLocaleString("en-US"),
         recovery: Math.round((m.expected_recovery_rate||0)*100)+"%",
@@ -1266,7 +1268,7 @@
       ? `<div class="im"><div class="k">What changed</div><div class="v drop tnum">${drop} pp lower</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">Payments in this group fail more often than normal.</div></div>
          <div class="im"><div class="k">Estimated impact</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">${inc.affected.toLocaleString()} payments affected in the current window</div></div>`
       : audienceMode === "financial"
-      ? `<div class="im"><div class="k">Estimated window cost</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">${money(inc.currentRate||inc.money)}/hr annualized from this window</div></div>
+      ? `<div class="im"><div class="k">Accumulated incident loss</div><div class="v money tnum">${money(inc.money)}</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">${money(inc.currentRate||inc.money)}/hr current loss rate</div></div>
          <div class="im"><div class="k">Conversion loss</div><div class="v drop tnum">−${drop} pp</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">${inc.convFrom}% expected → ${inc.convTo}% observed</div></div>
          <div class="im"><div class="k">Exposure</div><div class="v tnum">${inc.affected.toLocaleString()} tx</div><div style="font-size:10px;color:var(--ink-faint);margin-top:3px">in the current analysis window</div></div>`
       : `<div class="im"><div class="k">Conversion</div><div class="v"><span class="conv-mini"><span class="from tnum">${inc.convFrom}%</span> <span class="to tnum">${inc.convTo}%</span></span></div></div>
@@ -1295,20 +1297,23 @@
     const active = rcOrder.map(k=>INCIDENTS[k]).filter(i=>i && i.status==="active");
     const crit = active.filter(i=>i.severity==="crit").length;
     const high = active.filter(i=>i.severity==="high").length;
-    const windowCost = data && data.kpis && data.kpis.incidence_cost_current_window_usd != null
-      ? data.kpis.incidence_cost_current_window_usd
+    const accumulatedCost = data && data.kpis && data.kpis.accumulated_incident_loss_usd != null
+      ? data.kpis.accumulated_incident_loss_usd
       : active.reduce((sum,i)=>sum+(i.money||0),0);
-    const currentCostRate = data && data.kpis && data.kpis.current_incidence_cost_per_hour_usd != null
-      ? data.kpis.current_incidence_cost_per_hour_usd
+    const currentCostRate = data && data.kpis && data.kpis.current_loss_rate_per_hour_usd != null
+      ? data.kpis.current_loss_rate_per_hour_usd
       : active.reduce((sum,i)=>sum+(i.currentRate||i.money||0),0);
     const grossLost = data && data.kpis && data.kpis.gross_lost_gmv_per_hour_usd != null
       ? data.kpis.gross_lost_gmv_per_hour_usd
       : active.reduce((sum,i)=>sum+(i.grossMoney||i.money||0),0);
     $("#nav-inc-badge").textContent = rcOrder.length;
-    $("#mar-value").textContent = Math.round(windowCost).toLocaleString("en-US");
+    $("#mar-value").textContent = Math.round(accumulatedCost).toLocaleString("en-US");
     const horizon = data && data.kpis && data.kpis.recovery_horizon_hours ? ` · ${data.kpis.recovery_horizon_hours}h recovery horizon` : "";
     $("#mar-unit").textContent = `accrued across ${active.length} active incident${active.length===1?'':'s'}${horizon}`;
-    $("#mar-gross").textContent = `Current incidence cost: $${Math.round(currentCostRate).toLocaleString("en-US")} / hour · gross $${Math.round(grossLost).toLocaleString("en-US")} / hour`;
+    $("#mar-gross").textContent = `Current Loss Rate: $${Math.round(currentCostRate).toLocaleString("en-US")} / hour · gross $${Math.round(grossLost).toLocaleString("en-US")} / hour`;
+    const period=$("#loss-period").value;
+    const selectedPeriodLoss=(data&&data.kpis&&data.kpis.incident_loss_periods_usd&&data.kpis.incident_loss_periods_usd[period])||0;
+    $("#period-loss-value").textContent=money(selectedPeriodLoss);
     if (data && data.kpis && data.kpis.current_conversion_pct!=null) {
       $("#kpi-conv").textContent = data.kpis.current_conversion_pct.toFixed(1)+"%";
       const seconds=data.kpis.conversion_window_seconds||300, attempts=data.kpis.conversion_window_attempts||0;
@@ -1685,11 +1690,11 @@
     // financial
     if(inc.financial){
       $("#fin").innerHTML = `
-        <div class="f money"><div class="v tnum">${inc.financial.window||"$0"}</div><div class="k">Estimated Cost · Current Window</div></div>
+        <div class="f money"><div class="v tnum">${inc.financial.accumulated||"$0"}</div><div class="k">Accumulated Incident Loss</div></div>
         <div class="f money"><div class="v tnum">${inc.financial.revenue}</div><div class="k">Current Incidence Cost / hour</div></div>
         <div class="f secondary"><div class="v tnum">${inc.financial.gross||inc.financial.revenue}</div><div class="k">Gross Incidence Cost / hour</div></div>
         <div class="f"><div class="v tnum">${inc.financial.recovery||"—"}</div><div class="k">Expected recovery within 24h</div></div>`;
-      $("#fin-note").textContent = "Estimated Cost · Current Window equals the current cost per hour multiplied by the diagnosis window length. It refreshes with each new analysis and is not a running total. Figures are directional estimates, not exact accounting.";
+      $("#fin-note").textContent = "Accumulated Incident Loss adds only newly completed, incident-attributable declines. Current Loss Rate is recalculated from the latest rolling window. Figures are directional estimates, not exact accounting.";
     } else {
       $("#fin").innerHTML = `<div class="f" style="grid-column:1/-1;border-color:#5c4718"><div class="v" style="color:var(--warn);font-size:19px">Not quantified yet</div><div class="k">Incidence cost is withheld until a root cause reaches sufficient confidence. The system does not attach a dollar figure to a guess.</div></div>`;
       $("#fin-note").textContent = "No confident root cause → no defensible cost estimate. Honesty over false precision.";
@@ -1698,7 +1703,7 @@
   }
   function renderProfiles(inc){
     let panel=$("#profile-panel"); if(!panel){ panel=document.createElement("div"); panel.id="profile-panel"; panel.className="evi-card"; $("#rec-card").insertAdjacentElement("afterend",panel); }
-    const p=inc.profiles||{}, text={technical:p.technical||inc.confNote.text,financial:p.financial||`Estimated cost in the current analysis window: ${money(inc.money||0)}. Current incidence cost: ${money(inc.currentRate||0)} per hour.`,simple:p.simple||"Some payments are failing more often than normal."};
+    const p=inc.profiles||{}, text={technical:p.technical||inc.confNote.text,financial:p.financial||`Accumulated Incident Loss: ${money(inc.money||0)}. Current Loss Rate: ${money(inc.currentRate||0)} per hour.`,simple:p.simple||"Some payments are failing more often than normal."};
     const k=audienceMode; panel.innerHTML=`<div class="eh"><div class="why">${k==='technical'?'Technical evidence':k==='financial'?'Incidence Cost':'What this means'}</div></div><div class="evi-body"><div style="font-size:13.5px;color:var(--ink-soft)">${text[k]}</div>${k==='technical'?`<div style="height:10px;margin-top:12px;background:linear-gradient(90deg,var(--crit) ${inc.convTo||0}%,var(--ok) ${inc.convTo||0}%);border-radius:6px"></div><small>Observed vs expected conversion</small>`:k==='financial'?`<div style="height:12px;width:78%;margin-top:12px;background:var(--money);border-radius:6px"></div><small>Estimated cost in this window</small>`:`<div style="font-size:26px;margin-top:12px">🔎 → 💳 → 👥</div><small>Problem found, impact measured, human action recommended.</small>`}</div>`;
   }
   function renderExplorer(){ renderSwitch(); renderTree(); renderEvidence(); }
@@ -1894,10 +1899,10 @@
   let audienceMode=localStorage.getItem("audienceMode")||"technical";
   const AUDIENCE_COPY={
     technical:{
-      name:"Technical", briefTitle:"Technical view", hero:"Estimated Incidence Cost · Current Window", conversion:"Current conversion", transactions:"Transactions", active:"Active incidents", health:"System health", chart:"Conversion vs expected", incidents:"Active incidents", incidentHint:"Prioritized by incidence cost", chartLegend:`<span><i class="swatch" style="background:#8892a4;opacity:.55"></i> Expected range</span><span><i class="swatch" style="background:var(--ok)"></i> Healthy</span><span><i class="swatch" style="background:var(--warn)"></i> Breach</span><span><i class="swatch" style="background:var(--crit)"></i> Incident</span>`
+      name:"Technical", briefTitle:"Technical view", hero:"Accumulated Incident Loss", conversion:"Current conversion", transactions:"Transactions", active:"Active incidents", health:"System health", chart:"Conversion vs expected", incidents:"Active incidents", incidentHint:"Prioritized by incidence cost", chartLegend:`<span><i class="swatch" style="background:#8892a4;opacity:.55"></i> Expected range</span><span><i class="swatch" style="background:var(--ok)"></i> Healthy</span><span><i class="swatch" style="background:var(--warn)"></i> Breach</span><span><i class="swatch" style="background:var(--crit)"></i> Incident</span>`
     },
     financial:{
-      name:"Financial", briefTitle:"Financial exposure", hero:"Estimated revenue at risk · current window", conversion:"Conversion driving loss", transactions:"Payment volume", active:"Prioritized exposures", health:"Portfolio health", chart:"Conversion and revenue exposure", incidents:"Ranked financial exposure", incidentHint:"Largest estimated loss first", chartLegend:`<span><i class="swatch" style="background:#8892a4;opacity:.55"></i> Expected conversion</span><span><i class="swatch" style="background:var(--crit)"></i> Conversion affecting revenue</span>`
+      name:"Financial", briefTitle:"Financial exposure", hero:"Accumulated Incident Loss", conversion:"Conversion driving loss", transactions:"Payment volume", active:"Prioritized exposures", health:"Portfolio health", chart:"Conversion and revenue exposure", incidents:"Ranked financial exposure", incidentHint:"Largest estimated loss first", chartLegend:`<span><i class="swatch" style="background:#8892a4;opacity:.55"></i> Expected conversion</span><span><i class="swatch" style="background:var(--crit)"></i> Conversion affecting revenue</span>`
     },
     simple:{
       name:"Simple", briefTitle:"What needs attention", hero:"Estimated money at risk", conversion:"Payments approved", transactions:"Payments watched", active:"Problems to review", health:"Overall status", chart:"Are payments working as expected?", incidents:"What needs attention now", incidentHint:"Start with the first card", chartLegend:""
@@ -1939,7 +1944,7 @@
     $("#incident-list-hint").textContent=copy.incidentHint;
     $(".legend").innerHTML=copy.chartLegend;
     const active=rcOrder.map(key=>INCIDENTS[key]).filter(inc=>inc&&inc.status==="active").length;
-    $("#mar-unit").textContent=audienceMode==='financial'?`estimated across ${active} active issue${active===1?'':'s'} in the current analysis window`:audienceMode==='simple'?"an estimate for the payments in the current analysis window":`estimated across ${active} active incident${active===1?'':'s'} in the current analysis window`;
+    $("#mar-unit").textContent=audienceMode==='financial'?`accumulated across ${active} active issue${active===1?'':'s'}`:audienceMode==='simple'?"an estimate that grows while payment problems continue":`accumulated across ${active} active incident${active===1?'':'s'}`;
     $("#crumb").textContent=viewTitle(currentView);
     document.title=`PagoTotal · ${copy.name} workspace`;
     renderCommandIncidents();
@@ -1950,6 +1955,7 @@
     if(currentInc) renderExplorer();
   }
   $$(".audience-btn").forEach(b=>b.addEventListener("click",()=>{audienceMode=b.dataset.audience;localStorage.setItem("audienceMode",audienceMode);applyAudience();}));
+  $("#loss-period").addEventListener("change",()=>{ if(latestDashboardData) renderKpis(latestDashboardData); });
 
   function renderAll(data){
     if(data) latestDashboardData=data;

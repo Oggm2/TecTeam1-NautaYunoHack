@@ -1,32 +1,6 @@
 {
   "incidents": [
     {
-      "incident_id": "memory-stripe-br-2026-08-26",
-      "root_cause_segment": {
-        "provider": "stripe",
-        "country": "BR"
-      },
-      "decline_reason": "do_not_honor",
-      "resolved_at": "2026-08-26T18:42:00+00:00",
-      "duration_minutes": 41,
-      "cost_per_hour_usd": 48400,
-      "resolution_note": "Stripe confirmed regional degradation; Brazil payments were temporarily routed to an alternative provider."
-    },
-    {
-      "incident_id": "memory-banorte-2026-08-19",
-      "root_cause_segment": {
-        "merchant": "PagoModa",
-        "country": "MX",
-        "issuing_bank": "Banorte",
-        "payment_method": "card"
-      },
-      "decline_reason": "issuer_unavailable",
-      "resolved_at": "2026-08-19T15:18:00+00:00",
-      "duration_minutes": 27,
-      "cost_per_hour_usd": 16100,
-      "resolution_note": "Banorte restored service; conversion recovery was monitored."
-    },
-    {
       "incident_id": "5cca1c6f-c2cc-43cb-8b40-bc4bb006677f",
       "root_cause_segment": {
         "payment_method": "card",
@@ -89,6 +63,60 @@
       "observed_at": "2026-08-30T00:59:49.749158+00:00",
       "duration_minutes": 5.0,
       "cost_per_hour_usd": 15030.7,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "b67edbc3-b2c9-4d65-8911-1930199aee10",
+      "root_cause_segment": {
+        "provider": "stripe",
+        "country": "BR"
+      },
+      "decline_reason": "do_not_honor",
+      "observed_at": "2026-08-30T07:54:05.878408+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 125089.59,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "34cbdf5a-7735-46fa-a093-8585f5b4fc2f",
+      "root_cause_segment": {
+        "payment_method": "card",
+        "country": "MX",
+        "merchant": "PagoModa",
+        "issuing_bank": "Banorte"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T07:52:45.505123+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 35195.51,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "57084e29-7763-49ef-887e-2cb7128cff88",
+      "root_cause_segment": {
+        "payment_method": "wallet",
+        "country": "MX",
+        "issuing_bank": "Banorte",
+        "merchant": "PagoModa"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T07:53:28.057826+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 8657.46,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "bccfeffd-3081-40a1-96de-03acb94dbea8",
+      "root_cause_segment": {
+        "payment_method": "cash_in_store",
+        "country": "MX",
+        "issuing_bank": "Banorte",
+        "merchant": "PagoModa"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T07:50:21.215050+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 8520.61,
       "resolution_note": null
     }
   ]

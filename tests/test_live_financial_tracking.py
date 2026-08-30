@@ -10,6 +10,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import build_dashboard
+import incident_loss_ledger
+from recovery_estimator import RecoveryEstimator
 
 
 class LiveFinancialTrackingTests(unittest.TestCase):
@@ -46,6 +48,30 @@ class LiveFinancialTrackingTests(unittest.TestCase):
         self.assertEqual(stats["average_processing_time_ms"], 200.0)
         self.assertEqual(stats["processing_time_samples"], 2)
         self.assertEqual(stats["processing_time_window_seconds"], 180)
+
+    def test_loss_ledger_counts_a_decline_once_and_freezes_on_resolution(self) -> None:
+        started_at = datetime(2026, 8, 30, 12, tzinfo=UTC)
+        entry = {
+            "incident_key": "alerts:one", "priority_rank": 1, "status": "active",
+            "root_cause_segment": {"provider": "stripe", "country": "BR"},
+            "diagnosis": {
+                "evidence_sufficient": True,
+                "incident_window": {"started_at": started_at.isoformat(), "ended_at": (started_at + timedelta(minutes=5)).isoformat()},
+                "root_metrics": {"lost_approvals": 1},
+            },
+        }
+        event = {
+            "transaction_id": "tx-1", "provider": "stripe", "country": "BR", "status": "declined",
+            "amount_usd": 100, "payment_method": "card", "completed_at": (started_at + timedelta(minutes=1)).isoformat(),
+        }
+        ledger = incident_loss_ledger.checkpoint(incident_loss_ledger.empty(), [entry], [event], RecoveryEstimator().fit([]), started_at + timedelta(minutes=2))
+        first_total = entry["accumulated_incident_loss_usd"]
+        ledger = incident_loss_ledger.checkpoint(ledger, [entry], [event], RecoveryEstimator().fit([]), started_at + timedelta(minutes=3))
+
+        self.assertGreater(first_total, 0)
+        self.assertEqual(entry["accumulated_incident_loss_usd"], first_total)
+        ledger = incident_loss_ledger.checkpoint(ledger, [], [event], RecoveryEstimator().fit([]), started_at + timedelta(minutes=4))
+        self.assertEqual(ledger["resolved"]["alerts:one"]["accumulated_loss_usd"], first_total)
 
 
 if __name__ == "__main__":

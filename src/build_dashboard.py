@@ -20,6 +20,7 @@ import detector
 import diagnoser
 import explainer
 import incident_memory
+import incident_loss_ledger
 import prioritizer
 from recovery_estimator import RecoveryEstimator
 from baseline import BaselineStore
@@ -163,6 +164,7 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident], m
             "cost_per_hour_usd": incident.cost_per_hour_usd,
             "current_expected_unrecovered_gmv_per_hour_usd": incident.cost_per_hour_usd,
             "window_expected_unrecovered_gmv_usd": round(window_cost, 2),
+            "accumulated_incident_loss_usd": 0.0,
             "gross_lost_amount_per_hour_usd": diagnosis.get("root_metrics", {}).get("gross_lost_amount_per_hour_usd", 0.0),
             "urgency": incident.urgency,
             "urgency_basis": incident.urgency_basis,
@@ -240,6 +242,7 @@ def build_chart(events: list[dict[str, Any]], alerts: list[dict[str, Any]], hist
 
 def build_kpis(
     entries: list[dict[str, Any]], chart: dict[str, Any], transactions_window: int, recovery_horizon_hours: float,
+    loss_ledger: dict[str, Any] | None = None, observed_at: datetime | None = None,
 ) -> dict[str, Any]:
     current_window = chart.get("current_window") or {}
     active = [e for e in entries if e["status"] == "active"]
@@ -254,10 +257,13 @@ def build_kpis(
         "high_count": sum(e["severity"] == "high" for e in entries),
         "investigating_count": sum(e["status"] == "investigating" for e in entries),
         "incidence_cost_current_window_usd": round(sum(e.get("window_expected_unrecovered_gmv_usd", 0.0) for e in active), 2),
+        "accumulated_incident_loss_usd": round(sum(e.get("accumulated_incident_loss_usd", 0.0) for e in active), 2),
+        "current_loss_rate_per_hour_usd": round(sum(e.get("current_expected_unrecovered_gmv_per_hour_usd", e["cost_per_hour_usd"]) for e in active), 2),
         "current_incidence_cost_per_hour_usd": round(sum(e.get("current_expected_unrecovered_gmv_per_hour_usd", e["cost_per_hour_usd"]) for e in active), 2),
         "expected_unrecovered_gmv_per_hour_usd": round(sum(e["cost_per_hour_usd"] for e in active), 2),
         "gross_lost_gmv_per_hour_usd": round(sum(e.get("gross_lost_amount_per_hour_usd", 0.0) for e in active), 2),
         "recovery_horizon_hours": recovery_horizon_hours,
+        "incident_loss_periods_usd": (loss_ledger or {}).get("period_totals_usd", {}),
     }
 
 
@@ -369,11 +375,19 @@ def main() -> None:
     Path(args.priorities_out).write_text(json.dumps(prioritizer.to_json(prioritized), indent=2), encoding="utf-8")
 
     entries = build_incident_entries(prioritized, memory)
+    observed_at = datetime.now(UTC)
+    offline_ledger = incident_loss_ledger.checkpoint(
+        incident_loss_ledger.empty(), entries, events,
+        RecoveryEstimator(horizon_hours=args.recovery_horizon_hours).fit(history_events), observed_at,
+    )
     chart = build_chart(events, alerts, history_events, args)
-    kpis = build_kpis(entries, chart, transactions_window=len(events), recovery_horizon_hours=args.recovery_horizon_hours)
+    kpis = build_kpis(
+        entries, chart, transactions_window=len(events), recovery_horizon_hours=args.recovery_horizon_hours,
+        loss_ledger={**offline_ledger, "period_totals_usd": incident_loss_ledger.period_totals(offline_ledger, observed_at)}, observed_at=observed_at,
+    )
 
     dashboard = {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": observed_at.isoformat(),
         "kpis": kpis,
         "chart": chart,
         "incidents": entries,
