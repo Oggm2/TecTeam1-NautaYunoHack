@@ -432,5 +432,22 @@
     "decline_reason": "issuer_unavailable",
     "activated_at": "2026-08-30T11:37:37.539519+00:00",
     "direct_alert": true
+  },
+  {
+    "id": "26a0b0b6-3382-4686-97b8-e16497d76c35",
+    "name": "Judge live trial",
+    "filters": {
+      "merchant": "PagoModa",
+      "provider": "stripe",
+      "country": "MX",
+      "payment_method": "card",
+      "issuing_bank": "BBVA"
+    },
+    "approval_rate": 0.25,
+    "traffic_share": 0.35,
+    "duration_seconds": 300,
+    "decline_reason": "issuer_unavailable",
+    "activated_at": "2026-08-30T13:53:12.787212+00:00",
+    "direct_alert": true
   }
 ]
