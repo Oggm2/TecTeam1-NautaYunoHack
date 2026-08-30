@@ -2,7 +2,10 @@
   "incidents": [
     {
       "incident_id": "memory-stripe-br-2026-08-26",
-      "root_cause_segment": {"provider": "stripe", "country": "BR"},
+      "root_cause_segment": {
+        "provider": "stripe",
+        "country": "BR"
+      },
       "decline_reason": "do_not_honor",
       "resolved_at": "2026-08-26T18:42:00+00:00",
       "duration_minutes": 41,
@@ -11,12 +14,82 @@
     },
     {
       "incident_id": "memory-banorte-2026-08-19",
-      "root_cause_segment": {"merchant": "PagoModa", "country": "MX", "issuing_bank": "Banorte", "payment_method": "card"},
+      "root_cause_segment": {
+        "merchant": "PagoModa",
+        "country": "MX",
+        "issuing_bank": "Banorte",
+        "payment_method": "card"
+      },
       "decline_reason": "issuer_unavailable",
       "resolved_at": "2026-08-19T15:18:00+00:00",
       "duration_minutes": 27,
       "cost_per_hour_usd": 16100,
       "resolution_note": "Banorte restableció el servicio; se monitoreó la recuperación de conversión."
+    },
+    {
+      "incident_id": "5cca1c6f-c2cc-43cb-8b40-bc4bb006677f",
+      "root_cause_segment": {
+        "payment_method": "card",
+        "country": "MX",
+        "issuing_bank": "BBVA"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T01:00:52.031681+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 41667.44,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "c5e66cb1-a392-43f3-8201-089b81a69622",
+      "root_cause_segment": {
+        "payment_method": "cash_in_store",
+        "country": "MX",
+        "issuing_bank": "BBVA"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T01:01:17.013219+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 10772.81,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "767c7643-f46e-4342-b785-d53ed76f9e4e",
+      "root_cause_segment": {
+        "payment_method": "wallet",
+        "country": "MX",
+        "issuing_bank": "BBVA"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T01:00:59.629297+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 9793.16,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "67840df6-1a37-44ca-898b-9e96f91a862c",
+      "root_cause_segment": {
+        "merchant": "TechStore",
+        "country": "BR",
+        "issuing_bank": "Nubank"
+      },
+      "decline_reason": "issuer_unavailable",
+      "observed_at": "2026-08-30T00:57:25.383030+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 16691.7,
+      "resolution_note": null
+    },
+    {
+      "incident_id": "adbcd3fb-476c-4f4e-9279-de4f51865299",
+      "root_cause_segment": {
+        "merchant": "TechStore",
+        "country": "CO",
+        "payment_method": "pse"
+      },
+      "decline_reason": "transaction_not_permitted",
+      "observed_at": "2026-08-30T00:59:49.749158+00:00",
+      "duration_minutes": 5.0,
+      "cost_per_hour_usd": 15030.7,
+      "resolution_note": null
     }
   ]
 }

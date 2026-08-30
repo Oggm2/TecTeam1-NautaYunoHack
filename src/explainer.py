@@ -31,7 +31,19 @@ def format_segment(segment: dict[str, str]) -> str:
     return ", ".join(f"{labels.get(key, key)}={value}" for key, value in segment.items())
 
 
-def deterministic_explanation(diagnosis: dict[str, Any]) -> dict[str, Any]:
+def format_recurrence_note(recurrence: dict[str, Any] | None) -> str:
+    if not recurrence:
+        return ""
+    previous = recurrence["previous_incident"]
+    when = previous.get("resolved_at") or previous.get("observed_at")
+    when_label = when[:10] if when else "una ocasión anterior"
+    similarity_pct = round(recurrence["similarity"] * 100)
+    note = previous.get("resolution_note")
+    tail = f"; en esa ocasión: {note}." if note else "."
+    return f" Este patrón ya se había observado ({similarity_pct}% de similitud) el {when_label}{tail}"
+
+
+def deterministic_explanation(diagnosis: dict[str, Any], recurrence: dict[str, Any] | None = None) -> dict[str, Any]:
     segment = diagnosis.get("root_cause_segment", {})
     metrics = diagnosis.get("root_metrics", {})
     decline = diagnosis.get("dominant_decline")
@@ -42,6 +54,7 @@ def deterministic_explanation(diagnosis: dict[str, Any]) -> dict[str, Any]:
     expected = metrics.get("expected_conversion")
     cost = metrics.get("expected_unrecovered_amount_usd", 0)
     window = diagnosis.get("incident_window", {})
+    recurrence = recurrence if recurrence is not None else diagnosis.get("recurrence")
 
     if not enough:
         executive = "Se confirmó una caída de conversión, pero la evidencia no permite atribuirla a una causa única."
@@ -57,6 +70,7 @@ def deterministic_explanation(diagnosis: dict[str, Any]) -> dict[str, Any]:
                 f" El motivo de rechazo con mayor exceso fue {decline['decline_reason']} "
                 f"({decline['share_of_excess_declines']:.0%} de los rechazos adicionales)."
             )
+        operational += format_recurrence_note(recurrence)
     return {
         "mode": "deterministic",
         "incident_id": diagnosis.get("incident_id"),
@@ -93,7 +107,7 @@ EXPLANATION_SCHEMA = {
 }
 
 
-def openai_explanation(diagnosis: dict[str, Any], model: str) -> dict[str, Any]:
+def openai_explanation(diagnosis: dict[str, Any], model: str, recurrence: dict[str, Any] | None = None) -> dict[str, Any]:
     """Use OpenAI only as a factual Spanish copywriter over the diagnosis JSON."""
     try:
         from openai import OpenAI
@@ -102,12 +116,18 @@ def openai_explanation(diagnosis: dict[str, Any], model: str) -> dict[str, Any]:
     instructions = """Eres redactor para operaciones de pagos. Redacta únicamente con los hechos
 del JSON recibido. No inventes dimensiones, causas, cifras, fechas ni acciones. No cambies la
 acción recomendada. Si evidence_sufficient es false, dilo claramente. Responde en español.
-En profiles devuelve: technical para un operador, financial para negocio y simple sin jerga para cualquier persona."""
+En profiles devuelve: technical para un operador, financial para negocio y simple sin jerga para cualquier persona.
+Si el JSON incluye "recurrence", menciona brevemente en operational_explanation que este patrón ya
+ocurrió antes (con la fecha y similitud dadas) — solo si ese campo está presente."""
+    payload = dict(diagnosis)
+    recurrence = recurrence if recurrence is not None else diagnosis.get("recurrence")
+    if recurrence:
+        payload["recurrence"] = recurrence
     client = OpenAI()
     response = client.responses.create(
         model=model,
         instructions=instructions,
-        input=json.dumps(diagnosis, ensure_ascii=False),
+        input=json.dumps(payload, ensure_ascii=False),
         text={"format": {"type": "json_schema", "name": "incident_explanation", "strict": True, "schema": EXPLANATION_SCHEMA}},
     )
     explanation = json.loads(response.output_text)

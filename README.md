@@ -137,6 +137,53 @@ La salida de IA se fuerza a un esquema JSON con resumen ejecutivo, explicación
 operativa, acción recomendada y nota de incertidumbre. No se usa la IA para
 detectar ni diagnosticar incidentes.
 
+## Memoria de incidentes con ML
+
+`incident_memory.py` compara cada diagnóstico nuevo contra `data/incident_memory.json`
+usando un modelo de **k-nearest-neighbors (k=1) por similitud coseno**, no
+comparación exacta de segmentos. Cada incidente se convierte en un vector de
+features: qué dimensiones están involucradas y sus valores (one-hot), el
+motivo de rechazo dominante, hora del día y día de la semana codificados
+cíclicamente (seno/coseno, para que las 23:00 y las 00:00 se traten como
+cercanas) y la severidad (log del costo/hora). Esto generaliza mejor que el
+solapamiento exacto: dos incidentes con el mismo patrón (misma dimensión
+afectada, hora similar, mismo motivo de rechazo) pueden coincidir aunque el
+merchant o banco exacto sea distinto. No requiere numpy/scikit-learn — con
+la cantidad de incidentes que maneja este proyecto, una búsqueda por fuerza
+bruta en Python puro es suficiente y evita una dependencia extra antes de
+una demo en vivo.
+
+Cuando hay coincidencia, esa recurrencia ahora se inyecta también en
+`explainer.py`: la explicación operativa menciona la fecha y % de similitud
+del incidente anterior, y su nota de resolución si existe — ya no es
+necesario ir a la vista de Incident Memory para enterarte de que "esto ya
+pasó antes".
+
+La memoria también **aprende entre corridas**: al final de `build_dashboard.py`,
+cada incidente con evidencia suficiente se guarda (o actualiza) en
+`data/incident_memory.json` vía `incident_memory.upsert()`. La próxima vez
+que corras el pipeline, esos incidentes ya son candidatos de recurrencia.
+`live_dashboard.py` **no** persiste automáticamente durante una corrida en
+vivo (evita que un incidente activo se compare consigo mismo unos segundos
+después); usa `build_dashboard.py` para cerrar el ciclo de aprendizaje.
+
+### Poblar la memoria con varios incidentes de una sola vez
+
+`generate_incident_batch.py` genera un lote de transacciones (sin esperar en
+tiempo real) con varios incidentes distintos inyectados en distintos puntos
+del rango, usando un archivo de escenarios con el mismo formato que
+`examples/injections.json` (ver `examples/incident_training_scenarios.json`
+para un ejemplo con 5 escenarios variados). Luego corre `build_dashboard.py`
+sobre ese lote una sola vez para diagnosticar todos los incidentes y
+sembrar `incident_memory.json` con ejemplos reales y variados, en vez de
+correr `live_dashboard.py` una vez por escenario:
+
+```powershell
+py src/generate_history.py --days 60 --events-per-minute 5
+py src/generate_incident_batch.py --scenarios examples/incident_training_scenarios.json --hours 1.75 --events-per-second 15
+py src/build_dashboard.py --transactions data/incident_training_batch.jsonl
+```
+
 ## Dashboard en vivo
 
 `live_dashboard.py` conecta todo el pipeline en tiempo real: genera transacciones

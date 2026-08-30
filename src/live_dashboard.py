@@ -154,7 +154,7 @@ def main() -> None:
             for alert in new_alerts:
                 seen_alert_ids.add(alert["alert_id"])
             if new_alerts:
-                new_diagnoses = bd.diagnose_alerts(new_alerts, retained, history_events, args)
+                new_diagnoses = bd.diagnose_alerts(new_alerts, retained, history_events, args, memory)
                 if args.use_openai:
                     for diagnosis in new_diagnoses:
                         diagnosis["explanation"] = explainer.openai_explanation(diagnosis, args.model)

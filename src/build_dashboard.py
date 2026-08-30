@@ -103,7 +103,10 @@ def replay_transactions(history_events: list[dict[str, Any]], events: list[dict[
     return alerts
 
 
-def diagnose_alerts(alerts: list[dict[str, Any]], events: list[dict[str, Any]], history_events: list[dict[str, Any]], args: argparse.Namespace) -> list[dict[str, Any]]:
+def diagnose_alerts(
+    alerts: list[dict[str, Any]], events: list[dict[str, Any]], history_events: list[dict[str, Any]],
+    args: argparse.Namespace, memory: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     diag_args = argparse.Namespace(
         min_attempts=args.diag_min_attempts, min_history_attempts=args.min_history_attempts,
         min_drop_pp=args.min_drop_pp, z_threshold=args.z_threshold,
@@ -113,7 +116,9 @@ def diagnose_alerts(alerts: list[dict[str, Any]], events: list[dict[str, Any]], 
     diagnoses = []
     for alert in alerts:
         diagnosis = diagnoser.diagnose(alert, events, history_events, diag_args)
-        diagnosis["explanation"] = explainer.deterministic_explanation(diagnosis)
+        recurrence = incident_memory.match(diagnosis, memory)
+        diagnosis["recurrence"] = recurrence
+        diagnosis["explanation"] = explainer.deterministic_explanation(diagnosis, recurrence)
         diagnoses.append(diagnosis)
     return diagnoses
 
@@ -144,7 +149,9 @@ def build_incident_entries(prioritized: list[prioritizer.PrioritizedIncident], m
         window = diagnosis.get("incident_window", {})
         started_at, ended_at = parse_timestamp(window.get("started_at")), parse_timestamp(window.get("ended_at"))
         severity, status = classify_severity(diagnosis, incident.priority_rank)
-        recurrence = incident_memory.match(diagnosis, memory)
+        recurrence = diagnosis.get("recurrence")
+        if recurrence is None:
+            recurrence = incident_memory.match(diagnosis, memory)
         entries.append({
             "incident_id": diagnosis.get("incident_id"),
             "alert_id": diagnosis.get("alert_id"),
@@ -263,7 +270,8 @@ def main() -> None:
         for alert in alerts:
             sink.write(json.dumps(alert, separators=(",", ":")) + "\n")
 
-    diagnoses = diagnose_alerts(alerts, events, history_events, args)
+    memory = incident_memory.load(args.memory)
+    diagnoses = diagnose_alerts(alerts, events, history_events, args, memory)
     Path(args.diagnoses_out).parent.mkdir(parents=True, exist_ok=True)
     with Path(args.diagnoses_out).open("w", encoding="utf-8") as sink:
         for diagnosis in diagnoses:
@@ -272,7 +280,6 @@ def main() -> None:
     prioritized = prioritizer.prioritize(diagnoses)
     Path(args.priorities_out).write_text(json.dumps(prioritizer.to_json(prioritized), indent=2), encoding="utf-8")
 
-    memory = incident_memory.load(args.memory)
     entries = build_incident_entries(prioritized, memory)
     chart = build_chart(events, alerts, history_events, args)
     kpis = build_kpis(entries, chart, transactions_window=len(events), recovery_horizon_hours=args.recovery_horizon_hours)
@@ -288,6 +295,16 @@ def main() -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(dashboard, indent=2), encoding="utf-8")
     print(f"wrote {output_path} with {len(entries)} incident(s)", file=sys.stderr)
+
+    # Learn from this run: confidently diagnosed incidents join memory so future runs (or a later
+    # live_dashboard.py session) can recognize them as recurrences instead of starting from zero.
+    updated_memory = memory
+    for entry in entries:
+        if entry["diagnosis"].get("evidence_sufficient"):
+            updated_memory = incident_memory.upsert(updated_memory, incident_memory.record_from_entry(entry))
+    if updated_memory != memory:
+        incident_memory.save(args.memory, updated_memory)
+        print(f"updated {args.memory} — {len(updated_memory)} incident(s) in memory", file=sys.stderr)
 
 
 if __name__ == "__main__":

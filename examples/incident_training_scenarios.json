@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Adyen degraded in Colombia",
+    "start_after_seconds": 300,
+    "duration_seconds": 600,
+    "approval_rate": 0.42,
+    "filters": {"provider": "adyen", "country": "CO"},
+    "decline_reason": "do_not_honor"
+  },
+  {
+    "name": "Nubank outage for TechStore in Brazil",
+    "start_after_seconds": 1500,
+    "duration_seconds": 600,
+    "approval_rate": 0.10,
+    "filters": {"merchant": "TechStore", "country": "BR", "issuing_bank": "Nubank"},
+    "decline_reason": "issuer_unavailable"
+  },
+  {
+    "name": "PSE failing in Colombia",
+    "start_after_seconds": 2700,
+    "duration_seconds": 600,
+    "approval_rate": 0.30,
+    "filters": {"payment_method": "pse", "country": "CO"},
+    "decline_reason": "transaction_not_permitted"
+  },
+  {
+    "name": "dLocal degraded for TravelNow in Mexico",
+    "start_after_seconds": 3900,
+    "duration_seconds": 600,
+    "approval_rate": 0.25,
+    "filters": {"merchant": "TravelNow", "provider": "dlocal", "country": "MX"},
+    "decline_reason": "do_not_honor"
+  },
+  {
+    "name": "BBVA outage in Mexico",
+    "start_after_seconds": 5100,
+    "duration_seconds": 600,
+    "approval_rate": 0.15,
+    "filters": {"issuing_bank": "BBVA", "country": "MX"},
+    "decline_reason": "issuer_unavailable"
+  }
+]
